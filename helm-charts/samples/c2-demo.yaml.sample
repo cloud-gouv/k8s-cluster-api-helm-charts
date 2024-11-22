@@ -1,0 +1,84 @@
+provider:
+  outscale: true
+global:
+  # custom proxy
+  http_proxy: http://192.168.2.10:8888
+  https_proxy: http://192.168.2.10:8888
+  no_proxy: localhost,192.168.0.0/16
+
+  clusterName: c2-demo
+
+  # helm addons
+  addons:
+    cni:
+      enabled: true
+      type: cilium
+      version: 1.15.8
+      config:
+        ipaddresspool:
+          layer: "l2"
+          name: "first-pool"
+          addresses:
+            - 192.168.101.11/32
+    ccm:
+      enabled: true
+      type: outscale
+      version: 0.3.0
+    csi:
+      enabled: false
+    storagelocal:
+      enabled: false
+      type: storagelocal
+      version: 0.0.25
+    metallb:
+      enabled: false
+    ingress:
+      enabled: false
+      type: ingress-nginx
+      version: 4.10.1
+    certmanager:
+      enabled: false
+      type: cert-manager
+      version: v1.14.5
+
+outscale:
+  sshkeyname: REPLACE_SSH_KEY_NAME_
+  subregionname: eu-west-2a
+  osc_credentials:
+    secret_key: ""
+    access_key: ""
+    region: ""
+  # override lb name
+  loadbalancername: c2-demo-k8s
+  bastion:
+    enable: false
+    image: ubuntu-2204-2204-kubernetes-v1.30.5-2024-10-21
+    vmType: tinav5.c4r8p2
+    subregionName: eu-west-2a
+    allow_cidr:
+      - 0.0.0.0/0
+    rootDisk:
+      rootDiskIops: 100
+      rootDiskSize: 30
+      rootDiskType: standard
+  controlplane:
+    version: v1.30.5
+    replicas: 1
+    image: ubuntu-2204-2204-kubernetes-v1.30.5-2024-10-21
+    vmType: tinav5.c4r8p2
+    subregionName: eu-west-2a
+    rootDisk:
+      rootDiskIops: 100
+      rootDiskSize: 30
+      rootDiskType: standard
+  workers:
+    md-0-az1:
+      version: v1.30.5
+      replicas: 1
+      image: ubuntu-2204-2204-kubernetes-v1.30.5-2024-10-21
+      vmType: tinav5.c4r8p3
+      subregionName: eu-west-2a
+      rootDisk:
+        rootDiskIops: 100
+        rootDiskSize: 30
+        rootDiskType: standard

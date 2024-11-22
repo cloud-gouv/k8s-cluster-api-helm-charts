@@ -1,0 +1,39 @@
+{{ if and .Values.global.addons.csi.enabled  ( eq .Values.global.addons.csi.type "osc-bsu-csi" ) -}}
+apiVersion: addons.cluster.x-k8s.io/v1alpha1
+kind: HelmChartProxy
+metadata:
+  name: osc-bsu-csi-chart
+spec:
+  options:
+    waitForJobs: true
+    wait: true
+    timeout: 30m0s
+    install:
+      createNamespace: true
+  clusterSelector:
+  # Target workload clusters with specific labels.
+    matchLabels:
+      csi.enabled: "true"
+      csi.type: {{ .Values.global.addons.csi.type }}
+      csi.version: {{ .Values.global.addons.csi.version }}
+  # Target all workload clusters.
+  #  matchLabels: {}
+  releaseName: outscale-csi
+  repoURL: oci://registry-1.docker.io/outscalehelm/
+  chartName: osc-bsu-csi-driver
+  version: {{ .Values.global.addons.csi.version }}
+  namespace: kube-system
+  valuesTemplate: |
+    imagePullSecrets: regcred
+    enableVolumeResizing: true
+    enableVolumeSnapshot: true
+    credentials:
+      secretName: osc-bsu-csi
+    {{- if .Values.global.https_proxy }}
+    httpsProxy: {{ .Values.global.https_proxy | quote }}
+    {{- end }}
+    {{- if .Values.global.no_proxy }}
+    noProxy: "{{ .Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
+    {{- end }}
+  # TODO: pay attention to newlines at the end that get inserted by templates
+{{ end -}}

@@ -1,0 +1,10 @@
+apiVersion: v2
+name: capi-cluster-addons
+version: 1.0.2
+description: |
+  cluster api helm addons.
+dependencies:
+  - name: addons
+    version: 1.0.2
+    repository: 'file://charts/addons'
+    condition: addons.enabled

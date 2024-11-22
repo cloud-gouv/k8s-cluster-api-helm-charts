@@ -1,0 +1,11 @@
+dockerConfig:
+  enabled: false
+#addons: {}
+#  cni: {}
+#  ccm: {}
+#  metallb: {}
+#  ingress: {}
+
+#addons:
+#  cloudConfig:
+#    cloudConf: {}

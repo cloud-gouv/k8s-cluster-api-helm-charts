@@ -1,0 +1,201 @@
+provider:
+  openstack: true
+global:
+  # custom proxy
+  http_proxy: http://192.168.2.10:8888
+  https_proxy: http://192.168.2.10:8888
+  no_proxy: localhost,192.168.0.0/16
+
+  # cluster
+  clusterName: c1-demo
+  pods:
+    cidrBlocks: "172.16.0.0/16"
+  services:
+    cidrBlocks: "10.96.0.0/12"
+
+  # helm addons
+  addons:
+    cni:
+      enabled: true
+      #enabled: false
+      type: cilium
+      version: 1.15.8
+      #type: calico
+      #version: v3.27.3
+      config:
+        ipaddresspool:
+          layer: "l2"
+          name: "first-pool"
+          addresses:
+            - 192.168.101.11/32
+    ccm:
+      enabled: true
+      #enabled: false
+      type: openstack
+      version: 2.31.0
+      #type: outscale
+      #version: 0.3.0
+    csi:
+      enabled: true
+      #enabled: false
+      type: cinder-csi
+      version: 2.31.0
+    storagelocal:
+      enabled: true
+      #enabled: false
+      type: storagelocal
+      version: 0.0.25
+    metallb:
+      #enabled: true
+      enabled: false
+      type: metallb
+      version: 0.14.5
+      config:
+        ipaddresspool:
+          layer: "l2"
+          name: "first-pool"
+          addresses:
+            - 192.168.101.11/32
+    ingress:
+      enabled: true
+      #enabled: false
+      type: ingress-nginx
+      version: 4.10.1
+    certmanager:
+      enabled: true
+      #enabled: false
+      type: cert-manager
+      version: v1.14.5
+#
+# reference to openstack helm values
+#
+openstack:
+  sshkeyname: k8s-demo
+  router: router_services
+  network: network_kube
+  subnet: subnet_kube
+  bastion:
+    enabled: false
+    image: ubuntu22.04
+    flavor: CO1.2
+  controlplane:
+    version: v1.29.4
+    serverGroup:
+      filter:
+         name: "controlplane-node"
+    replicas: 1
+    image: ubuntu-2204-kube-v1.29.4
+    flavor: CO1.2
+    availabilityZones:
+      - AZ1
+      - AZ2
+    # IP for kube API : pre allocated IP outside cluster-api
+    apiServerFixedIP: 192.168.101.10
+#    rootVolume:
+#      sizeGiB: 30
+#      type: __DEFAULT__
+  workers:
+    md-0:
+      nodeLabels:
+        cluster.environment: staging
+        ingress-ready: true
+      serverGroup:
+        filter:
+           name: "worker-node"
+      version: v1.29.4
+      replicas: 1
+      image: ubuntu-2204-kube-v1.29.4
+      flavor: CO1.2
+      #failureDomain: AZ2
+      # IP for ingress: pre allocated IP outside cluster-api
+      ingressServerFixedIP: 192.168.101.11
+#      rootVolume:
+#        sizeGiB: 30
+#        type: __DEFAULT__
+#      additionalBlockDevices:
+#        name: data
+#        sizeGiB: 30
+#        type: __DEFAULT__
+
+## Add workers node
+#    md-1:
+#      version: v1.29.4
+#      replicas: 1
+#      image: ubuntu-2204-kube-v1.29.4
+#      flavor: CO1.2
+#      # failureDomain: AZ2
+#      # IP for ingress: pre allocated IP outside cluster-api
+#      ingressServerFixedIP: 192.168.101.11
+#      rootVolume:
+#        sizeGiB: 30
+#        type: __DEFAULT__
+#      additionalBlockDevices:
+#        name: data
+#        sizeGiB: 30
+#        type: __DEFAULT__
+
+#  csi:
+#    storageClass:
+#    - metadata:
+#        name: cinder-default
+#      spec:
+#        provisioner: cinder.csi.openstack.org
+#        volumeBindingMode: WaitForFirstConsumer
+#        allowVolumeExpansion: false
+#        parameters:
+#          type: __DEFAULT__
+#          availability: nova
+#
+
+  certmanager:
+    clusterIssuers:
+    - metadata:
+        name: letsencrypt-staging
+      spec:
+        acme:
+          server: https://acme-staging-v02.api.letsencrypt.org/directory
+          email: _REPLACE_WITH_EMAIL_
+          privateKeySecretRef:
+            name: letsencrypt-staging
+          solvers:
+              - http01:
+                  ingress:
+                    ingressClassName: nginx
+    - metadata:
+        name: letsencrypt-production
+      spec:
+        acme:
+          server: https://acme-v02.api.letsencrypt.org/directory
+          email: _REPLACE_WITH_EMAIL_
+          privateKeySecretRef:
+            name: letsencrypt-production
+          solvers:
+              - http01:
+                  ingress:
+                    ingressClassName: nginx
+  # docker login (rate limit)
+  dockerConfig:
+    registry: https://index.docker.io/v1/
+    auth: __REPLACE_WITH_DOCKERHUB_AUTH_B64__
+  cloudConfig:
+    #
+    # used by cluster api provider openstack (capo)
+    #
+    #
+    # B64 encode cacert file with: `cat ca.crt |base64 -w0`
+    #
+    cacert: _OPENSTACK_CLOUD_CACERT_B64_
+    #
+    # B64 encode clouds.yaml with : `cat clouds.yaml |base64 -w0`
+    #
+    cloudsYaml: _OPENSTACK_CLOUD_PROVIDER_CONF_B64_
+    #
+    # used by ccm-openstack
+    #
+    cloudConf:
+      global:
+        ## use application credential ID/secret
+        auth-url: _OS_AUTH_URL/v3_
+        application-credential-id: _OS_APPLICATION_CREDENTIAL_ID_
+        application-credential-secret: _OS_APPLICATION_CREDENTIAL_SECRET_
+        region: "__OS_REGION_NAME_"

@@ -1,0 +1,59 @@
+{{- $values := .Values }}
+{{- range $name, $pool := .Values.workers }}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OpenStackMachineTemplate
+metadata:
+  name: {{ $.Values.global.clusterName }}-{{ $name }}-{{ $pool.version }}
+spec:
+  template:
+    spec:
+      configDrive: true
+    {{- with $pool.serverMetadata }}
+      serverMetadata: {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with $pool.serverGroup }}
+      serverGroup: {{- toYaml . | nindent 8 }}
+    {{- end }}
+      flavor: {{ $pool.flavor }}
+      image:
+        filter:
+          name: {{ $pool.image }}
+      sshKeyName: {{ $.Values.sshkeyname }}
+      ports:
+        - network:
+            filter:
+              {{- if $.Values.network }}
+              name: {{ $.Values.network }}
+              {{- end }}
+          fixedIPs:
+            - subnet:
+                filter:
+                  {{- if $.Values.subnet }}
+                  name: {{ $.Values.subnet }}
+                  {{- end }}
+          securityGroups:
+            - filter:
+                name: k8s-cluster-default-{{ $.Values.global.clusterName }}-secgroup-worker
+            - filter:
+                name: allow-http
+            - filter:
+                name: allow-ssh
+          allowedAddressPairs:
+            - ipAddress: {{ $pool.ingressServerFixedIP }}
+      {{- if $pool.rootVolume }}
+      rootVolume:
+        sizeGiB: {{ $pool.rootVolume.sizeGiB }}
+        type: {{ $pool.rootVolume.type }}
+      {{- end }}
+      {{- if $pool.additionalBlockDevices }}
+      additionalBlockDevices:
+        - name: {{ $pool.additionalBlockDevices.name }}
+          sizeGiB: {{ $pool.additionalBlockDevices.sizeGiB }}
+          storage:
+            type: Volume
+            volume:
+              type: {{ $pool.additionalBlockDevices.type }}
+      {{- end }}
+---
+{{- end }}

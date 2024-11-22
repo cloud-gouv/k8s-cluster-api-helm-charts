@@ -1,0 +1,4 @@
+apiVersion: v2
+name: outscale
+version: 1.0.1
+appVersion: "1.0"

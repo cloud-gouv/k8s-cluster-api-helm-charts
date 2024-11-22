@@ -1,0 +1,41 @@
+{{ if .Values.global.addons.metallb.enabled -}}
+apiVersion: addons.cluster.x-k8s.io/v1alpha1
+kind: HelmChartProxy
+metadata:
+  name: metallb
+spec:
+  options:
+    waitForJobs: true
+    wait: true
+    timeout: 30m0s
+    install:
+      createNamespace: true
+  clusterSelector:
+    matchLabels:
+      metallb.enabled: "true"
+      metallb.type: {{ .Values.global.addons.metallb.type }}
+      metallb.version: {{ .Values.global.addons.metallb.version }}
+  repoURL: https://metallb.github.io/metallb
+  chartName: metallb
+  version: {{ .Values.global.addons.metallb.version }}
+  releaseName: metallb
+  namespace: metallb
+  valuesTemplate: |
+    #metallb:
+    # define loadbalancerclass (must be used in ingress-nginx or service )
+    loadBalancerClass: "metallb.universe.tf/metallb"
+    controller:
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
+      tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"
+    speaker:
+      tolerateMaster: false
+      nodeSelector:
+        ingress-ready: "true"
+  # TODO: pay attention to newlines at the end that get inserted by templates
+{{ end -}}

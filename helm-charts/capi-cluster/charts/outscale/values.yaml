@@ -1,0 +1,61 @@
+machinehealthcheck:
+  enabled: false
+
+addons:
+  cni: {}
+  ccm: {}
+  metallb: {}
+  ingress: {}
+  certmanager: {}
+  csi: {}
+
+certmanager: {}
+csi: {}
+
+#dockerConfig:
+#  registry: https://index.docker.io/v1/
+#  auth: base64(docker_login:docker_password)
+#
+#
+# outscale
+#sshkeyname: REPLACE_MY_KEY
+#subregionName: "eu-west-2a"
+#
+#bastion:
+#  enable: false
+#loadbalancername: my-lb
+#controlplane:
+#  version: v1.29.5
+#  replicas: 1
+#  vmType: tinav5.c2r4p3
+#  subregionName: eu-west-2a
+#  image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
+#  rootDisk:
+#    rootDiskIops: 100
+#    rootDiskSize: 30
+#    rootDiskType: standard
+#  volumes:
+#    - name: data-volume
+#      size: 10
+#      iops: 100
+#      volumeType: standard
+#      subregionName: eu-west-2a
+#workers:
+#  - name: md-0
+#    version: v1.29.5
+#    replicas: 0
+#    vmType: tinav5.c2r4p3
+#    subregionName: eu-west-2a
+#    image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
+#    rootDisk:
+#      rootDiskIops: 100
+#      rootDiskSize: 30
+#      rootDiskType: standard
+#
+# credentials for ccm
+#
+osc_credentials: {}
+#osc_credentials:
+#  secret_key: ""
+#  access_key: ""
+#  region: ""

@@ -1,0 +1,35 @@
+{{- $values := .Values }}
+{{- range $name, $pool := .Values.workers }}
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: {{ $.Values.global.clusterName }}-{{ $name }}
+spec:
+  clusterName: {{ $.Values.global.clusterName }}
+  replicas: {{ $pool.replicas | default 0 }}
+  minReadySeconds: 0
+  progressDeadlineSeconds: 600
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels: null
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: {{ $.Values.global.clusterName }}-{{ $name }}
+      clusterName: {{ $.Values.global.clusterName }}
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: OscMachineTemplate
+        name: {{ $.Values.global.clusterName }}-{{ $name }}-{{ $pool.version }}
+      version: {{ $pool.version }}
+---
+{{- end }}

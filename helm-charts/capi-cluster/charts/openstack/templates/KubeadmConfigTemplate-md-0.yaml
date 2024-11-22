@@ -1,0 +1,88 @@
+{{- $values := .Values }}
+{{- range $name, $pool := .Values.workers }}
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: {{ $.Values.global.clusterName }}-{{ $name }}
+spec:
+  template:
+    spec:
+      {{- if $pool.additionalBlockDevices }}
+      ##  Add external volume
+      diskSetup:
+         partitions:
+         - device: /dev/vdb
+           layout: true
+           overwrite: false
+           tableType: gpt
+         filesystems:
+         - device: /dev/vdb
+           extraOpts:
+           - -E
+           - lazy_itable_init=1,lazy_journal_init=1
+           filesystem: ext4
+           label: {{ $pool.additionalBlockDevices.name }}_disk
+      mounts:
+        - - LABEL={{ $pool.additionalBlockDevices.name }}_disk
+          - /mnt/disk
+      {{- end }}
+      preKubeadmCommands:
+        - echo debug-pre > /tmp/out
+        - mkdir -p /etc/pre-kubeadm-commands
+        - for script in $(find /etc/pre-kubeadm-commands/ -name '*.sh' -type f | sort);
+          do echo "Running script $script"; "$script"; done
+      postKubeadmCommands:
+        - echo debug-post >> /tmp/out
+        - mkdir -p /etc/post-kubeadm-commands
+        - for script in $(find /etc/post-kubeadm-commands/ -name '*.sh' -type f | sort);
+          do echo "Running script $script"; "$script"; done
+      files:
+        - content: |
+            #!/bin/bash
+            #
+            # pre-kubadm-scripts
+            #
+            set -e
+            # apply containerd config before kubeadm
+            systemctl daemon-reload
+            systemctl restart containerd
+          owner: root:root
+          path: /etc/pre-kubeadm-commands/10-containerd-restart.sh
+          permissions: "0700"
+        - path: /etc/apt/apt.conf.d/99proxy
+          owner: "root:root"
+          permissions: "0644"
+          content: |
+            Acquire {
+              {{- if $.Values.global.http_proxy }}
+              http::Proxy {{ $.Values.global.http_proxy | quote }};
+              {{- end }}
+              {{- if $.Values.global.https_proxy }}
+              https::Proxy {{ $.Values.global.https_proxy | quote }};
+              {{- end }}
+              }
+        - path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+          owner: "root:root"
+          permissions: "0644"
+          content: |
+            [Service]
+            {{- if $.Values.global.http_proxy }}
+            Environment="HTTP_PROXY={{ $.Values.global.http_proxy }}"
+            {{- end }}
+            {{- if $.Values.global.https_proxy }}
+            Environment="HTTPS_PROXY={{ $.Values.global.https_proxy }}"
+            {{- end }}
+            {{- if $.Values.global.no_proxy }}
+            Environment="NO_PROXY=.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,192.168.0.0/16,{{ $.Values.global.pods.cidrBlocks }},{{ $.Values.global.services.cidrBlocks }}"
+            {{- end }}
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            cloud-provider: external
+            provider-id: {{`'openstack:///{{ instance_id }}'`}}
+            {{- with $pool.nodeLabels }}
+            node-labels: "{{ range $i, $k := (keys . | sortAlpha) }}{{ if ne $i 0 }},{{ end }}{{ $k }}={{ index $pool.nodeLabels $k }}{{ end }}"
+            {{- end }}
+          name: {{`'{{ local_hostname }}'`}}
+---
+{{- end }}

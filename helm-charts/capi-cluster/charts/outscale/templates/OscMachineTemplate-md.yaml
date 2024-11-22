@@ -1,0 +1,33 @@
+{{- $values := .Values }}
+{{- range $name, $pool := .Values.workers }}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OscMachineTemplate
+metadata:
+  name: {{ $.Values.global.clusterName }}-{{ $name }}-{{ $pool.version }}
+spec:
+  template:
+    spec:
+      node:
+        clusterName: {{ $.Values.global.clusterName }}
+        image:
+          name: {{ $pool.image }}
+        keypair:
+          name: {{ $.Values.sshkeyname }}
+          deleteKeypair: false
+        vm:
+          clusterName: {{ $.Values.global.clusterName }}
+          keypairName: {{ $.Values.sshkeyname }}
+          vmType: {{ $pool.vmType }}
+          subregionName: {{ $pool.subregionName  }}
+          {{- if hasKey $pool "rootDisk" }}
+          rootDisk:
+            rootDiskIops: {{ $pool.rootDisk.rootDiskIops | default 100 }}
+            rootDiskSize: {{ $pool.rootDisk.rootDiskSize | default 30 }}
+            rootDiskType: {{ $pool.rootDisk.rootDiskType | default "standard" }}
+          {{- end }}
+        {{- with $pool.volumes }}
+        volumes: {{- toYaml . | nindent 10 }}
+        {{- end }}
+---
+{{- end }}

@@ -1,0 +1,37 @@
+{{ if and .Values.global.addons.ccm.enabled  ( eq .Values.global.addons.ccm.type "outscale" ) -}}
+apiVersion: addons.cluster.x-k8s.io/v1alpha1
+kind: HelmChartProxy
+metadata:
+  name: cloud-provider-outscale-chart
+spec:
+  options:
+    waitForJobs: true
+    wait: true
+    timeout: 30m0s
+    install:
+      createNamespace: true
+  clusterSelector:
+  # Target workload clusters with specific labels.
+    matchLabels:
+      ccm.enabled: "true"
+      ccm.type: {{ .Values.global.addons.ccm.type }}
+      ccm.version: {{ .Values.global.addons.ccm.version }}
+  # Target all workload clusters.
+  #  matchLabels: {}
+  releaseName: outscale-ccm
+  repoURL: oci://registry-1.docker.io/outscalehelm/
+  chartName: osc-cloud-controller-manager
+  version: {{ .Values.global.addons.ccm.version }}
+  namespace: kube-system
+  valuesTemplate: |
+    imagePullSecrets: regcred
+    oscSecretName: osc-secret
+    extraEnv:
+    {{- if .Values.global.https_proxy }}
+    httpsProxy: {{ .Values.global.https_proxy | quote }}
+    {{- end }}
+    {{- if .Values.global.no_proxy }}
+    noProxy: "{{ .Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
+    {{- end }}
+  # TODO: pay attention to newlines at the end that get inserted by templates
+{{ end -}}

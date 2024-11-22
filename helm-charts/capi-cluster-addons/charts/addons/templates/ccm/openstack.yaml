@@ -1,0 +1,46 @@
+{{ if and .Values.global.addons.ccm.enabled  ( eq .Values.global.addons.ccm.type "openstack" ) -}}
+apiVersion: addons.cluster.x-k8s.io/v1alpha1
+kind: HelmChartProxy
+metadata:
+  name: cloud-provider-openstack-chart
+spec:
+  options:
+    waitForJobs: true
+    wait: true
+    timeout: 30m0s
+    install:
+      createNamespace: true
+  clusterSelector:
+  # Target workload clusters with specific labels.
+    matchLabels:
+      ccm.enabled: "true"
+      ccm.type: {{ .Values.global.addons.ccm.type }}
+      ccm.version: {{ .Values.global.addons.ccm.version }}
+  # Target all workload clusters.
+  #  matchLabels: {}
+  releaseName: openstack-ccm
+  repoURL: https://kubernetes.github.io/cloud-provider-openstack
+  chartName: openstack-cloud-controller-manager
+  version: {{ .Values.global.addons.ccm.version }}
+  namespace: kube-system
+  valuesTemplate: |
+    secret:
+      enabled: true
+      name: cloud-config
+      create: false
+    extraEnv:
+      {{- if .Values.global.http_proxy }}
+      - name: http_proxy
+        value: {{ .Values.global.http_proxy | quote }}
+      {{- end }}
+      {{- if .Values.global.https_proxy }}
+      - name: https_proxy
+        value: {{ .Values.global.https_proxy | quote }}
+      {{- end }}
+      {{- if .Values.global.no_proxy }}
+      # exclude from proxy pods.cidrBlocks, services.cidrBlocks
+      - name: no_proxy
+        value: "{{ .Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
+      {{- end }}
+  # TODO: pay attention to newlines at the end that get inserted by templates
+{{ end -}}

@@ -1,0 +1,55 @@
+machinehealthcheck:
+  enabled: false
+
+addons:
+  cni: {}
+  ccm: {}
+  metallb: {}
+  ingress: {}
+  certmanager: {}
+  csi: {}
+# sshkeyname: REPLACE_MY_KEY
+
+#router: router_services
+#network: network_kube
+#subnet: subnet_kube
+
+#bastion:
+#  enabled: false
+#  image: ubuntu22.04
+#  flavor: CO1.2
+#controlplane:
+#  version: v1.29.4
+#  replicas: 1
+#  image: ubuntu-2204-kube-v1.29.4
+#  flavor: CO1.2
+#  apiServerFixedIP: 192.168.101.10
+#  availabilityZones:
+#    - AZ1
+#    - AZ2
+#  serverGroup:
+#    filter:
+#      name: worker-node
+#  serverMetadata:
+#    - key: ingress-ready
+#      value: "true"
+#
+#workers:
+#  - name: md-0
+#    version: v1.29.4
+#    replicas: 0
+#    image: ubuntu-2204-kube-v1.29.4
+#    flavor: CO1.2
+#    ingressServerFixedIP: 192.168.101.11
+#    failureDomain: AZ1
+#    serverGroup:
+#      filter:
+#        name: worker-node
+
+certmanager: {}
+csi: {}
+cloudConfig:
+  # b64 encoded value
+  cacert:
+  cloudsYaml:
+  cloudConf: {}

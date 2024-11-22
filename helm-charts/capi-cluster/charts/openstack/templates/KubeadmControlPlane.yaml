@@ -1,0 +1,269 @@
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: {{ .Values.global.clusterName }}-control-plane
+spec:
+  kubeadmConfigSpec:
+##  Add external volume for etcd
+#    diskSetup:
+##      partitions:
+##      - device: /dev/vdb
+##        layout: true
+##        overwrite: false
+##        tableType: gpt
+#      filesystems:
+#      - device: /dev/vdb
+#        extraOpts:
+#        - -E
+#        - lazy_itable_init=1,lazy_journal_init=1
+#        filesystem: ext4
+#        label: etcd_disk
+#    mounts:
+#      - - LABEL=etcd_disk
+#        - /var/lib/etcddisk
+    preKubeadmCommands:
+      - echo debug-pre > /tmp/out
+      - mkdir -p /etc/pre-kubeadm-commands
+      - for script in $(find /etc/pre-kubeadm-commands/ -name '*.sh' -type f | sort);
+        do echo "Running script $script"; "$script"; done
+    postKubeadmCommands:
+      - echo debug-post >> /tmp/out
+      - mkdir -p /etc/post-kubeadm-commands
+      - for script in $(find /etc/post-kubeadm-commands/ -name '*.sh' -type f | sort);
+        do echo "Running script $script"; "$script"; done
+    files:
+      - content: |
+          #!/bin/bash
+          #
+          # pre-kubadm-scripts
+          #
+          set -e
+          # apply containerd config before kubeadm
+          systemctl daemon-reload
+          systemctl restart containerd
+        owner: root:root
+        path: /etc/pre-kubeadm-commands/10-containerd-restart.sh
+        permissions: "0700"
+      - path: /etc/kubernetes/manifests/kube-vip.yaml
+        owner: "root:root"
+        permissions: "0600"
+        content: |
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            creationTimestamp: null
+            name: kube-vip
+            namespace: kube-system
+          spec:
+            containers:
+            - args:
+              - manager
+              env:
+              - name: vip_arp
+                value: "true"
+              - name: port
+                value: "6443"
+              - name: vip_nodename
+                valueFrom:
+                  fieldRef:
+                    fieldPath: spec.nodeName
+              - name: vip_interface
+                value: ens3
+              - name: vip_cidr
+                value: "32"
+              - name: vip_subnet
+                value: /32
+              - name: dns_mode
+                value: "false"
+              - name: cp_enable
+                value: "true"
+              - name: cp_namespace
+                value: kube-system
+              - name: svc_enable
+                value: "true"
+              - name: svc_leasename
+                value: plndr-svcs-lock
+              - name: vip_leaderelection
+                value: "true"
+              - name: vip_leasename
+                value: plndr-cp-lock
+              - name: vip_leaseduration
+                value: "15"
+              - name: vip_renewdeadline
+                value: "10"
+              - name: vip_retryperiod
+                value: "2"
+              - name: address
+                value: {{ .Values.controlplane.apiServerFixedIP }}
+              - name: prometheus_server
+                value: :2112
+              image: ghcr.io/kube-vip/kube-vip:v0.8.0
+              imagePullPolicy: IfNotPresent
+              name: kube-vip
+              resources: {}
+              securityContext:
+                capabilities:
+                  add:
+                  - NET_ADMIN
+                  - NET_RAW
+              volumeMounts:
+              - mountPath: /etc/kubernetes/admin.conf
+                name: kubeconfig
+              # bug kube 1.29
+              - mountPath: /etc/hosts
+                name: etchosts
+            hostNetwork: true
+            volumes:
+            - hostPath:
+                path: /etc/kubernetes/admin.conf
+              name: kubeconfig
+            - hostPath:
+                path: /etc/kube-vip.hosts
+                type: File
+              name: etchosts
+          status: {}
+      - content: 127.0.0.1 localhost kubernetes
+        owner: root:root
+        path: /etc/kube-vip.hosts
+        permissions: "0644"
+      - content: |
+          #!/bin/bash
+          # Copyright 2020 The Kubernetes Authors.
+          #
+          # Licensed under the Apache License, Version 2.0 (the "License");
+          # you may not use this file except in compliance with the License.
+          # You may obtain a copy of the License at
+          #
+          #     http://www.apache.org/licenses/LICENSE-2.0
+          #
+          # Unless required by applicable law or agreed to in writing, software
+          # distributed under the License is distributed on an "AS IS" BASIS,
+          # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+          # See the License for the specific language governing permissions and
+          # limitations under the License.
+          set -e
+          # Configure the workaround required for kubeadm init with kube-vip:
+          # xref: https://github.com/kube-vip/kube-vip/issues/684
+          # Nothing to do for kubernetes < v1.29
+          KUBEADM_MINOR="$(kubeadm version -o short | cut -d '.' -f 2)"
+          if [[ "$KUBEADM_MINOR" -lt "29" ]]; then
+            exit 0
+          fi
+          IS_KUBEADM_INIT="false"
+          # cloud-init kubeadm init
+          if [[ -f /run/kubeadm/kubeadm.yaml ]]; then
+            IS_KUBEADM_INIT="true"
+          fi
+          # ignition kubeadm init
+          if [[ -f /etc/kubeadm.sh ]] && grep -q -e "kubeadm init" /etc/kubeadm.sh; then
+            IS_KUBEADM_INIT="true"
+          fi
+          if [[ "$IS_KUBEADM_INIT" == "true" ]]; then
+            sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' \
+              /etc/kubernetes/manifests/kube-vip.yaml
+          fi
+        owner: root:root
+        path: /etc/pre-kubeadm-commands/50-kube-vip-prepare.sh
+        permissions: "0700"
+      - content: |
+          #!/bin/bash
+          set -e
+          # Configure the workaround required for kubeadm init with kube-vip:
+          # xref: https://github.com/kube-vip/kube-vip/issues/684
+          # Nothing to do for kubernetes < v1.29
+          KUBEADM_MINOR="$(kubeadm version -o short | cut -d '.' -f 2)"
+          if [[ "$KUBEADM_MINOR" -lt "29" ]]; then
+            exit 0
+          fi
+          IS_KUBEADM_INIT="false"
+          # cloud-init kubeadm init
+          if [[ -f /run/kubeadm/kubeadm.yaml ]]; then
+            IS_KUBEADM_INIT="true"
+          fi
+          # ignition kubeadm init
+          if [[ -f /etc/kubeadm.sh ]] && grep -q -e "kubeadm init" /etc/kubeadm.sh; then
+            IS_KUBEADM_INIT="true"
+          fi
+          if [[ "$IS_KUBEADM_INIT" == "true" ]]; then
+            sed -i 's#path: /etc/kubernetes/super-admin.conf#path: /etc/kubernetes/admin.conf#' \
+              /etc/kubernetes/manifests/kube-vip.yaml
+          fi
+        owner: root:root
+        path: /etc/post-kubeadm-commands/50-kube-vip-restore.sh
+        permissions: "0700"
+      - content: |
+          #!/bin/bash
+          grep '^      limits:' /etc/kubernetes/manifests/kube-apiserver.yaml >/dev/null 2>&1 && exit 0
+          MEM=$(free -m | grep '^Mem:' | awk '{print $2;}')
+          CPU=$(grep '^processor' /proc/cpuinfo | wc -l)
+          sed -i "/^ *requests:/i\      limits:\n        memory: $((10+3*$MEM/4))M\n        cpu: $((750*$CPU))m" /etc/kubernetes/manifests/kube-apiserver.yaml
+          sed -i "/^ *requests:/a\        memory: 512M" /etc/kubernetes/manifests/kube-apiserver.yaml
+          sync
+          systemctl restart kubelet
+        owner: root:root
+        path: /etc/post-kubeadm-commands/10-tweak-kubeapi-memlimit.sh
+        permissions: "0700"
+      - path: /etc/apt/apt.conf.d/99proxy
+        owner: "root:root"
+        permissions: "0644"
+        content: |
+          Acquire {
+            {{- if .Values.global.http_proxy }}
+            http::Proxy {{ .Values.global.http_proxy | quote }};
+            {{- end }}
+            {{- if .Values.global.https_proxy }}
+            https::Proxy {{ .Values.global.https_proxy | quote }};
+            {{- end }}
+            }
+      - path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+        owner: "root:root"
+        permissions: "0644"
+        content: |
+          [Service]
+          {{- if .Values.global.http_proxy }}
+          Environment="HTTP_PROXY={{ .Values.global.http_proxy }}"
+          {{- end }}
+          {{- if .Values.global.https_proxy }}
+          Environment="HTTPS_PROXY={{ .Values.global.https_proxy }}"
+          {{- end }}
+          {{- if .Values.global.no_proxy }}
+          Environment="NO_PROXY=.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,192.168.0.0/16,{{ .Values.global.pods.cidrBlocks }},{{ .Values.global.services.cidrBlocks }}"
+          {{- end }}
+    clusterConfiguration:
+      apiServer:
+        extraArgs:
+          cloud-provider: external
+      controllerManager:
+        extraArgs:
+          cloud-provider: external
+### use external etcd volume dir
+#      etcd:
+#        local:
+#          dataDir: /var/lib/etcddisk/etcd ## We Change the etcd data dir when moving to dedicated volume (because of "dir is not empty")
+#          extraArgs:
+#            quota-backend-bytes: "8589934592"
+    initConfiguration:
+      {{ if and .Values.global.addons.cni.enabled ( eq .Values.global.addons.cni.type "cilium" ) -}}
+      # cilium replace kube-proxy
+      skipPhases:
+        - addon/kube-proxy
+      {{ end -}}
+      nodeRegistration:
+        kubeletExtraArgs:
+          cloud-provider: external
+          provider-id: {{`'openstack:///{{ instance_id }}'`}}
+        name: {{`'{{ local_hostname }}'`}}
+    joinConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          cloud-provider: external
+          provider-id: {{`'openstack:///{{ instance_id }}'`}}
+        name: {{`'{{ local_hostname }}'`}}
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: OpenStackMachineTemplate
+      name: {{ .Values.global.clusterName }}-control-plane-{{ .Values.controlplane.version }}
+  replicas: {{ .Values.controlplane.replicas | default 1 }}
+  version: {{ .Values.controlplane.version }}

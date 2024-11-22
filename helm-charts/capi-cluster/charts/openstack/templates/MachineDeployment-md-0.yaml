@@ -1,0 +1,30 @@
+{{- $values := .Values }}
+{{- range $name, $pool := .Values.workers }}
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: {{ $.Values.global.clusterName }}-{{ $name }}
+spec:
+  clusterName: {{ $.Values.global.clusterName }}
+  replicas: {{ $pool.replicas | default 0 }}
+  selector:
+    matchLabels: null
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: {{ $.Values.global.clusterName }}-{{ $name }}
+      clusterName: {{ $.Values.global.clusterName }}
+      {{- if $pool.failureDomain }}
+      failureDomain: {{ $pool.failureDomain }}
+      {{- end }}
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: OpenStackMachineTemplate
+        name: {{ $.Values.global.clusterName }}-{{ $name }}-{{ $pool.version }}
+      version: {{ $pool.version }}
+---
+{{- end }}

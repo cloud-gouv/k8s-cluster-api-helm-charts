@@ -1,0 +1,44 @@
+{{ if and .Values.global.addons.cni.enabled  ( eq .Values.global.addons.cni.type "calico" ) -}}
+apiVersion: addons.cluster.x-k8s.io/v1alpha1
+kind: HelmChartProxy
+metadata:
+  name: cni-calico
+spec:
+  options:
+    waitForJobs: true
+    wait: true
+    timeout: 30m0s
+    install:
+      createNamespace: true
+  clusterSelector:
+  # Target workload clusters with specific labels.
+    matchLabels:
+      cni.enabled: "true"
+      cni.type: {{ .Values.global.addons.cni.type }}
+      cni.version: {{ .Values.global.addons.cni.version }}
+  # Target all workload clusters.
+  #  matchLabels: {}
+  releaseName: calico
+  repoURL: https://docs.tigera.io/calico/charts
+  chartName: tigera-operator
+  version: {{ .Values.global.addons.cni.version }}
+  namespace: kube-system
+  valuesTemplate: |
+    installation:
+      {{ if .Values.dockerConfig.enabled -}}
+      imagePullSecrets:
+        - name: regcred
+      {{ end -}}
+      cni:
+        type: Calico
+      calicoNetwork:
+        bgp: Enabled
+        mtu: 1350
+        #  Helm render the template as a raw string with \{\{`
+        ipPools:{{`{{range $i, $cidr := .Cluster.spec.clusterNetwork.pods.cidrBlocks }}
+        - cidr: {{ $cidr }}
+          encapsulation: IPIP
+          natOutgoing: Enabled
+          nodeSelector: all(){{end}}`}}
+  # TODO: pay attention to newlines at the end that get inserted by templates
+{{ end -}}
