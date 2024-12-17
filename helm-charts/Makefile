@@ -4,6 +4,8 @@ CLUSTER_NAME = ""
 index: package-capi-cluster \
        package-capi-cluster-addons \
        package-local-path-provisioner \
+			 package-osc-cloud-controller-manager \
+       package-osc-bsu-csi-driver \
        index-repo
 package-capi-cluster:
 	helm package capi-cluster -d repo/
@@ -22,6 +24,12 @@ package-cloud-provider-openstack:
           # helm package cloud-provider-openstack/charts/cinder-csi-plugin -d repo/ ; \
           # rm -rf cloud-provider-openstack )
 	)
+
+# dockerhub rate-limit: mirror here
+package-osc-cloud-controller-manager:
+	cd repo && helm pull oci://registry-1.docker.io/outscalehelm/osc-cloud-controller-manager --version 0.3.0 
+package-osc-bsu-csi-driver:
+	cd repo && helm pull oci://registry-1.docker.io/outscalehelm/osc-bsu-csi-driver --version 1.6.0
 
 index-repo:
 	helm repo index repo/
