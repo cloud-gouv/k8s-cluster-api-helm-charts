@@ -23,10 +23,20 @@ spec:
   chartName: osc-cloud-controller-manager
   version: {{ .Values.global.addons.ccm.version }}
   namespace: kube-system
+  credentials:
+    key: "oci-creds.json"
+    secret:
+      name: oci-creds
+      namespace: caaph-system
   valuesTemplate: |
-    imagePullSecrets: regcred
+    # https://hub.docker.com/r/outscale/cloud-provider-osc/tags
+    image:
+      tag: v0.2.5
+    {{ if .Values.dockerConfig.enabled -}}
+    imagePullSecrets:
+      - name: regcred
+    {{ end -}}
     oscSecretName: osc-secret
-    extraEnv:
     {{- if .Values.global.https_proxy }}
     httpsProxy: {{ .Values.global.https_proxy | quote }}
     {{- end }}

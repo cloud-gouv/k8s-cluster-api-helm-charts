@@ -23,8 +23,18 @@ spec:
   chartName: osc-bsu-csi-driver
   version: {{ .Values.global.addons.csi.version }}
   namespace: kube-system
+  credentials:
+    key: "oci-creds.json"
+    secret:
+      name: oci-creds
+      namespace: caaph-system
   valuesTemplate: |
+    # https://hub.docker.com/r/outscale/osc-bsu-csi-driver/tags
+    #image:
+    #  tag: v1.4.1
+    {{ if .Values.dockerConfig.enabled -}}
     imagePullSecrets: regcred
+    {{ end -}}
     enableVolumeResizing: true
     enableVolumeSnapshot: true
     credentials:
