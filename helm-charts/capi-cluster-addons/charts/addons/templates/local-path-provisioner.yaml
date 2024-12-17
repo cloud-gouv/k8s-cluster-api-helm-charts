@@ -15,6 +15,7 @@ spec:
       storagelocal.enabled: "true"
       storagelocal.type: {{ .Values.global.addons.storagelocal.type }}
       storagelocal.version: {{ .Values.global.addons.storagelocal.version }}
+  # mirror helm
   repoURL: https://raw.githubusercontent.com/cloud-gouv/k8s-cluster-api-helm-charts/main/helm-charts/repo/
   chartName: local-path-provisioner
   version: {{ .Values.global.addons.storagelocal.version }}
