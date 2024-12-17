@@ -19,14 +19,27 @@ spec:
   # Target all workload clusters.
   #  matchLabels: {}
   releaseName: outscale-ccm
-  repoURL: oci://registry-1.docker.io/outscalehelm/
+  # mirror helm
+  repoURL: https://raw.githubusercontent.com/cloud-gouv/k8s-cluster-api-helm-charts/main/helm-charts/repo/
+  # repoURL: oci://registry-1.docker.io/outscalehelm/
   chartName: osc-cloud-controller-manager
   version: {{ .Values.global.addons.ccm.version }}
   namespace: kube-system
+  # TODO: helm registry login
+  #  credentials:
+  #    key: "oci-creds.json"
+  #    secret:
+  #      name: oci-creds
+  #      namespace: caaph-system
   valuesTemplate: |
-    imagePullSecrets: regcred
+    # https://hub.docker.com/r/outscale/cloud-provider-osc/tags
+    image:
+      tag: v0.2.5
+    {{ if .Values.dockerConfig.enabled -}}
+    imagePullSecrets:
+      - name: regcred
+    {{ end -}}
     oscSecretName: osc-secret
-    extraEnv:
     {{- if .Values.global.https_proxy }}
     httpsProxy: {{ .Values.global.https_proxy | quote }}
     {{- end }}

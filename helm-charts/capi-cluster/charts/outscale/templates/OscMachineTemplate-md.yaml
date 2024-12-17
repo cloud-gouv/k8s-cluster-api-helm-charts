@@ -14,7 +14,6 @@ spec:
           name: {{ $pool.image }}
         keypair:
           name: {{ $.Values.sshkeyname }}
-          deleteKeypair: false
         vm:
           clusterName: {{ $.Values.global.clusterName }}
           keypairName: {{ $.Values.sshkeyname }}

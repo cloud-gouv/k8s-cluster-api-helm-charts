@@ -8,7 +8,7 @@ spec:
     verbosity: 5
     clusterConfiguration:
       apiServer:
-        timeoutForControlPlane: 20m
+        timeoutForControlPlane: 20m0s
         extraArgs:
           cloud-provider: external
       controllerManager:
