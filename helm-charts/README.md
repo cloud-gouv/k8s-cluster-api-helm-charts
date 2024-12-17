@@ -90,3 +90,13 @@ kubectl get secrets -A
 # On workload cluster, verify metallb config is deployed
 kubectl --kubeconfig=${CLUSTER_NAME}.kubeconfig get L2Advertisement,ipaddresspool -A
 ```
+
+
+## generate helm index
+
+```
+make index
+git add repo
+git commit -m "update helm index" repo
+git push
+```
