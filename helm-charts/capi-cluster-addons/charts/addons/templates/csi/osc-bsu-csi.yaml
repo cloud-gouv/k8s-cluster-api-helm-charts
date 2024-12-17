@@ -36,7 +36,8 @@ spec:
     #image:
     #  tag: v1.4.1
     {{ if .Values.dockerConfig.enabled -}}
-    imagePullSecrets: regcred
+    imagePullSecrets:
+      - name: regcred
     {{ end -}}
     enableVolumeResizing: true
     enableVolumeSnapshot: true
