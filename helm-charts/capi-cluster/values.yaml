@@ -2,6 +2,7 @@ provider:
   openstack: false
   outscale: false
   outscale-clusterclass: false
+  capd: false
 
 global:
   http_proxy: ""
@@ -58,6 +59,11 @@ global:
       version: v1.14.5
     storagelocal:
       enabled: false
+
+#
+# reference to capd helm values
+#
+capd: {}
 
 #
 # reference to openstack helm values
