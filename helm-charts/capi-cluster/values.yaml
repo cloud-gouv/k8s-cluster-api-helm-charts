@@ -2,6 +2,7 @@ provider:
   openstack: false
   outscale: false
   outscale-clusterclass: false
+  capd: false
 
 global:
   http_proxy: ""
@@ -227,6 +228,11 @@ global:
         - cluster-api-provider-outscale-system
         - loki
         - whoami
+
+#
+# reference to capd helm values
+#
+capd: {}
 
 #
 # reference to openstack helm values
