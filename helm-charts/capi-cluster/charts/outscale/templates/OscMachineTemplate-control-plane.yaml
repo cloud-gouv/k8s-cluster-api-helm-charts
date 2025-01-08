@@ -14,7 +14,7 @@ spec:
         vm:
           clusterName: {{ .Values.global.clusterName }}
           keypairName: {{ .Values.sshkeyname }}
-          loadBalancerName: {{ .Values.loadbalancername | default "{{ .Values.global.clusterName }}-k8s" }}
+          loadBalancerName: {{ template "outscale.defaultLoadbalancerName" $ }}
           role: controlplane
           vmType: {{ .Values.controlplane.vmType }}
           subregionName: {{ .Values.controlplane.subregionName  }}
