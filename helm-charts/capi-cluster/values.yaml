@@ -143,6 +143,10 @@ outscale: {}
 #    secret_key: ""
 #    access_key: ""
 #    region: ""
+#  osc_csi_credentials:
+#    access_key: ""
+#    secret_key: ""
+
 #
 ##  dockerConfig:
 #     registry: https://index.docker.io/v1/

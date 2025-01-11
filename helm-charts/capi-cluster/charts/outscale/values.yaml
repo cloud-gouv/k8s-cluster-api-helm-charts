@@ -59,3 +59,9 @@ osc_credentials: {}
 #  secret_key: ""
 #  access_key: ""
 #  region: ""
+# credentials for csi
+#
+osc_csi_credentials: {}
+#osc_csi_credentials:
+#  access_key: ""
+#  secret_key: ""
