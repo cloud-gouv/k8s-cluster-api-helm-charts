@@ -4,7 +4,7 @@ Define Loadbalancer name : outscale limitation is max length 32
 */}}
 
 {{- define "outscale.defaultLoadbalancerName" -}}
-{{- $loadbalancername := printf "%s-%s" (lower "{{ .Values.global.clusterName }}" | sha256sum | trunc 28 ) "k8s" }}
+{{- $loadbalancername := printf "%s-%s" (lower .Values.global.clusterName | sha256sum | trunc 28 ) "k8s" }}
 {{- if and (hasKey .Values "loadbalancername") (not (empty .Values.loadbalancername)) }}
 {{- $loadbalancername = .Values.loadbalancername }}
 {{- end }}
