@@ -168,12 +168,16 @@ spec:
         toPortRange: 6443
         ipProtocol: tcp
         ipRange: 10.0.4.0/24
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-lb
+      {{- $allowCidrApi := .Values.allow_cidr_api | default (list "0.0.0.0/0") }}
+      securityGroupRules:
+      {{- range $i, $cidr := $allowCidrApi }}
+      - name: {{ $.Values.global.clusterName }}-securitygrouprule-lb-{{ $i }}
         flow: Inbound
         fromPortRange: 6443
         toPortRange: 6443
         ipProtocol: tcp
-        ipRange: 0.0.0.0/0
+        ipRange: {{ $cidr }}
+      {{- end }}
     - description: Security Group Node with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-node
       securityGroupRules:
