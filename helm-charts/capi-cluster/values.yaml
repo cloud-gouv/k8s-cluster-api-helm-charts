@@ -139,7 +139,7 @@ outscale: {}
 #       rootDiskIops: 100
 #       rootDiskSize: 30
 #       rootDiskType: standard
-#  osc_credentials:
+#  osc_ccm_credentials:
 #    secret_key: ""
 #    access_key: ""
 #    region: ""
