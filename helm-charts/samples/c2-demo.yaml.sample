@@ -44,10 +44,13 @@ global:
 outscale:
   sshkeyname: REPLACE_SSH_KEY_NAME_
   subregionname: eu-west-2a
-  osc_credentials:
+  osc_ccm_credentials:
     secret_key: ""
     access_key: ""
     region: ""
+  osc_csi_credentials:
+    secret_key: ""
+    access_key: ""
   # override lb name
   loadbalancername: c2-demo-k8s
   bastion:

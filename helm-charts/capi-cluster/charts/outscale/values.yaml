@@ -54,8 +54,8 @@ csi: {}
 #
 # credentials for ccm
 #
-osc_credentials: {}
-#osc_credentials:
+osc_ccm_credentials: {}
+#osc_ccm_credentials:
 #  secret_key: ""
 #  access_key: ""
 #  region: ""
