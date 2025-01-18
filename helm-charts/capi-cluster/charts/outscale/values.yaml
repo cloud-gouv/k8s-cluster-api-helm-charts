@@ -26,6 +26,7 @@ csi: {}
 #  allow_cidr:
 #    - 0.0.0.0/0
 #loadbalancername: my-lb
+#loadbalancertype: internet-facing
 #allow_cidr_api:
 #  - 0.0.0.0/0
 #controlplane:
