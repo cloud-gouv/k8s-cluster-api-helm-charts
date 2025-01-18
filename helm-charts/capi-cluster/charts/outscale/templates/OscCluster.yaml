@@ -50,7 +50,7 @@ spec:
         loadbalancerport: 6443
         loadbalancerprotocol: TCP
       loadbalancername: {{ template "outscale.defaultLoadbalancerName" $ }}
-      loadbalancertype: internet-facing
+      loadbalancertype: {{ .Values.loadbalancertype | default "internet-facing" }}
     natService:
       clusterName: {{ .Values.global.clusterName }}
     net:
