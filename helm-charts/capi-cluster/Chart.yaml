@@ -13,3 +13,7 @@ dependencies:
     version: 1.0.1
     repository: 'file://charts/outscale'
     condition: provider.outscale
+  - name: capd
+    version: 1.0.0
+    repository: 'file://charts/capd'
+    condition: provider.capd

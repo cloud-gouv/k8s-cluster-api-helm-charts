@@ -1,6 +1,7 @@
 provider:
   openstack: false
   outscale: false
+  capd: false
 
 global:
   # clusterName: cluster1-dev
@@ -51,6 +52,11 @@ global:
       enabled: false
       type: cert-manager
       version: v1.14.5
+
+#
+# reference to capd helm values
+#
+capd: {}
 
 #
 # reference to openstack helm values
