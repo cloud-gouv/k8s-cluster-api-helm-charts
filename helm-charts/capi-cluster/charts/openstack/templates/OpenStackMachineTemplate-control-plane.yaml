@@ -28,13 +28,13 @@ spec:
                   {{- if .Values.subnet }}
                   name: {{ .Values.subnet }}
                   {{- end }}
-          securityGroups:
-            - filter:
-                name: k8s-cluster-default-{{ .Values.global.clusterName }}-secgroup-controlplane
-            - filter:
-                name: allow-http
-            - filter:
-                name: allow-ssh
+#          securityGroups:
+#            - filter:
+#                name: k8s-cluster-default-{{ .Values.global.clusterName }}-secgroup-controlplane
+#            - filter:
+#                name: allow-http
+#            - filter:
+#                name: allow-ssh
           allowedAddressPairs:
             - ipAddress: {{ .Values.controlplane.apiServerFixedIP }}
 #          disablePortSecurity: true
