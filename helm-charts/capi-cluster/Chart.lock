@@ -1,0 +1,9 @@
+dependencies:
+- name: openstack
+  repository: file://charts/openstack
+  version: 1.0.0
+- name: outscale
+  repository: file://charts/outscale
+  version: 2.0.0
+digest: sha256:08f130be81b7517eef288408a12985bf4bb16c1464662e4776f120979c2fab43
+generated: "2025-03-02T16:14:25.044827946+01:00"

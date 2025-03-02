@@ -1,67 +1,37 @@
-machinehealthcheck:
-  enabled: false
+# Default values for capi-cluster/outscale.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
 
-addons:
-  cni: {}
-  ccm: {}
-  metallb: {}
-  ingress: {}
-  certmanager: {}
-  csi: {}
+# clusterClass:
+#   # name of the clusterclass to use
+#   # this is the concatenatikon of:
+#   #  - provider name
+#   #  - "-v"
+#   #  - the version of the helm chart "capi-clusterclass" which deployed
+#   #    the clusterclass
+#   name: outscale-v1.0.0
 
-certmanager: {}
-csi: {}
+#   # Kubernetes version to use
+#   # /!\ this must be in sync' with clusterClass.variables.vmImageName
+#   kubernetesVersion: v1.28.5
 
-#dockerConfig:
-#  registry: https://index.docker.io/v1/
-#  auth: base64(docker_login:docker_password)
-#
-#
-# outscale
-#sshkeyname: REPLACE_MY_KEY
-#subregionName: "eu-west-2a"
-#
-#bastion:
-#  enable: false
-#loadbalancername: my-lb
-#controlplane:
-#  version: v1.29.5
-#  replicas: 1
-#  vmType: tinav5.c2r4p3
-#  subregionName: eu-west-2a
-#  image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
-#  rootDisk:
-#    rootDiskIops: 100
-#    rootDiskSize: 30
-#    rootDiskType: standard
-#  volumes:
-#    - name: data-volume
-#      size: 10
-#      iops: 100
-#      volumeType: standard
-#      subregionName: eu-west-2a
-#workers:
-#  - name: md-0
-#    version: v1.29.5
-#    replicas: 0
-#    vmType: tinav5.c2r4p3
-#    subregionName: eu-west-2a
-#    image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
-#    rootDisk:
-#      rootDiskIops: 100
-#      rootDiskSize: 30
-#      rootDiskType: standard
-#
-# credentials for ccm
-#
-osc_ccm_credentials: {}
-#osc_ccm_credentials:
-#  secret_key: ""
-#  access_key: ""
-#  region: ""
-# credentials for csi
-#
-osc_csi_credentials: {}
-#osc_csi_credentials:
-#  access_key: ""
-#  secret_key: ""
+#   # number of ControlPlane nodes
+#   controlPlane:
+#     replicas: 1
+  
+#   # list of MachineDeployments to implement
+#   # along with their properties
+#   workers:
+#     machineDeployments:
+#       - name: md-1
+#         class: az1-md-class
+#         replicas: 1
+
+#   # variables to be passed into the clusterclass
+#   variables:
+#     coreDNSVersion: "v1.10.1"
+#     vmImageName: "ubuntu-2204-2204-kubernetes-v1.28.5-2024-01-10"
+#     controlPlane:
+#       vmSize: tinav5.c4r8p2
+#     workers:
+#       vmSize: tinav5.c4r8p3
