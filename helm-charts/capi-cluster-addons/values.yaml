@@ -1,4 +1,6 @@
 global:
+  clusterName: my-cluster
+  
   # custom proxy
   http_proxy: http://192.168.2.10:8888
   https_proxy: http://192.168.2.10:8888

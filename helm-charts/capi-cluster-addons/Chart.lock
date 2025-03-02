@@ -1,0 +1,6 @@
+dependencies:
+- name: addons
+  repository: file://charts/addons
+  version: 1.1.0
+digest: sha256:d4372a345a168f717f33bc4ef0901b884b32180ceb521d722c79c53012a9246f
+generated: "2025-03-02T15:48:01.899060918+01:00"
