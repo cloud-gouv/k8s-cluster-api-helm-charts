@@ -1,0 +1,11 @@
+{{/*
+    this template aims at generating the namespace that will
+    host the clusterclass for the cluster to be created
+*/}}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+  labels:
+    {{- include "outscale.labels" $ | nindent 4 }}

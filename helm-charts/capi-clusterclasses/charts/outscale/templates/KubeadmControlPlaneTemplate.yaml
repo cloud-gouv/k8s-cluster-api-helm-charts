@@ -1,0 +1,363 @@
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlaneTemplate
+metadata:
+  name: {{ include "outscale.name" . }}
+  namespace: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+  labels:
+    {{- include "outscale.labels" $ | nindent 4 }}
+spec:
+  template:
+    spec:
+      rolloutStrategy:
+        rollingUpdate:
+          maxSurge: 1
+        type: RollingUpdate
+      rolloutBefore:
+        certificatesExpiryDays: 45
+      kubeadmConfigSpec:
+        verbosity: 5
+        useExperimentalRetryJoin: true
+        clusterConfiguration:
+          apiServer:
+            timeoutForControlPlane: 20m0s
+            extraArgs:
+              cloud-provider: "external"
+            extraVolumes:
+              - name: "audit-policy"
+                pathType: "File"
+                hostPath: "/etc/kubernetes/audit-policy.yaml"
+                mountPath: "/etc/kubernetes/audit-policy.yaml"
+                readOnly: true
+              - name: "audit-logs"
+                hostPath: "/var/log/kubernetes"
+                mountPath: "/var/log/kubernetes"
+              - name: "admission-pss"
+                pathType: "File"
+                hostPath: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
+                mountPath: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
+                readOnly: true
+          controllerManager:
+            extraArgs:
+              cloud-provider: "external"
+          dns:
+            imageTag: "0.0.0"   # will be patched by a ClusterClass patch
+        initConfiguration:
+          localAPIEndpoint:
+            advertiseAddress: "0.0.0.0"
+            bindPort: 6443
+          skipPhases:
+            - addon/kube-proxy
+          nodeRegistration:
+            imagePullPolicy: IfNotPresent
+            name: {{`"{{ ds.meta_data.local_hostname }}"`}}
+            kubeletExtraArgs:
+              cloud-provider: "external"
+              provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
+        joinConfiguration:
+          controlPlane:
+            localAPIEndpoint:
+              advertiseAddress: "0.0.0.0"
+              bindPort: 6443
+          discovery: {}
+          skipPhases:
+            - addon/kube-proxy
+          nodeRegistration:
+            imagePullPolicy: IfNotPresent
+            name: {{`"{{ ds.meta_data.local_hostname }}"`}}
+            kubeletExtraArgs:
+              cloud-provider: "external"
+              provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
+        # #  Add an external volume dedicated to etcd
+        # diskSetup:
+        #   partitions:
+        #     - device: /dev/vdb
+        #       layout: true
+        #       overwrite: false
+        #       tableType: gpt
+        #   filesystems:
+        #     - device: /dev/vdb
+        #       extraOpts:
+        #       - -E
+        #       - lazy_itable_init=1,lazy_journal_init=1
+        #       filesystem: ext4
+        #       label: etcd_disk
+        # mounts:
+        #   - - LABEL=etcd_disk
+        #     - /var/lib/etcddisk
+        preKubeadmCommands:
+          - mkdir -p /etc/pre-kubeadm-commands
+          - for script in $(find /etc/pre-kubeadm-commands/ -name '*.sh' -type f | sort);
+            do echo "Running script $script"; "$script"; done
+        postKubeadmCommands:
+          - mkdir -p /etc/post-kubeadm-commands
+          - for script in $(find /etc/post-kubeadm-commands/ -name '*.sh' -type f | sort);
+            do echo "Running script $script"; "$script"; done
+        files:
+          - path: /etc/pre-kubeadm-commands/00-wait_endpoint.sh
+            owner: root:root
+            permissions: "0755"
+            content: |
+              #!/bin/bash
+              set +e
+              # Define the retry function
+              wait_and_retry() {
+                local retries="$1"
+                local wait="$2"
+                local command="$3"
+
+                $command
+                local exit_code=$?
+
+                if [[ $exit_code -ne 0 && $retries -gt 0 ]]; then
+                  echo "# Wait $wait before retrying $retries : $command"
+                  sleep $wait
+                  wait_and_retry $(($retries - 1)) $wait "$command"
+                else
+                  return $exit_code
+                fi
+              }
+              # wait endpoint is up
+              endpoint=""
+              [[ -f /run/kubeadm/kubeadm.yaml ]] && endpoint=$(grep "controlPlaneEndpoint" /run/kubeadm/kubeadm.yaml|awk ' {print $2 }' |sed -e 's/ //g;s/:.*//g')
+              [[ -f  /run/kubeadm/kubeadm-join-config.yaml ]] && endpoint=$(grep "apiServerEndpoint" /run/kubeadm/kubeadm-join-config.yaml |awk ' {print $2 }' |sed -e 's/ //g;s/:.*//g')
+              [[ -n "$endpoint" ]] && wait_and_retry 360 10 "host $endpoint"
+              # wait external access is up
+              external_url="github.com"
+              [[ -n "$external_url" ]] && wait_and_retry 360 10 "host $external_url"
+          - path: /etc/pre-kubeadm-commands/10-containerd-restart.sh.disable
+            owner: root:root
+            permissions: "0700"
+            content: |
+              #!/bin/bash
+              #
+              # pre-kubadm-scripts
+              #
+              set -e
+              # apply containerd config before kubeadm
+              echo "## restart containerd"
+              systemctl daemon-reload
+              systemctl restart containerd
+          - path: /etc/post-kubeadm-commands/10-tweak-kubeapi-memlimit.sh.disable
+            owner: root:root
+            permissions: "0700"
+            content: |
+              #!/bin/bash
+              grep '^      limits:' /etc/kubernetes/manifests/kube-apiserver.yaml >/dev/null 2>&1 && exit 0
+              MEM=$(free -m | grep '^Mem:' | awk '{print $2;}')
+              CPU=$(grep '^processor' /proc/cpuinfo | wc -l)
+              sed -i "/^ *requests:/i\      limits:\n        memory: $((10+3*$MEM/4))M\n        cpu: $((750*$CPU))m" /etc/kubernetes/manifests/kube-apiserver.yaml
+              sed -i "/^ *requests:/a\        memory: 512M" /etc/kubernetes/manifests/kube-apiserver.yaml
+              sync
+              systemctl restart kubelet
+          - path: /etc/apt/apt.conf.d/99proxy
+            owner: "root:root"
+            permissions: "0644"
+            content: |
+              Acquire {
+                {{- if .Values.global.http_proxy }}
+                http::Proxy {{ .Values.global.http_proxy | quote }};
+                {{- end }}
+                {{- if .Values.global.https_proxy }}
+                https::Proxy {{ .Values.global.https_proxy | quote }};
+                {{- end }}
+                }
+          - path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+            owner: "root:root"
+            permissions: "0644"
+            content: |
+              [Service]
+              {{- if .Values.global.http_proxy }}
+              Environment="HTTP_PROXY={{ .Values.global.http_proxy }}"
+              {{- end }}
+              {{- if .Values.global.https_proxy }}
+              Environment="HTTPS_PROXY={{ .Values.global.https_proxy }}"
+              {{- end }}
+              {{- if .Values.global.no_proxy }}
+              Environment="NO_PROXY=.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,192.168.0.0/16,{{ .Values.global.pods.cidrBlocks }},{{ .Values.global.services.cidrBlocks }}"
+              {{- end }}
+          - path: /etc/kubernetes/audit-policy.yaml
+            owner: "root:root"
+            permissions: "0600"
+            content: |
+              apiVersion: audit.k8s.io/v1
+              kind: Policy
+              rules:
+              - level: None
+                users:
+                - system:serviceaccount:kube-system:kube-proxy
+                verbs:
+                - watch
+                resources:
+                - group: ""
+                  resources:
+                  - endpoints
+                  - services
+                  - services/status
+              - level: None
+                userGroups:
+                - system:nodes
+                verbs:
+                - get
+                resources:
+                - group: ""
+                  resources:
+                  - nodes
+                  - nodes/status
+              - level: None
+                users:
+                - system:kube-controller-manager
+                - system:kube-scheduler
+                - system:serviceaccount:kube-system:endpoint-controller
+                verbs:
+                - get
+                - update
+                namespaces:
+                - kube-system
+                resources:
+                - group: ""
+                  resources:
+                  - endpoints
+              - level: None
+                users:
+                - system:apiserver
+                verbs:
+                - get
+                resources:
+                - group: ""
+                  resources:
+                  - namespaces
+                  - namespaces/status
+                  - namespaces/finalize
+              - level: None
+                users:
+                - system:kube-controller-manager
+                verbs:
+                - get
+                - list
+                resources:
+                - group: metrics.k8s.io
+              - level: None
+                nonResourceURLs:
+                - /healthz*
+                - /version
+                - /swagger*
+              - level: None
+                resources:
+                - group: ""
+                  resources:
+                  - events
+              - level: None
+                users:
+                - system:serviceaccount:kube-system:generic-garbage-collector
+                verbs:
+                - get
+                - list
+                - watch
+              - level: Request
+                userGroups:
+                - system:nodes
+                verbs:
+                - update
+                - patch
+                resources:
+                - group: ""
+                  resources:
+                  - nodes/status
+                  - pods/status
+                omitStages:
+                - RequestReceived
+              - level: Request
+                users:
+                - system:serviceaccount:kube-system:namespace-controller
+                verbs:
+                - deletecollection
+                omitStages:
+                - RequestReceived
+              - level: Metadata
+                resources:
+                - group: ""
+                  resources:
+                  - secrets
+                  - configmaps
+                - group: authentication.k8s.io
+                  resources:
+                  - tokenreviews
+                omitStages:
+                - RequestReceived
+              - level: Request
+                verbs:
+                - get
+                - list
+                - watch
+                resources:
+                - group: ""
+                - group: admissionregistration.k8s.io
+                - group: apiextensions.k8s.io
+                - group: apiregistration.k8s.io
+                - group: apps
+                - group: authentication.k8s.io
+                - group: authorization.k8s.io
+                - group: autoscaling
+                - group: batch
+                - group: certificates.k8s.io
+                - group: extensions
+                - group: metrics.k8s.io
+                - group: networking.k8s.io
+                - group: policy
+                - group: rbac.authorization.k8s.io
+                - group: settings.k8s.io
+                - group: storage.k8s.io
+                omitStages:
+                - RequestReceived
+              - level: RequestResponse
+                resources:
+                - group: ""
+                - group: admissionregistration.k8s.io
+                - group: apiextensions.k8s.io
+                - group: apiregistration.k8s.io
+                - group: apps
+                - group: authentication.k8s.io
+                - group: authorization.k8s.io
+                - group: autoscaling
+                - group: batch
+                - group: certificates.k8s.io
+                - group: extensions
+                - group: metrics.k8s.io
+                - group: networking.k8s.io
+                - group: policy
+                - group: rbac.authorization.k8s.io
+                - group: settings.k8s.io
+                - group: storage.k8s.io
+                omitStages:
+                - RequestReceived
+              - level: Metadata
+                omitStages:
+                - RequestReceived
+          - path: /etc/kubernetes/kube-apiserver-admission-pss.yaml
+            owner: root:root
+            permissions: "0444"
+            content: |
+              # Do not apply default pod security admission
+              apiVersion: apiserver.config.k8s.io/v1
+              kind: AdmissionConfiguration
+              plugins:
+              - name: PodSecurity
+                configuration:
+                  apiVersion: pod-security.admission.config.k8s.io/v1beta1
+                  kind: PodSecurityConfiguration
+                  defaults:
+                    enforce: ""
+                    enforce-version: "latest"
+                    audit: ""
+                    audit-version: "latest"
+                    warn: ""
+                    warn-version: "latest"
+                  exemptions:
+                    usernames: []
+                    runtimeClasses: []
+                    namespaces:
+                      - kube-system
+                      - ingress-nginx
+                      - monitoring
+                      - promtail

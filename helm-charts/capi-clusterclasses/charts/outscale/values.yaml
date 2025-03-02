@@ -1,0 +1,87 @@
+# Default values for capi-clusterclasses.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# # maximum number of pods that can be scheduled on a node
+# maxPods: 110
+
+# # SSH keyname to be injected into the VMs for this cluster
+# # (also used for the bastion if any)
+# sshkeyname: my-key
+
+# # Name of the Outscale subregion to use to deploy resources that
+# # do require subregion to be documented (bastion, subnets,
+# # OscMachineTemplate dedicated one specific AZ)
+# subregionName: eu-west-2a
+
+# # properties of the bastion
+# bastion:
+#   enable: true
+#   vmType: tinav5.c4r8p3
+#   image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
+#   subregionName: eu-west-2a
+#   rootDisk:
+#     rootDiskIops: 1000
+#     rootDiskSize: 50
+#     rootDiskType: gp2
+#   allow_cidr:
+#     - 133.99.1.0/24
+#     - 216.168.2.123/32
+
+# # properties of the controlplane
+# controlplane:
+#   replicas: 1
+#   rootDisk:
+#     rootDiskIops: 1000
+#     rootDiskSize: 50
+#     rootDiskType: gp2
+#   volumes:
+#     - name: data-volume
+#       iops: 100
+#       size: 10
+#       volumeType: standard
+
+# # properties of the workers
+# workers:
+#   # the names of these dictionaries will be used in the template 'ClusterClass.yaml'
+#   # as the names of the 'MachineDeployment classes'
+#
+#   # for workers that will be *not* hosted in a specific availability zone
+#   regionwide-md-class:
+#     rootDisk:
+#       rootDiskIops: 1000
+#       rootDiskSize: 50
+#       rootDiskType: gp2
+#     volumes:
+#       - name: data-volume
+#         iops: 100
+#         size: 10
+#         volumeType: standard
+
+#   # for workers that will be hosted in a specific availability zone
+#   # note that the name 'az1' is irrelevent, it could be anything
+#   az1-md-class:
+#     subregionName: eu-west-2a
+#     rootDisk:
+#       rootDiskIops: 1000
+#       rootDiskSize: 50
+#       rootDiskType: gp2
+#     volumes:
+#       - name: data-volume
+#         iops: 100
+#         size: 10
+#         volumeType: standard
+  
+#   # for workers that will be hosted in a specific availability zone
+#   # note that the name 'az2' is irrelevent, it could be anything
+#   az2-md-class:
+#     subregionName: eu-west-2b
+#     rootDisk:
+#       rootDiskIops: 1000
+#       rootDiskSize: 50
+#       rootDiskType: gp2
+#     volumes:
+#       - name: data-volume
+#         iops: 100
+#         size: 10
+#         volumeType: standard

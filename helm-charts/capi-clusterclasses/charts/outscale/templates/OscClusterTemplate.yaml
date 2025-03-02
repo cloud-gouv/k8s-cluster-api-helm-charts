@@ -1,0 +1,248 @@
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OscClusterTemplate
+metadata:
+  name: {{ include "outscale.name" . }}
+  namespace: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+  labels:
+    {{- include "outscale.labels" $ | nindent 4 }}
+spec:
+  template:
+    spec:
+      network:
+        clusterName: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+        bastion:
+          enable: {{ .Values.bastion.enable | default "false" }}
+          {{- if .Values.bastion.enable }}
+          clusterName: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+          name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-vm-bastion
+          keypairName: {{ .Values.sshkeyname }}
+          vmType: {{ .Values.bastion.vmType }}
+          imageName: {{ .Values.bastion.image }}
+          deviceName: "/dev/sda1"
+          {{- if hasKey .Values.bastion "rootDisk" }}
+          rootDisk:
+            rootDiskIops: {{ .Values.bastion.rootDisk.rootDiskIops | default 100 }}
+            rootDiskSize: {{ .Values.bastion.rootDisk.rootDiskSize | default 30 }}
+            rootDiskType: {{ .Values.bastion.rootDisk.rootDiskType | default "standard" }}
+          {{- end }}
+          subnetName: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-subnet-public
+          subregionName: {{ .Values.bastion.subregionName  }}
+          securityGroupNames:
+            - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygroup-bastion
+          #publicIpName: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-publicip-bastion
+          publicIpNameAfterBastion: true
+          {{- end }}
+        internetService:
+          clusterName: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+        publicIps:
+          - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-publicip-nat
+          {{- if .Values.bastion.enable }}
+          - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-publicip-bastion
+          {{- end }}
+        loadBalancer:
+          clusterName: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+          loadbalancername: {{ template "outscale.defaultLoadbalancerName" $ }}
+          loadbalancertype: internet-facing
+          listener:
+            backendport: 6443
+            backendprotocol: TCP
+            loadbalancerport: 6443
+            loadbalancerprotocol: TCP
+          healthCheck:
+            checkinterval: 30
+            healthythreshold: 5
+            port: 6443
+            protocol: TCP
+            timeout: 30
+            unhealthythreshold: 5
+        natService:
+          clusterName: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+        net:
+          clusterName: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+          ipRange: "10.0.0.0/16"
+        subnets:
+          - ipSubnetRange: 10.0.4.0/24
+            name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-subnet-kcp
+            subregionName: {{ .Values.subregionName  }}
+          - ipSubnetRange: 10.0.3.0/24
+            name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-subnet-kw
+            subregionName: {{ .Values.subregionName  }}
+          - ipSubnetRange: 10.0.2.0/24
+            name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-subnet-public
+            subregionName: {{ .Values.subregionName  }}
+        securityGroups:
+          {{- if and (.Values.bastion.enable) (hasKey .Values.bastion "allow_cidr") }}
+          - description: Security Group for bastion(s) with {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+            name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygroup-bastion
+            securityGroupRules:
+              {{- range $i, $cidr := .Values.bastion.allow_cidr }}
+              - name: {{ $.Values.global.clusterName }}-securitygrouprule-ssh-{{ $i }}
+                flow: Inbound
+                fromPortRange: 22
+                toPortRange: 22
+                ipProtocol: tcp
+                ipRange: {{ $cidr }}
+              {{- end }}
+          {{- end }}
+          - description: Security Group for workers with {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+            name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygroup-kw
+            securityGroupRules:
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygrouprule-kw-bgp
+                flow: Inbound
+                fromPortRange: 179
+                toPortRange: 179
+                ipProtocol: tcp
+                ipRange: 10.0.0.0/16
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygrouprule-api-kubelet-kw
+                flow: Inbound
+                fromPortRange: 10250
+                toPortRange: 10250
+                ipProtocol: tcp
+                ipRange: 10.0.3.0/24
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygrouprule-kw-nodeip-kcp
+                flow: Inbound
+                toPortRange: 32767
+                fromPortRange: 30000
+                ipProtocol: tcp
+                ipRange: 10.0.4.0/24
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygrouprule-api-kubelet-kcp
+                flow: Inbound
+                fromPortRange: 10250
+                toPortRange: 10250
+                ipProtocol: tcp
+                ipRange: 10.0.4.0/24
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygrouprule-kw-nodeip-kw
+                flow: Inbound
+                fromPortRange: 30000
+                toPortRange: 32767
+                ipProtocol: tcp
+                ipRange: 10.0.3.0/24
+          - description: Security Group for controlplane with {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+            name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygroup-kcp
+            securityGroupRules:
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygrouprule-kcp-bgp
+                flow: Inbound
+                fromPortRange: 179
+                toPortRange: 179
+                ipProtocol: tcp
+                ipRange: 10.0.0.0/16
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygrouprule-api-lb
+                flow: Inbound
+                fromPortRange: 6443
+                toPortRange: 6443
+                ipProtocol: tcp
+                ipRange: 10.0.2.0/24
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygrouprule-api-kw
+                flow: Inbound
+                fromPortRange: 6443
+                toPortRange: 6443
+                ipProtocol: tcp
+                ipRange: 10.0.3.0/24
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygrouprule-api-kcp
+                flow: Inbound
+                fromPortRange: 6443
+                toPortRange: 6443
+                ipProtocol: tcp
+                ipRange: 10.0.4.0/24
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygrouprule-kcp-nodeip-kw
+                flow: Inbound
+                fromPortRange: 30000
+                toPortRange: 32767
+                ipProtocol: tcp
+                ipRange: 10.0.3.0/24
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygrouprule-etcd
+                flow: Inbound
+                fromPortRange: 2378
+                toPortRange: 2380
+                ipProtocol: tcp
+                ipRange: 10.0.4.0/24
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygrouprule-kubelet-kcp
+                flow: Inbound
+                fromPortRange: 10250
+                toPortRange: 10252
+                ipProtocol: tcp
+                ipRange: 10.0.4.0/24
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitugrouprule-kcp-nodeip-kcp
+                flow: Inbound
+                fromPortRange: 30000
+                toPortRange: 32767
+                ipProtocol: tcp
+                ipRange: 10.0.4.0/24
+          - description: Security Group for load-balancer with {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+            name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygroup-lb
+            securityGroupRules:
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygrouprule-lb-out
+                flow: Outbound
+                fromPortRange: 6443
+                toPortRange: 6443
+                ipProtocol: tcp
+                ipRange: 10.0.4.0/24
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygrouprule-lb
+                flow: Inbound
+                fromPortRange: 6443
+                toPortRange: 6443
+                ipProtocol: tcp
+                ipRange: 0.0.0.0/0
+          - description: Security Group for nodes with {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+            name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygroup-node
+            tag: OscK8sMainSG
+            securityGroupRules:
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygroup-all-tcp
+                flow: Inbound
+                fromPortRange: 1
+                toPortRange: 65535
+                ipProtocol: "-1"
+                ipRange: 10.0.0.0/16
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygroup-calico-vxlan
+                flow: Inbound
+                fromPortRange: 4789
+                toPortRange: 4789
+                ipProtocol: udp
+                ipRange: 10.0.0.0/16
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygroup-typha
+                flow: Inbound
+                fromPortRange: 5473
+                toPortRange: 5473
+                ipProtocol: udp
+                ipRange: 10.0.0.0/16
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygroup-wireguard-ipv6
+                flow: Inbound
+                fromPortRange: 51821
+                toPortRange: 51821
+                ipProtocol: udp
+                ipRange: 10.0.0.0/16
+              # icmp
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygroup-icmp
+                flow: Inbound
+                fromPortRange: 8
+                toPortRange: 8
+                ipProtocol: icmp
+                ipRange: 10.0.0.0/16
+              # cilium
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygroup-cilium-vxlan
+                flow: Inbound
+                fromPortRange: 8472
+                toPortRange: 8472
+                ipProtocol: udp
+                ipRange: 10.0.0.0/16
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygroup-cilium-health
+                flow: Inbound
+                fromPortRange: 4240
+                toPortRange: 4240
+                ipProtocol: tcp
+                ipRange: 10.0.0.0/16
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygroup-cilium-hubble
+                flow: Inbound
+                fromPortRange: 4244
+                toPortRange: 4244
+                ipProtocol: tcp
+                ipRange: 10.0.0.0/16
+              {{ if .Values.bastion.enable -}}
+              - name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}-securitygrouprule-ssh
+                flow: Inbound
+                fromPortRange: 22
+                toPortRange: 22
+                ipProtocol: tcp
+                ipRange: 10.0.2.0/24
+              {{ end -}}

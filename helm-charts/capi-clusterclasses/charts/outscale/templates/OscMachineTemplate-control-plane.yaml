@@ -1,0 +1,33 @@
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OscMachineTemplate
+metadata:
+  name: {{ include "outscale.name" . }}-controlplane
+  namespace: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+  labels:
+    {{- include "outscale.labels" $ | nindent 4 }}
+spec:
+  template:
+    spec:
+      node:
+        clusterName: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+        image:
+          name: "must-be-patched"
+        keypair:
+          name: {{ .Values.sshkeyname }}
+        vm:
+          clusterName: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+          keypairName: {{ .Values.sshkeyname }}
+          loadBalancerName: {{ template "outscale.defaultLoadbalancerName" $ }}
+          role: controlplane
+          vmType: "tinav5.c2r4p3"   # will be patched by ClusterClass
+          # securityGroupNames: []
+          {{- if hasKey .Values.controlplane "rootDisk" }}
+          rootDisk:
+            rootDiskIops: {{ .Values.controlplane.rootDisk.rootDiskIops | default 100 }}
+            rootDiskSize: {{ .Values.controlplane.rootDisk.rootDiskSize | default 30 }}
+            rootDiskType: {{ .Values.controlplane.rootDisk.rootDiskType | default "standard" }}
+          {{- end }}
+        {{- with .Values.controlplane.volumes }}
+        volumes: {{- toYaml . | nindent 10 }}
+        {{- end }}
