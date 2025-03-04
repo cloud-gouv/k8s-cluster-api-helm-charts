@@ -1,0 +1,638 @@
+{{- $values := .Values }}
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: ClusterClass
+metadata:
+  name: {{ include "outscale.name" $ }}
+  namespace: default
+  labels:
+    {{- include "outscale.labels" $ | nindent 4 }}
+spec:
+  infrastructure:
+    ref:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: OscClusterTemplate
+      name: {{ include "outscale.name" . }}
+
+  controlPlane:
+    ref:
+      apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+      kind: KubeadmControlPlaneTemplate
+      name: {{ include "outscale.name" $ }}
+    namingStrategy:
+      template: {{`"{{ .cluster.name }}-{{ .random }}"`}}
+    machineInfrastructure:
+      ref:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: OscMachineTemplate
+        name: {{ include "outscale.name" $ }}-controlplane
+    machineHealthCheck:
+      maxUnhealthy: 100%
+      nodeStartupTimeout: 20m0s
+      unhealthyConditions:
+        - type: Ready
+          status: Unknown
+          timeout: 5m0s
+        - type: Ready
+          status: "False"
+          timeout: 20m0s
+        - status: "True"
+          timeout: 1m0s
+          type: DiskPressure
+
+  workers:
+    machineDeployments:
+      {{- range $name, $_ := .Values.workers }}
+      - class: {{ $name }}
+        strategy:
+          rollingUpdate:
+            maxSurge: "20%"
+            maxUnavailable: 0
+          type: RollingUpdate
+        namingStrategy:
+          template: {{`"{{ .cluster.name }}-{{ .machineDeployment.topologyName }}-{{ .random }}"`}}
+        template:
+          bootstrap:
+            ref:
+              apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+              kind: KubeadmConfigTemplate
+              name: {{ include "outscale.name" $ }}
+          infrastructure:
+            ref:
+              apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+              kind: OscMachineTemplate
+              name: {{ include "outscale.name" $ }}-worker-{{ $name }}
+          metadata: {}
+        machineHealthCheck:
+          maxUnhealthy: 100%
+          nodeStartupTimeout: 20m0s
+          unhealthyConditions:
+            - type: Ready
+              status: Unknown
+              timeout: 5m0s
+            - type: Ready
+              status: "False"
+              timeout: 20m0s
+            - status: "True"
+              timeout: 1m0s
+              type: DiskPressure
+      {{- end }}
+
+  variables:
+    - name: bastion
+      required: false
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: properties of the bastion (if enabled)
+          properties:
+            enable:
+              type: boolean
+              description: flag (boolean) to enable/disable the bastion
+              default: false
+            vmSize:
+              type: string
+              description: size of the bastion VM. This must be a valid Outscale vmType
+              default: tinav5.c4r8p3
+              example: tinav5.c4r8p3
+            imageName:
+              type: string
+              description: name of the image to use to provision the bastion VM
+              default: ubuntu-2204-2204-kubernetes-v1.28.5-2024-01-10
+              example: ubuntu-2204-2204-kubernetes-v1.28.5-2024-01-10
+            subregionName:
+              type: string
+              description: name of the subregion where the bastion will be deployed
+              default: eu-west-2a
+              example: eu-west-2a, eu-west-2b
+            rootDisk:
+              type: object
+              properties:
+                iops:
+                  type: integer
+                  description: IOPS of the root disk
+                  default: 1000
+                size:
+                  type: integer
+                  description: size of the root disk in GiB
+                  default: 50
+                type:
+                  type: string
+                  description: type of the root disk
+                  default: standard
+                  enum: ["standard", "gp2", "io1"]
+              default:
+                iops: 1000
+                size: 50
+                type: standard
+            allow_cidr:
+              type: array
+              items:
+                type: string
+              description: list of CIDRs that are allowed to connect to the bastion
+              default: []
+          required: []
+          default:
+            enable: false
+    - name: sshKeypairName
+      required: true
+      schema:
+        openAPIV3Schema:
+          type: string
+          description: name of the SSH Keypair to inject into all the VMs of the cluster
+    - name: subregionName
+      required: false
+      schema:
+        openAPIV3Schema:
+          type: string
+          description: |
+            Name of the Outscale subregion to use to deploy resources that
+            do require subregion to be documented (bastion, subnets,
+            OscMachineTemplates dedicated one specific AZ)
+          default: eu-west-2a
+          example: eu-west-2a, eu-west-2b
+    - name: coreDNSVersion
+      # coredns is not upgraded automaticaly by cluster api
+      # We need to specify the target version for each cluster/clusterclass
+      # see https://github.com/kubernetes-sigs/cluster-api/issues/6429
+      # and for default version for each kubernets versions:
+      # https://github.com/kubernetes/kubernetes/blob/v1.28.5/cmd/kubeadm/app/constants/constants.go#L344
+      required: true
+      schema:
+        openAPIV3Schema:
+          type: string
+          description: coredns image version (corends is not upgraded automaticaly by cluster api)
+    - name: vmImageName
+      required: true
+      schema:
+        openAPIV3Schema:
+          type: string
+          description: name of the image to use to provision controlplane and worker VMs
+    - name: controlPlane
+      required: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            vmSize:
+              type: string
+              description: size of the controlplane VMs. This must be a valid Outscale vmType
+              example: tinav5.c4r8p3
+            rootDisk:
+              type: object
+              properties:
+                iops:
+                  type: integer
+                  description: IOPS of the root disk
+                  example: 1000
+                size:
+                  type: integer
+                  description: size of the root disk in GiB
+                  example: 50
+                type:
+                  type: string
+                  description: type of the root disk
+                  example: standard
+                  enum: ["standard", "gp2", "io1"]
+              required:
+                - iops
+                - size
+                - type
+          required:
+            - vmSize
+    - name: workers
+      required: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            vmSize:
+              type: string
+              description: size of the worker VMs. This must be a valid Outscale vmType
+              example: tinav5.c4r8p3
+            rootDisk:
+              type: object
+              properties:
+                iops:
+                  type: integer
+                  description: IOPS of the root disk
+                  example: 1000
+                size:
+                  type: integer
+                  description: size of the root disk in GiB
+                  example: 50
+                type:
+                  type: string
+                  description: type of the root disk
+                  example: standard
+                  enum: ["standard", "gp2", "io1"]
+              required:
+                - iops
+                - size
+                - type
+          required:
+            - vmSize
+
+  patches:
+    # KubeadmControlPlaneTemplate patches
+    - name: kcpt_main
+      definitions:
+        - selector:
+            apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+            kind: KubeadmControlPlaneTemplate
+            matchResources:
+              controlPlane: true
+          jsonPatches:
+            - op: replace
+              path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/dns/imageTag
+              valueFrom:
+                template: {{`"{{ .coreDNSVersion }}"`}}
+
+    # OscMachineTemplate (ControlPlane) patches
+    - name: omt_controlplane_main
+      definitions:
+        - selector:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: OscMachineTemplate
+            matchResources:
+              controlPlane: true
+          jsonPatches:
+            - op: replace
+              path: /spec/template/spec/node/clusterName
+              valueFrom:
+                variable: builtin.cluster.name
+            - op: replace
+              path: /spec/template/spec/node/image/name
+              valueFrom:
+                variable: vmImageName
+            - op: replace
+              path: /spec/template/spec/node/keypair/name
+              valueFrom:
+                variable: sshKeypairName
+            - op: replace
+              path: /spec/template/spec/node/vm/clusterName
+              valueFrom:
+                variable: builtin.cluster.name
+            - op: replace
+              path: /spec/template/spec/node/vm/keypairName
+              valueFrom:
+                variable: sshKeypairName
+            - op: replace
+              path: /spec/template/spec/node/vm/loadBalancerName
+              valueFrom:
+                template: {{`"{{ printf \"%s-%s\" (lower .builtin.cluster.name | sha256sum | trunc 28 ) \"k8s\" }}"`}}
+            - op: replace
+              path: /spec/template/spec/node/vm/vmType
+              valueFrom:
+                variable: controlPlane.vmSize
+
+    # OscMachineTemplate (ControlPlane) patches for RootDisk
+    - name: omt_controlplane_rootdisk
+      enabledIf: {{`"{{ hasKey .controlPlane \"rootDisk\" }}"`}}
+      definitions:
+        - selector:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: OscMachineTemplate
+            matchResources:
+              controlPlane: true
+          jsonPatches:
+            - op: replace
+              path: /spec/template/spec/node/vm/rootDisk
+              valueFrom:
+                template: |
+                  {{`rootDiskIops: {{ .controlPlane.rootDisk.iops }}
+                  rootDiskSize: {{ .controlPlane.rootDisk.size }}
+                  rootDiskType: {{ .controlPlane.rootDisk.type }}`}}
+
+    # OscMachineTemplate (Workers) patches
+    - name: omt_workers_main
+      definitions:
+        - selector:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: OscMachineTemplate
+            matchResources:
+              machineDeploymentClass:
+                names:
+                  {{- range $name, $_ := .Values.workers }}
+                  - {{ $name }}
+                  {{- end }}
+          jsonPatches:
+            - op: replace
+              path: /spec/template/spec/node/clusterName
+              valueFrom:
+                variable: builtin.cluster.name
+            - op: replace
+              path: /spec/template/spec/node/image/name
+              valueFrom:
+                variable: vmImageName
+            - op: replace
+              path: /spec/template/spec/node/keypair/name
+              valueFrom:
+                variable: sshKeypairName
+            - op: replace
+              path: /spec/template/spec/node/vm/clusterName
+              valueFrom:
+                variable: builtin.cluster.name
+            - op: replace
+              path: /spec/template/spec/node/vm/keypairName
+              valueFrom:
+                variable: sshKeypairName
+            - op: replace
+              path: /spec/template/spec/node/vm/vmType
+              valueFrom:
+                variable: workers.vmSize
+
+    # OscMachineTemplate (workers) patches for RootDisk
+    - name: omt_workers_rootdisk
+      enabledIf: {{`"{{ hasKey .workers \"rootDisk\" }}"`}}
+      definitions:
+        - selector:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: OscMachineTemplate
+            matchResources:
+              machineDeploymentClass:
+                names:
+                  {{- range $name, $_ := .Values.workers }}
+                  - {{ $name }}
+                  {{- end }}
+          jsonPatches:
+            - op: replace
+              path: /spec/template/spec/node/vm/rootDisk
+              valueFrom:
+                template: |
+                  {{`rootDiskIops: {{ .workers.rootDisk.iops }}
+                  rootDiskSize: {{ .workers.rootDisk.size }}
+                  rootDiskType: {{ .workers.rootDisk.type }}`}}
+
+    # OscClusterTemplate patches
+    - name: oct_main
+      definitions:
+        - selector:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: OscClusterTemplate
+            matchResources:
+              infrastructureCluster: true
+          jsonPatches:
+            - op: replace
+              path: /spec/template/spec/network/clusterName
+              valueFrom:
+                variable: builtin.cluster.name
+            - op: replace
+              path: /spec/template/spec/network/internetService/clusterName
+              valueFrom:
+                variable: builtin.cluster.name
+            - op: replace
+              path: /spec/template/spec/network/publicIps
+              valueFrom:
+                template: |
+                  {{`{{ printf "- name: %s-%s" .builtin.cluster.name "publicip-nat" }}`}}
+            - op: replace
+              path: /spec/template/spec/network/loadBalancer/clusterName
+              valueFrom:
+                variable: builtin.cluster.name
+            - op: replace
+              path: /spec/template/spec/network/loadBalancer/loadbalancername
+              valueFrom:
+                template: {{`"{{ printf \"%s-%s\" (lower .builtin.cluster.name | sha256sum | trunc 28 ) \"k8s\" }}"`}}
+            - op: replace
+              path: /spec/template/spec/network/natService/clusterName
+              valueFrom:
+                variable: builtin.cluster.name
+            - op: replace
+              path: /spec/template/spec/network/net/clusterName
+              valueFrom:
+                variable: builtin.cluster.name
+            - op: replace
+              path: /spec/template/spec/network/subnets
+              valueFrom:
+                template: |
+                  {{`- ipSubnetRange: 10.0.4.0/24
+                    name: {{ printf "%s-subnet-kcp" .builtin.cluster.name }}
+                    subregionName: {{ .subregionName }}`}}
+                  {{`- ipSubnetRange: 10.0.3.0/24
+                    name: {{ printf "%s-subnet-kw" .builtin.cluster.name }}
+                    subregionName: {{ .subregionName }}`}}
+                  {{`- ipSubnetRange: 10.0.2.0/24
+                    name: {{ printf "%s-subnet-public" .builtin.cluster.name }}
+                    subregionName: {{ .subregionName }}`}}
+            - op: replace
+              path: /spec/template/spec/network/securityGroups
+              valueFrom:
+                template: |
+                  {{`- description: Security Group for workers with {{ .builtin.cluster.name }}
+                    name: {{ printf "%s-securitygroup-kw" .builtin.cluster.name }}
+                    securityGroupRules:`}}
+                      {{`- name: {{ printf "%s-securitygrouprule-kw-bgp" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 179
+                        toPortRange: 179
+                        ipProtocol: tcp
+                        ipRange: 10.0.0.0/16`}}
+                      {{`- name: {{ printf "%s-securitygrouprule-api-kubelet-kw" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 10250
+                        toPortRange: 10250
+                        ipProtocol: tcp
+                        ipRange: 10.0.3.0/24`}}
+                      {{`- name: {{ printf "%s-securitygrouprule-kw-nodeip-kcp" .builtin.cluster.name }}
+                        flow: Inbound
+                        toPortRange: 32767
+                        fromPortRange: 30000
+                        ipProtocol: tcp
+                        ipRange: 10.0.4.0/24`}}
+                      {{`- name: {{ printf "%s-securitygrouprule-api-kubelet-kcp" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 10250
+                        toPortRange: 10250
+                        ipProtocol: tcp
+                        ipRange: 10.0.4.0/24`}}
+                      {{`- name: {{ printf "%s-securitygrouprule-kw-nodeip-kw" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 30000
+                        toPortRange: 32767
+                        ipProtocol: tcp
+                        ipRange: 10.0.3.0/24`}}
+                  {{`- description: Security Group for controlplane with {{ .builtin.cluster.name }}
+                    name: {{ printf "%s-securitygroup-kcp" .builtin.cluster.name }}
+                    securityGroupRules:`}}
+                      {{`- name: {{ printf "%s-securitygrouprule-kcp-bgp" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 179
+                        toPortRange: 179
+                        ipProtocol: tcp
+                        ipRange: 10.0.0.0/16`}}
+                      {{`- name: {{ printf "%s-securitygrouprule-api-lb" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 6443
+                        toPortRange: 6443
+                        ipProtocol: tcp
+                        ipRange: 10.0.2.0/24`}}
+                      {{`- name: {{ printf "%s-securitygrouprule-api-kw" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 6443
+                        toPortRange: 6443
+                        ipProtocol: tcp
+                        ipRange: 10.0.3.0/24`}}
+                      {{`- name: {{ printf "%s-securitygrouprule-api-kcp" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 6443
+                        toPortRange: 6443
+                        ipProtocol: tcp
+                        ipRange: 10.0.4.0/24`}}
+                      {{`- name: {{ printf "%s-securitygrouprule-kcp-nodeip-kw" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 30000
+                        toPortRange: 32767
+                        ipProtocol: tcp
+                        ipRange: 10.0.3.0/24`}}
+                      {{`- name: {{ printf "%s-securitygrouprule-etcd" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 2378
+                        toPortRange: 2380
+                        ipProtocol: tcp
+                        ipRange: 10.0.4.0/24`}}
+                      {{`- name: {{ printf "%s-securitygrouprule-kubelet-kcp" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 10250
+                        toPortRange: 10252
+                        ipProtocol: tcp
+                        ipRange: 10.0.4.0/24`}}
+                      {{`- name: {{ printf "%s-securitugrouprule-kcp-nodeip-kcp" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 30000
+                        toPortRange: 32767
+                        ipProtocol: tcp
+                        ipRange: 10.0.4.0/24`}}
+                  {{`- description: Security Group for load-balancer with {{ .builtin.cluster.name }}
+                    name: {{ printf "%s-securitygroup-lb" .builtin.cluster.name }}
+                    securityGroupRules:`}}
+                      {{`- name: {{ printf "%s-securitygrouprule-lb-out" .builtin.cluster.name }}
+                        flow: Outbound
+                        fromPortRange: 6443
+                        toPortRange: 6443
+                        ipProtocol: tcp
+                        ipRange: 10.0.4.0/24`}}
+                      {{`- name: {{ printf "%s-securitygrouprule-lb" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 6443
+                        toPortRange: 6443
+                        ipProtocol: tcp
+                        ipRange: 0.0.0.0/0`}}
+                  {{`- description: Security Group for nodes with {{ .builtin.cluster.name }}
+                    name: {{ printf "%s-securitygroup-node" .builtin.cluster.name }}
+                    tag: OscK8sMainSG
+                    securityGroupRules:`}}
+                      {{`- name: {{ printf "%s-securitygroup-all-tcp" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 1
+                        toPortRange: 65535
+                        ipProtocol: "-1"
+                        ipRange: 10.0.0.0/16`}}
+                      {{`- name: {{ printf "%s-securitygroup-calico-vxlan" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 4789
+                        toPortRange: 4789
+                        ipProtocol: udp
+                        ipRange: 10.0.0.0/16`}}
+                      {{`- name: {{ printf "%s-securitygroup-typha" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 5473
+                        toPortRange: 5473
+                        ipProtocol: udp
+                        ipRange: 10.0.0.0/16`}}
+                      {{`- name: {{ printf "%s-securitygroup-icmp" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 8
+                        toPortRange: 8
+                        ipProtocol: icmp
+                        ipRange: 10.0.0.0/16`}}
+                      {{`- name: {{ printf "%s-securitygroup-cilium-vxlan" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 8472
+                        toPortRange: 8472
+                        ipProtocol: udp
+                        ipRange: 10.0.0.0/16`}}
+                      {{`- name: {{ printf "%s-securitygroup-cilium-health" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 4240
+                        toPortRange: 4240
+                        ipProtocol: tcp
+                        ipRange: 10.0.0.0/16`}}
+                      {{`- name: {{ printf "%s-securitygroup-cilium-hubble" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 4244
+                        toPortRange: 4244
+                        ipProtocol: tcp
+                        ipRange: 10.0.0.0/16`}}
+                      {{`{{- if .bastion.enable }}`}}
+                      {{`- name: {{ printf "%s-securitygrouprule-ssh" .builtin.cluster.name }}
+                        flow: Inbound
+                        fromPortRange: 22
+                        toPortRange: 22
+                        ipProtocol: tcp
+                        ipRange: 10.0.2.0/24`}}
+                      {{`{{- end }}`}}
+
+    # OscClusterTemplate patches for the bastion
+    - name: oct_bastion
+      enabledIf: {{`"{{ .bastion.enable }}"`}}
+      definitions:
+        - selector:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: OscClusterTemplate
+            matchResources:
+              infrastructureCluster: true
+          jsonPatches:
+            - op: replace
+              path: /spec/template/spec/network/bastion
+              valueFrom:
+                template: |
+                  {{`enable: true
+                  clusterName: {{ .builtin.cluster.name }}
+                  name: {{ printf "%s-vm-bastion" .builtin.cluster.name }}
+                  keypairName: {{ .sshKeypairName }}
+                  vmType: {{ .bastion.vmSize }}
+                  imageName: {{ .bastion.imageName }}
+                  deviceName: "/dev/sda1"
+                  rootDisk:
+                    rootDiskIops: {{ .bastion.rootDisk.iops }}
+                    rootDiskSize: {{ .bastion.rootDisk.size }}
+                    rootDiskType: {{ .bastion.rootDisk.type }}
+                  subnetName: {{ printf "%s-subnet-public" .builtin.cluster.name }}
+                  subregionName: {{ .bastion.subregionName }}
+                  securityGroupNames:
+                    - name: {{ printf "%s-securitygroup-bastion" .builtin.cluster.name }}
+                  publicIpNameAfterBastion: true`}}
+            - op: add
+              path: /spec/template/spec/network/publicIps/-
+              valueFrom:
+                template: |
+                  {{`{{ printf "name: %s-%s" .builtin.cluster.name "publicip-bastion" }}`}}
+
+    # OscClusterTemplate patches for the bastion (when 'allow_cidr' has items defined)
+    - name: oct_bastion_with_allow_cidr
+      enabledIf: {{`"{{ and (.bastion.enable) (gt (.bastion.allow_cidr | len) 0) }}"`}}
+      definitions:
+        - selector:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: OscClusterTemplate
+            matchResources:
+              infrastructureCluster: true
+          jsonPatches:
+            - op: add
+              path: /spec/template/spec/network/securityGroups/-
+              valueFrom:
+                template: |
+                  description: Security Group for bastion(s) with {{`{{ .builtin.cluster.name }}`}}
+                  name: "{{ print "{{ .builtin.cluster.name }}" "-securitygroup-bastion" }}"
+                  securityGroupRules:
+                    {{`{{- $clusterName := .builtin.cluster.name }}
+                    {{- range $i, $cidr := .bastion.allow_cidr }}
+                    - name: {{ printf "%s-securitygrouprule-ssh-%d" $clusterName $i }}
+                      flow: Inbound
+                      fromPortRange: 22
+                      toPortRange: 22
+                      ipProtocol: tcp
+                      ipRange: {{ $cidr }}
+                    {{- end }}`}}
+                  
