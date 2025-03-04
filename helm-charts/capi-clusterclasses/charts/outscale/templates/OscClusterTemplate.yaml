@@ -1,0 +1,43 @@
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OscClusterTemplate
+metadata:
+  name: {{ include "outscale.name" . }}
+  namespace: default
+  labels:
+    {{- include "outscale.labels" $ | nindent 4 }}
+spec:
+  template:
+    spec:
+      network:
+        clusterName: "must-be-patched"
+        bastion:        # will be patched by a ClusterClass patch
+          enable: false
+        internetService:
+          clusterName: "must-be-patched"
+        publicIps:      # will be patched by a ClusterClass patch
+          - {}
+        loadBalancer:
+          clusterName: "must-be-patched"
+          loadbalancername: "must-be-patched"
+          loadbalancertype: internet-facing
+          listener:
+            backendport: 6443
+            backendprotocol: TCP
+            loadbalancerport: 6443
+            loadbalancerprotocol: TCP
+          healthCheck:
+            checkinterval: 30
+            healthythreshold: 5
+            port: 6443
+            protocol: TCP
+            timeout: 30
+            unhealthythreshold: 5
+        natService:
+          clusterName: "must-be-patched"
+        net:
+          clusterName: "must-be-patched"
+        subnets:        # will be patched by a ClusterClass patch
+          - {}
+        securityGroups: # will be patched by a ClusterClass patch
+          - {}

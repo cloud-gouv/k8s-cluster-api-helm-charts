@@ -1,0 +1,37 @@
+{{- $values := .Values }}
+{{- range $name, $mt := .Values.workers }}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OscMachineTemplate
+metadata:
+  name: {{ include "outscale.name" $ }}-worker-{{ $name }}
+  namespace: default
+  labels:
+    {{- include "outscale.labels" $ | nindent 4 }}
+spec:
+  template:
+    spec:
+      node:
+        clusterName: "must-be-patched"
+        image:
+          name: "must-be-patched"
+        keypair:
+          name: "must-be-patched"
+        vm:
+          clusterName: "must-be-patched"
+          keypairName: "must-be-patched"
+          vmType: "tinav5.c2r4p3"   # will be patched by ClusterClass
+          # securityGroupNames: []
+          {{- if hasKey $mt "subregionName" }}
+          subregionName: {{ $mt.subregionName  }}
+          {{- end }}
+          {{- if hasKey $mt "rootDisk" }}
+          rootDisk:
+            rootDiskIops: {{ $mt.rootDisk.rootDiskIops | default 100 }}
+            rootDiskSize: {{ $mt.rootDisk.rootDiskSize | default 30 }}
+            rootDiskType: {{ $mt.rootDisk.rootDiskType | default "standard" }}
+          {{- end }}
+        {{- with $mt.volumes }}
+        volumes: {{- toYaml . | nindent 10 }}
+        {{- end }}
+{{- end }}
