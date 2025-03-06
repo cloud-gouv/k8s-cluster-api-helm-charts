@@ -56,21 +56,50 @@ spec:
     # DEBUG: security group inside cluster explicitly disabled
     allowAllInClusterTraffic: true
     allNodesSecurityGroupRules:
-      - description: Created by cluster-api-provider-openstack - BGP (calico)
+      - description: Created by cluster-api-provider-openstack - Cilium (vxlan)
         direction: ingress
         etherType: IPv4
-        name: BGP (Calico)
-        portRangeMax: 179
-        portRangeMin: 179
+        name: Cilium (vxlan)
+        portRangeMax: 8472
+        portRangeMin: 8472
+        protocol: udp
+        remoteManagedGroups:
+          - controlplane
+          - worker
+      - description: Created by cluster-api-provider-openstack - Cilium (health)
+        direction: ingress
+        etherType: IPv4
+        name: Cilium (health)
+        portRangeMax: 4240
+        portRangeMin: 4240
         protocol: tcp
         remoteManagedGroups:
           - controlplane
           - worker
-      - description: Created by cluster-api-provider-openstack - IP-in-IP (calico)
+      - description: Created by cluster-api-provider-openstack - Cilium (hubble)
         direction: ingress
         etherType: IPv4
-        name: IP-in-IP (calico)
-        protocol: "4"
+        name: Cilium (hubble)
+        portRangeMax: 4244
+        portRangeMin: 4244
+        protocol: tcp
         remoteManagedGroups:
           - controlplane
           - worker
+
+      - description: Created by cluster-api-provider-openstack - http to worker node (http)
+        remoteIPPrefix: 0.0.0.0/0
+        direction: ingress
+        etherType: IPv4
+        name: http port
+        portRangeMin: 80
+        portRangeMax: 80
+        protocol: tcp
+      - description: Created by cluster-api-provider-openstack - https to worker node (https)
+        remoteIPPrefix: 0.0.0.0/0
+        direction: ingress
+        etherType: IPv4
+        name: https port
+        portRangeMin: 443
+        portRangeMax: 443
+        protocol: tcp

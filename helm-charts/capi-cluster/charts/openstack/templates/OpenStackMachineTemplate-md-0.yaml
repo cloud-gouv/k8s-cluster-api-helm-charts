@@ -32,13 +32,13 @@ spec:
                   {{- if $.Values.subnet }}
                   name: {{ $.Values.subnet }}
                   {{- end }}
-          securityGroups:
-            - filter:
-                name: k8s-cluster-default-{{ $.Values.global.clusterName }}-secgroup-worker
-            - filter:
-                name: allow-http
-            - filter:
-                name: allow-ssh
+#          securityGroups:
+#            - filter:
+#                name: k8s-cluster-default-{{ $.Values.global.clusterName }}-secgroup-worker
+#            - filter:
+#                name: allow-http
+#            - filter:
+#                name: allow-ssh
           allowedAddressPairs:
             - ipAddress: {{ $pool.ingressServerFixedIP }}
       {{- if $pool.rootVolume }}
