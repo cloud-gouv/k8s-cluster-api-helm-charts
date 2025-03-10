@@ -10,10 +10,33 @@ spec:
       joinConfiguration:
         nodeRegistration:
           imagePullPolicy: IfNotPresent
-          name: {{`'{{ ds.meta_data.local_hostname }}'`}}
+          name: "{{`'{{ ds.meta_data.local_hostname }}'`}}"
           kubeletExtraArgs:
-            cloud-provider: external
-            provider-id: {{`'aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}'`}}
+            cloud-provider: "external"
+            anonymous-auth: "false"
+            container-log-max-files: "10"
+            container-log-max-size: 50Mi
+            event-burst: "100"
+            event-qps: "100"
+            eviction-hard: imagefs.available<10%,memory.available<100Mi,nodefs.available<5%,nodefs.inodesFree<5%
+            eviction-max-pod-grace-period: "180"
+            eviction-soft: imagefs.available<15%,memory.available<300Mi,nodefs.available<10%,nodefs.inodesFree<10%
+            eviction-soft-grace-period: imagefs.available=5m0s,memory.available=5m0s,nodefs.available=30m0s,nodefs.inodesFree=30m0s
+            fail-swap-on: "true"
+            feature-gates: "EventedPLEG=true,HPAScaleToZero=true,KubeletCgroupDriverFromCRI=true,KubeletPodResourcesGet=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+            image-gc-low-threshold: "50"
+            kernel-memcg-notification: "true"
+            kube-reserved: "cpu=300m,memory=500Mi,ephemeral-storage=1Gi,pid='1000'"
+            system-reserved: "cpu=200m,memory=200Mi,ephemeral-storage=1Gi,pid='1000'"
+            max-pods: "110"
+            registry-burst: "10"
+            registry-qps: "5"
+            rotate-certificates: "true"
+            serialize-image-pulls: "false"
+            tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+            tls-min-version: "VersionTLS12"
+            v: "5"
+            provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
             {{- with $pool.nodeLabels }}
             node-labels: "{{ range $i, $k := (keys . | sortAlpha) }}{{ if ne $i 0 }},{{ end }}{{ $k }}={{ index $pool.nodeLabels $k }}{{ end }}"
             {{- end }}
@@ -26,36 +49,92 @@ spec:
         - for script in $(find /etc/post-kubeadm-commands/ -name '*.sh' -type f | sort);
           do echo "Running script $script"; "$script"; done
       files:
-      - content: |
-          #!/bin/bash
-          set +e
-          # Define the retry function
-          wait_and_retry() {
-            local retries="$1"
-            local wait="$2"
-            local command="$3"
+        - path: /etc/pre-kubeadm-commands/00-wait_endpoint.sh
+          owner: root:root
+          permissions: "0755"
+          content: |
+            #!/bin/bash
+            set +e
+            # Define the retry function
+            wait_and_retry() {
+              local retries="$1"
+              local wait="$2"
+              local command="$3"
 
-            $command
-            local exit_code=$?
+              $command
+              local exit_code=$?
 
-            if [[ $exit_code -ne 0 && $retries -gt 0 ]]; then
-              echo "# Wait $wait before retrying $retries : $command"
-              sleep $wait
-              wait_and_retry $(($retries - 1)) $wait "$command"
-            else
-              return $exit_code
-            fi
-          }
-          # wait endpoint is up
-          endpoint=""
-          [[ -f /run/kubeadm/kubeadm.yaml ]] && endpoint=$(grep "controlPlaneEndpoint" /run/kubeadm/kubeadm.yaml|awk ' {print $2 }' |sed -e 's/ //g;s/:.*//g')
-          [[ -f  /run/kubeadm/kubeadm-join-config.yaml ]] && endpoint=$(grep "apiServerEndpoint" /run/kubeadm/kubeadm-join-config.yaml |awk ' {print $2 }' |sed -e 's/ //g;s/:.*//g')
-          [[ -n "$endpoint" ]] && wait_and_retry 360 10 "host $endpoint"
-          # wait external access is up
-          external_url="github.com"
-          [[ -n "$external_url" ]] && wait_and_retry 360 10 "host $external_url"
-        owner: root:root
-        path: /etc/pre-kubeadm-commands/00-wait_endpoint.sh
-        permissions: "0755"
+              if [[ $exit_code -ne 0 && $retries -gt 0 ]]; then
+                echo "# Wait $wait before retrying $retries : $command"
+                sleep $wait
+                wait_and_retry $(($retries - 1)) $wait "$command"
+              else
+                return $exit_code
+              fi
+            }
+            # wait endpoint is up
+            endpoint=""
+            [[ -f /run/kubeadm/kubeadm.yaml ]] && endpoint=$(grep "controlPlaneEndpoint" /run/kubeadm/kubeadm.yaml|awk ' {print $2 }' |sed -e 's/ //g;s/:.*//g')
+            [[ -f  /run/kubeadm/kubeadm-join-config.yaml ]] && endpoint=$(grep "apiServerEndpoint" /run/kubeadm/kubeadm-join-config.yaml |awk ' {print $2 }' |sed -e 's/ //g;s/:.*//g')
+            [[ -n "$endpoint" ]] && wait_and_retry 360 10 "host $endpoint"
+            # wait external access is up
+            external_url="github.com"
+            [[ -n "$external_url" ]] && wait_and_retry 360 10 "host $external_url"
+        - path: /etc/pre-kubeadm-commands/10-containerd-restart.sh
+          owner: root:root
+          permissions: "0700"
+          content: |
+            #!/bin/bash
+            #
+            # pre-kubadm-scripts
+            #
+            set -e
+            # apply containerd config before kubeadm
+            echo "## restart containerd"
+            systemctl daemon-reload
+            systemctl restart containerd
+        - path: /etc/apt/apt.conf.d/99proxy
+          owner: "root:root"
+          permissions: "0644"
+          content: |
+            Acquire {
+              {{- if .Values.global.http_proxy }}
+              http::Proxy {{ .Values.global.http_proxy | quote }};
+              {{- end }}
+              {{- if .Values.global.https_proxy }}
+              https::Proxy {{ .Values.global.https_proxy | quote }};
+              {{- end }}
+            }
+        - path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+          owner: root:root
+          permissions: "0755"
+          content: |
+            #!/bin/bash
+            set +e
+            # Define the retry function
+            wait_and_retry() {
+              local retries="$1"
+              local wait="$2"
+              local command="$3"
+
+              $command
+              local exit_code=$?
+
+              if [[ $exit_code -ne 0 && $retries -gt 0 ]]; then
+                echo "# Wait $wait before retrying $retries : $command"
+                sleep $wait
+                wait_and_retry $(($retries - 1)) $wait "$command"
+              else
+                return $exit_code
+              fi
+            }
+            # wait endpoint is up
+            endpoint=""
+            [[ -f /run/kubeadm/kubeadm.yaml ]] && endpoint=$(grep "controlPlaneEndpoint" /run/kubeadm/kubeadm.yaml|awk ' {print $2 }' |sed -e 's/ //g;s/:.*//g')
+            [[ -f  /run/kubeadm/kubeadm-join-config.yaml ]] && endpoint=$(grep "apiServerEndpoint" /run/kubeadm/kubeadm-join-config.yaml |awk ' {print $2 }' |sed -e 's/ //g;s/:.*//g')
+            [[ -n "$endpoint" ]] && wait_and_retry 360 10 "host $endpoint"
+            # wait external access is up
+            external_url="github.com"
+            [[ -n "$external_url" ]] && wait_and_retry 360 10 "host $external_url"
 ---
 {{- end }}
