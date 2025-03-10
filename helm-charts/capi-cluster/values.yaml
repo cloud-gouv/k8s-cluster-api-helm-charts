@@ -3,6 +3,10 @@ provider:
   outscale: false
 
 global:
+  http_proxy: ""
+  https_proxy: ""
+  no_proxy: ""
+
   # clusterName: cluster1-dev
   pods:
     cidrBlocks: "172.16.0.0/16"
