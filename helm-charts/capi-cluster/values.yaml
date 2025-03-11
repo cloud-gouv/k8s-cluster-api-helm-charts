@@ -55,57 +55,59 @@ global:
       enabled: false
       type: cert-manager
       version: v1.14.5
+    storagelocal:
+      enabled: false
 
 #
 # reference to openstack helm values
 #
 openstack: {}
-#  machinehealthcheck:
-#    enabled: false
-#  sshkeyname: REPLACE_SSH_KEY_NAME_
-#  router: router_services
-#  network: network_kube
-#  subnet: subnet_kube
-#  bastion:
-#    enabled: false
-#    image: ubuntu22.04
-#    flavor: CO1.2
-#  controlplane:
-#    version: v1.29.4
-#    replicas: 1
-#    image: ubuntu-2204-kube-v1.29.4
-#    flavor: CO1.2
-#    availabilityZones:
-#      - AZ1
-#      - AZ2
-#    # reserved ip/port outside cluster-api
-#    apiServerFixedIP: 192.168.101.10
-#    #rootVolume: {}
-#  workers:
-#    md-0:
-#      version: v1.29.4
-#      replicas: 0
-#      image: ubuntu-2204-kube-v1.29.4
-#      flavor: CO1.2
-#      # reserved ip/port outside cluster-api
-#      ingressServerFixedIP: 192.168.101.11
-#      #rootVolume: {}
-##
-## openstack cloud config
-##
-##  cloudConfig:
-##    # used by ccm-openstack
-##    cloudConf:
-##      global:
-##        auth-url: _OS_AUTH_URL/v3_
-##        application-credential-id=_OS_APPLICATION_CREDENTIAL_ID_
-##        application-credential-secret=_OS_APPLICATION_CREDENTIAL_SECRET_
-##        region: "__OS_REGION_NAME_"
-##    # used by cluster api provider openstack (capo)
-##    cacert: _REPLACE_WITH_B64ENCODED_CACERT_
-##    cloudsYaml: _REPLACE_WITH_B64_cloud.yaml_
-#
-##  dockerConfig:
+#   machinehealthcheck:
+#     enabled: false
+#   sshkeyname: REPLACE_SSH_KEY_NAME_
+#   router: router_services
+#   network: network_kube
+#   subnet: subnet_kube
+#   bastion:
+#     enabled: false
+#     image: ubuntu22.04
+#     flavor: CO1.2
+#   controlplane:
+#     version: v1.29.4
+#     replicas: 1
+#     image: ubuntu-2204-kube-v1.29.4
+#     flavor: CO1.2
+#     availabilityZones:
+#       - AZ1
+#       - AZ2
+#     # reserved ip/port outside cluster-api
+#     apiServerFixedIP: 192.168.101.10
+#     #rootVolume: {}
+#   workers:
+#     md-0:
+#       version: v1.29.4
+#       replicas: 0
+#       image: ubuntu-2204-kube-v1.29.4
+#       flavor: CO1.2
+#       # reserved ip/port outside cluster-api
+#       ingressServerFixedIP: 192.168.101.11
+#       #rootVolume: {}
+# #
+# # openstack cloud config
+# #
+# #  cloudConfig:
+# #    # used by ccm-openstack
+# #    cloudConf:
+# #      global:
+# #        auth-url: _OS_AUTH_URL/v3_
+# #        application-credential-id=_OS_APPLICATION_CREDENTIAL_ID_
+# #        application-credential-secret=_OS_APPLICATION_CREDENTIAL_SECRET_
+# #        region: "__OS_REGION_NAME_"
+# #    # used by cluster api provider openstack (capo)
+# #    cacert: _REPLACE_WITH_B64ENCODED_CACERT_
+# #    cloudsYaml: _REPLACE_WITH_B64_cloud.yaml_
+
+#   dockerConfig:
 #     registry: https://index.docker.io/v1/
 #     auth: base64(docker_login:docker_password)
 #
