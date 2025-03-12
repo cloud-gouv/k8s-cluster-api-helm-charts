@@ -5,46 +5,156 @@ metadata:
   name: {{ .Values.global.clusterName }}-control-plane
 spec:
   kubeadmConfigSpec:
-##  Add external volume for etcd
-#    diskSetup:
-##      partitions:
-##      - device: /dev/vdb
-##        layout: true
-##        overwrite: false
-##        tableType: gpt
-#      filesystems:
-#      - device: /dev/vdb
-#        extraOpts:
-#        - -E
-#        - lazy_itable_init=1,lazy_journal_init=1
-#        filesystem: ext4
-#        label: etcd_disk
-#    mounts:
-#      - - LABEL=etcd_disk
-#        - /var/lib/etcddisk
+    verbosity: 5
+    clusterConfiguration:
+      apiServer:
+        timeoutForControlPlane: 20m0s
+        extraArgs:
+          # allow-privileged: "true"
+          # audit-log-maxsize: "100"
+          # audit-log-maxbackup: "10"
+          # audit-log-path: "/var/log/kubernetes/audit.log"
+          # audit-policy-file: "/etc/kubernetes/audit-policy.yaml"
+          authorization-mode: "RBAC,Node"
+          cloud-provider: "external"
+          enable-bootstrap-token-auth: "true"
+          enable-admission-plugins: "NodeRestriction,AlwaysPullImages"
+          # encryption-provider-config: "xxxx"
+          event-ttl: "4h"
+          feature-gates: "EventedPLEG=true,HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+          requestheader-allowed-names: "front-proxy-client"
+          requestheader-client-ca-file: "/etc/kubernetes/pki/front-proxy-ca.crt"
+          requestheader-extra-headers-prefix: "X-Remote-Extra-"
+          requestheader-group-headers: "X-Remote-Group"
+          requestheader-username-headers: "X-Remote-User"
+          tls-min-version: "VersionTLS12"
+          tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+          v: "5"
+        # extraVolumes:
+        #   - name: "audit-policy"
+        #     pathType: "File"
+        #     hostPath: "/etc/kubernetes/audit-policy.yaml"
+        #     mountPath: "/etc/kubernetes/audit-policy.yaml"
+        #     readOnly: true
+        #   - name: "audit-logs"
+        #     hostPath: "/var/log/kubernetes"
+        #     mountPath: "/var/log/kubernetes"
+        #   - name: "admission-pss"
+        #     pathType: "File"
+        #     hostPath: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
+        #     mountPath: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
+        #     readOnly: true
+      controllerManager:
+        extraArgs:
+          allocate-node-cidrs: "false"
+          cloud-provider: "external"
+          cluster-name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+          feature-gates: "EventedPLEG=true,HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+          tls-min-version: "VersionTLS12"
+          tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+          v: "5"
+      etcd:
+        local:
+          dataDir: "/var/lib/etcd"
+          extraArgs:
+            auto-compaction-retention: "1"
+            quota-backend-bytes: "8589934592"
+            experimental-initial-corrupt-check: "true"
+            experimental-warning-apply-duration: "200ms"
+            experimental-bootstrap-defrag-threshold-megabytes: "512"
+            tls-min-version: "TLS1.2"
+            v2-deprecation: "gone"
+      scheduler:
+        extraArgs:
+          feature-gates: "EventedPLEG=true,HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+          tls-min-version: "VersionTLS12"
+          tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+          v: "5"
+    initConfiguration:
+      {{ if and .Values.global.addons.cni.enabled ( eq .Values.global.addons.cni.type "cilium" ) -}}
+      # cilium replace kube-proxy
+      skipPhases:
+        - addon/kube-proxy
+      {{ end -}}
+      nodeRegistration:
+        name: {{`"{{ local_hostname }}"`}}
+        kubeletExtraArgs:
+          cloud-provider: "external"
+          anonymous-auth: "false"
+          container-log-max-files: "10"
+          container-log-max-size: 50Mi
+          event-burst: "100"
+          event-qps: "100"
+          eviction-hard: imagefs.available<10%,memory.available<100Mi,nodefs.available<5%,nodefs.inodesFree<5%
+          eviction-max-pod-grace-period: "180"
+          eviction-soft: imagefs.available<15%,memory.available<300Mi,nodefs.available<10%,nodefs.inodesFree<10%
+          eviction-soft-grace-period: imagefs.available=5m0s,memory.available=5m0s,nodefs.available=30m0s,nodefs.inodesFree=30m0s
+          fail-swap-on: "true"
+          feature-gates: "EventedPLEG=true,HPAScaleToZero=true,KubeletCgroupDriverFromCRI=true,KubeletPodResourcesGet=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+          image-gc-low-threshold: "50"
+          kernel-memcg-notification: "true"
+          kube-reserved: "cpu=300m,memory=500Mi,ephemeral-storage=1Gi,pid='1000'"
+          system-reserved: "cpu=200m,memory=200Mi,ephemeral-storage=1Gi,pid='1000'"
+          max-pods: "110"
+          provider-id: {{`"openstack:///{{ instance_id }}"`}}
+          registry-burst: "10"
+          registry-qps: "5"
+          rotate-certificates: "true"
+          serialize-image-pulls: "false"
+          tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+          tls-min-version: "VersionTLS12"
+          v: "5"
+    joinConfiguration:
+      nodeRegistration:
+        name: {{`"{{ local_hostname }}"`}}
+        kubeletExtraArgs:
+          cloud-provider: "external"
+          anonymous-auth: "false"
+          container-log-max-files: "10"
+          container-log-max-size: 50Mi
+          event-burst: "100"
+          event-qps: "100"
+          eviction-hard: imagefs.available<10%,memory.available<100Mi,nodefs.available<5%,nodefs.inodesFree<5%
+          eviction-max-pod-grace-period: "180"
+          eviction-soft: imagefs.available<15%,memory.available<300Mi,nodefs.available<10%,nodefs.inodesFree<10%
+          eviction-soft-grace-period: imagefs.available=5m0s,memory.available=5m0s,nodefs.available=30m0s,nodefs.inodesFree=30m0s
+          fail-swap-on: "true"
+          feature-gates: "EventedPLEG=true,HPAScaleToZero=true,KubeletCgroupDriverFromCRI=true,KubeletPodResourcesGet=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+          image-gc-low-threshold: "50"
+          kernel-memcg-notification: "true"
+          kube-reserved: "cpu=300m,memory=500Mi,ephemeral-storage=1Gi,pid='1000'"
+          system-reserved: "cpu=200m,memory=200Mi,ephemeral-storage=1Gi,pid='1000'"
+          max-pods: "110"
+          provider-id: {{`"openstack:///{{ instance_id }}"`}}
+          registry-burst: "10"
+          registry-qps: "5"
+          rotate-certificates: "true"
+          serialize-image-pulls: "false"
+          tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+          tls-min-version: "VersionTLS12"
+          v: "5"
     preKubeadmCommands:
-      - echo debug-pre > /tmp/out
       - mkdir -p /etc/pre-kubeadm-commands
       - for script in $(find /etc/pre-kubeadm-commands/ -name '*.sh' -type f | sort);
         do echo "Running script $script"; "$script"; done
     postKubeadmCommands:
-      - echo debug-post >> /tmp/out
       - mkdir -p /etc/post-kubeadm-commands
       - for script in $(find /etc/post-kubeadm-commands/ -name '*.sh' -type f | sort);
         do echo "Running script $script"; "$script"; done
     files:
-      - content: |
+      - path: /etc/pre-kubeadm-commands/10-containerd-restart.sh
+        owner: root:root
+        permissions: "0700"
+        content: |
           #!/bin/bash
           #
           # pre-kubadm-scripts
           #
           set -e
           # apply containerd config before kubeadm
+          echo "## restart containerd"
           systemctl daemon-reload
           systemctl restart containerd
-        owner: root:root
-        path: /etc/pre-kubeadm-commands/10-containerd-restart.sh
-        permissions: "0700"
       - path: /etc/kubernetes/manifests/kube-vip.yaml
         owner: "root:root"
         permissions: "0600"
@@ -123,11 +233,14 @@ spec:
                 type: File
               name: etchosts
           status: {}
-      - content: 127.0.0.1 localhost kubernetes
-        owner: root:root
-        path: /etc/kube-vip.hosts
+      - path: /etc/kube-vip.hosts
+        owner: root:root  
         permissions: "0644"
-      - content: |
+        content: 127.0.0.1 localhost kubernetes
+      - path: /etc/pre-kubeadm-commands/50-kube-vip-prepare.sh
+        owner: root:root
+        permissions: "0700"
+        content: |
           #!/bin/bash
           # Copyright 2020 The Kubernetes Authors.
           #
@@ -163,10 +276,10 @@ spec:
             sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' \
               /etc/kubernetes/manifests/kube-vip.yaml
           fi
+      - path: /etc/post-kubeadm-commands/50-kube-vip-restore.sh
         owner: root:root
-        path: /etc/pre-kubeadm-commands/50-kube-vip-prepare.sh
         permissions: "0700"
-      - content: |
+        content: |
           #!/bin/bash
           set -e
           # Configure the workaround required for kubeadm init with kube-vip:
@@ -189,21 +302,6 @@ spec:
             sed -i 's#path: /etc/kubernetes/super-admin.conf#path: /etc/kubernetes/admin.conf#' \
               /etc/kubernetes/manifests/kube-vip.yaml
           fi
-        owner: root:root
-        path: /etc/post-kubeadm-commands/50-kube-vip-restore.sh
-        permissions: "0700"
-      - content: |
-          #!/bin/bash
-          grep '^      limits:' /etc/kubernetes/manifests/kube-apiserver.yaml >/dev/null 2>&1 && exit 0
-          MEM=$(free -m | grep '^Mem:' | awk '{print $2;}')
-          CPU=$(grep '^processor' /proc/cpuinfo | wc -l)
-          sed -i "/^ *requests:/i\      limits:\n        memory: $((10+3*$MEM/4))M\n        cpu: $((750*$CPU))m" /etc/kubernetes/manifests/kube-apiserver.yaml
-          sed -i "/^ *requests:/a\        memory: 512M" /etc/kubernetes/manifests/kube-apiserver.yaml
-          sync
-          systemctl restart kubelet
-        owner: root:root
-        path: /etc/post-kubeadm-commands/10-tweak-kubeapi-memlimit.sh
-        permissions: "0700"
       - path: /etc/apt/apt.conf.d/99proxy
         owner: "root:root"
         permissions: "0644"
@@ -230,36 +328,191 @@ spec:
           {{- if .Values.global.no_proxy }}
           Environment="NO_PROXY=.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,192.168.0.0/16,{{ .Values.global.pods.cidrBlocks }},{{ .Values.global.services.cidrBlocks }}"
           {{- end }}
-    clusterConfiguration:
-      apiServer:
-        extraArgs:
-          cloud-provider: external
-      controllerManager:
-        extraArgs:
-          cloud-provider: external
-### use external etcd volume dir
-#      etcd:
-#        local:
-#          dataDir: /var/lib/etcddisk/etcd ## We Change the etcd data dir when moving to dedicated volume (because of "dir is not empty")
-#          extraArgs:
-#            quota-backend-bytes: "8589934592"
-    initConfiguration:
-      {{ if and .Values.global.addons.cni.enabled ( eq .Values.global.addons.cni.type "cilium" ) -}}
-      # cilium replace kube-proxy
-      skipPhases:
-        - addon/kube-proxy
-      {{ end -}}
-      nodeRegistration:
-        kubeletExtraArgs:
-          cloud-provider: external
-          provider-id: {{`'openstack:///{{ instance_id }}'`}}
-        name: {{`'{{ local_hostname }}'`}}
-    joinConfiguration:
-      nodeRegistration:
-        kubeletExtraArgs:
-          cloud-provider: external
-          provider-id: {{`'openstack:///{{ instance_id }}'`}}
-        name: {{`'{{ local_hostname }}'`}}
+      - path: /etc/kubernetes/audit-policy.yaml
+        owner: "root:root"
+        permissions: "0600"
+        content: |
+          apiVersion: audit.k8s.io/v1
+          kind: Policy
+          rules:
+          - level: None
+            users:
+            - system:serviceaccount:kube-system:kube-proxy
+            verbs:
+            - watch
+            resources:
+            - group: ""
+              resources:
+              - endpoints
+              - services
+              - services/status
+          - level: None
+            userGroups:
+            - system:nodes
+            verbs:
+            - get
+            resources:
+            - group: ""
+              resources:
+              - nodes
+              - nodes/status
+          - level: None
+            users:
+            - system:kube-controller-manager
+            - system:kube-scheduler
+            - system:serviceaccount:kube-system:endpoint-controller
+            verbs:
+            - get
+            - update
+            namespaces:
+            - kube-system
+            resources:
+            - group: ""
+              resources:
+              - endpoints
+          - level: None
+            users:
+            - system:apiserver
+            verbs:
+            - get
+            resources:
+            - group: ""
+              resources:
+              - namespaces
+              - namespaces/status
+              - namespaces/finalize
+          - level: None
+            users:
+            - system:kube-controller-manager
+            verbs:
+            - get
+            - list
+            resources:
+            - group: metrics.k8s.io
+          - level: None
+            nonResourceURLs:
+            - /healthz*
+            - /version
+            - /swagger*
+          - level: None
+            resources:
+            - group: ""
+              resources:
+              - events
+          - level: None
+            users:
+            - system:serviceaccount:kube-system:generic-garbage-collector
+            verbs:
+            - get
+            - list
+            - watch
+          - level: Request
+            userGroups:
+            - system:nodes
+            verbs:
+            - update
+            - patch
+            resources:
+            - group: ""
+              resources:
+              - nodes/status
+              - pods/status
+            omitStages:
+            - RequestReceived
+          - level: Request
+            users:
+            - system:serviceaccount:kube-system:namespace-controller
+            verbs:
+            - deletecollection
+            omitStages:
+            - RequestReceived
+          - level: Metadata
+            resources:
+            - group: ""
+              resources:
+              - secrets
+              - configmaps
+            - group: authentication.k8s.io
+              resources:
+              - tokenreviews
+            omitStages:
+            - RequestReceived
+          - level: Request
+            verbs:
+            - get
+            - list
+            - watch
+            resources:
+            - group: ""
+            - group: admissionregistration.k8s.io
+            - group: apiextensions.k8s.io
+            - group: apiregistration.k8s.io
+            - group: apps
+            - group: authentication.k8s.io
+            - group: authorization.k8s.io
+            - group: autoscaling
+            - group: batch
+            - group: certificates.k8s.io
+            - group: extensions
+            - group: metrics.k8s.io
+            - group: networking.k8s.io
+            - group: policy
+            - group: rbac.authorization.k8s.io
+            - group: settings.k8s.io
+            - group: storage.k8s.io
+            omitStages:
+            - RequestReceived
+          - level: RequestResponse
+            resources:
+            - group: ""
+            - group: admissionregistration.k8s.io
+            - group: apiextensions.k8s.io
+            - group: apiregistration.k8s.io
+            - group: apps
+            - group: authentication.k8s.io
+            - group: authorization.k8s.io
+            - group: autoscaling
+            - group: batch
+            - group: certificates.k8s.io
+            - group: extensions
+            - group: metrics.k8s.io
+            - group: networking.k8s.io
+            - group: policy
+            - group: rbac.authorization.k8s.io
+            - group: settings.k8s.io
+            - group: storage.k8s.io
+            omitStages:
+            - RequestReceived
+          - level: Metadata
+            omitStages:
+            - RequestReceived
+      - path: /etc/kubernetes/kube-apiserver-admission-pss.yaml
+        owner: root:root
+        permissions: "0444"
+        content: |
+          # Do not apply default pod security admission
+          apiVersion: apiserver.config.k8s.io/v1
+          kind: AdmissionConfiguration
+          plugins:
+          - name: PodSecurity
+            configuration:
+              apiVersion: pod-security.admission.config.k8s.io/v1beta1
+              kind: PodSecurityConfiguration
+              defaults:
+                enforce: ""
+                enforce-version: "latest"
+                audit: ""
+                audit-version: "latest"
+                warn: ""
+                warn-version: "latest"
+              exemptions:
+                usernames: []
+                runtimeClasses: []
+                namespaces:
+                  - kube-system
+                  - ingress-nginx
+                  - monitoring
+                  - promtail
   machineTemplate:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -267,3 +520,7 @@ spec:
       name: {{ .Values.global.clusterName }}-control-plane-{{ .Values.controlplane.version }}
   replicas: {{ .Values.controlplane.replicas | default 1 }}
   version: {{ .Values.controlplane.version }}
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: 1
+    type: RollingUpdate
