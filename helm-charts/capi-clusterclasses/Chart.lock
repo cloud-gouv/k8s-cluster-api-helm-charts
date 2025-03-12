@@ -1,0 +1,6 @@
+dependencies:
+- name: outscale
+  repository: file://charts/outscale
+  version: 1.0.0
+digest: sha256:e599efde07d2d514d11cde0a5d9aa8eccad76bf7ff555f7dfb049da5325eac6c
+generated: "2025-03-04T03:17:39.441707906+01:00"
