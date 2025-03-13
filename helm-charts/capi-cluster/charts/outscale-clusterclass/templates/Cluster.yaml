@@ -1,0 +1,86 @@
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+  namespace: default
+  labels:
+    cluster.x-k8s.io/name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+    {{- if .Values.global.addons.cni.enabled }}
+    cni.enabled: {{ printf "%t" .Values.global.addons.cni.enabled | quote }}
+    cni.type: {{ .Values.global.addons.cni.type | quote }}
+    cni.version: {{ .Values.global.addons.cni.version | quote }}
+    {{- end }}
+    {{- if .Values.global.addons.ccm.enabled }}
+    ccm.enabled: {{  printf "%t" .Values.global.addons.ccm.enabled | quote }}
+    ccm.type: {{ .Values.global.addons.ccm.type | quote }}
+    ccm.version: {{ .Values.global.addons.ccm.version | quote }}
+    {{- end }}
+    {{- if .Values.global.addons.metallb.enabled }}
+    metallb.enabled: {{  printf "%t" .Values.global.addons.metallb.enabled | quote }}
+    metallb.type: {{ .Values.global.addons.metallb.type | quote }}
+    metallb.version: {{ .Values.global.addons.metallb.version | quote }}
+    {{- end }}
+    {{- if .Values.global.addons.ingress.enabled }}
+    ingress.enabled: {{  printf "%t" .Values.global.addons.ingress.enabled | quote }}
+    ingress.type: {{ .Values.global.addons.ingress.type | quote }}
+    ingress.version: {{ .Values.global.addons.ingress.version | quote }}
+    {{- end }}
+    {{- if .Values.global.addons.certmanager.enabled }}
+    certmanager.enabled: {{  printf "%t" .Values.global.addons.certmanager.enabled | quote }}
+    certmanager.type: {{ .Values.global.addons.certmanager.type | quote }}
+    certmanager.version: {{ .Values.global.addons.certmanager.version | quote }}
+    {{- end }}
+    {{- if .Values.global.addons.storagelocal.enabled }}
+    storagelocal.enabled: {{  printf "%t" .Values.global.addons.storagelocal.enabled | quote }}
+    storagelocal.type: {{ .Values.global.addons.storagelocal.type | quote }}
+    storagelocal.version: {{ .Values.global.addons.storagelocal.version | quote }}
+    {{- end }}
+    {{- if .Values.global.addons.csi.enabled }}
+    csi.enabled: {{ printf "%t" .Values.global.addons.csi.enabled | quote }}
+    csi.type: {{ .Values.global.addons.csi.type | quote }}
+    csi.version: {{ .Values.global.addons.csi.version | quote }}
+    {{- end }}
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+        - {{ .Values.global.pods.cidrBlocks | default "10.42.0.0/16" }}
+    services:
+      cidrBlocks:
+        - {{ .Values.global.services.cidrBlocks | default "10.96.0.0/12" }}
+
+  topology:
+    class: {{ .Values.clusterClass.name }}
+    version: {{ .Values.clusterClass.kubernetesVersion | quote }}
+    controlPlane:
+      replicas: {{ .Values.clusterClass.controlPlane.replicas | default 1 }}
+    workers:
+      machineDeployments:
+      {{- range $index, $md := .Values.clusterClass.workers.machineDeployments }}
+      - name: {{ $md.name }}
+        class: {{ $md.class }}
+        replicas: {{ $md.replicas | default 1 }}
+      {{- end }}
+
+    variables:
+      - name: bastion
+        {{- if and (hasKey .Values.clusterClass.variables "bastion") .Values.clusterClass.variables.bastion.enable }}
+        value:
+          {{- .Values.clusterClass.variables.bastion | toYaml | nindent 10 }}
+        {{- else }}
+        value:
+          enable: false
+        {{- end }}
+      - name: sshKeypairName
+        value: {{ .Values.clusterClass.variables.sshKeypairName }}
+      - name: coreDNSVersion
+        value: {{ .Values.clusterClass.variables.coreDNSVersion | quote }}
+      - name: vmImageName
+        value: {{ .Values.clusterClass.variables.vmImageName | quote }}
+      - name: controlPlane
+        value:
+          {{- .Values.clusterClass.variables.controlPlane | toYaml | nindent 10 }}
+      - name: workers
+        value:
+          {{- .Values.clusterClass.variables.workers | toYaml | nindent 10 }}
