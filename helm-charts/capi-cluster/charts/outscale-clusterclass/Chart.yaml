@@ -1,0 +1,6 @@
+apiVersion: v2
+name: outscale-clusterclass
+description: A Helm chart to create a Kubernetes cluster @Outscale using CAPI ClusterClass
+type: application
+version: 1.0.0
+appVersion: "1.0"

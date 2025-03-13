@@ -1,17 +1,20 @@
 provider:
   openstack: false
   outscale: false
+  outscale-clusterclass: false
 
 global:
   http_proxy: ""
   https_proxy: ""
   no_proxy: ""
 
-  # clusterName: cluster1-dev
+  clusterName: my-cluster
+
   pods:
     cidrBlocks: "172.16.0.0/16"
   services:
     cidrBlocks: "10.96.0.0/12"
+  
   # helmchartproxy installed inside workload cluster
   # helm addons
   addons:
@@ -29,14 +32,12 @@ global:
 #            - 192.168.101.11/32
     ccm:
       enabled: true
-      #enabled: false
-      type: openstack
-      version: 2.31.0
+      type: outscale    # or openstack
+      version: 0.3.2    # for openstack: 2.31.0
     csi:
       enabled: true
-      #enabled: false
-      type: cinder-csi
-      version: 2.31.0
+      type: osc-bsu-csi # or cinder-csi
+      version: 1.6.0    # for cinder-csi: 2.31.0
     metallb:
       enabled: false
       type: metallb
@@ -55,6 +56,8 @@ global:
       enabled: false
       type: cert-manager
       version: v1.14.5
+    storagelocal:
+      enabled: false
 
 #
 # reference to openstack helm values
@@ -90,68 +93,161 @@ openstack: {}
 #      # reserved ip/port outside cluster-api
 #      ingressServerFixedIP: 192.168.101.11
 #      #rootVolume: {}
-##
-## openstack cloud config
-##
-##  cloudConfig:
-##    # used by ccm-openstack
-##    cloudConf:
-##      global:
-##        auth-url: _OS_AUTH_URL/v3_
-##        application-credential-id=_OS_APPLICATION_CREDENTIAL_ID_
-##        application-credential-secret=_OS_APPLICATION_CREDENTIAL_SECRET_
-##        region: "__OS_REGION_NAME_"
-##    # used by cluster api provider openstack (capo)
-##    cacert: _REPLACE_WITH_B64ENCODED_CACERT_
-##    cloudsYaml: _REPLACE_WITH_B64_cloud.yaml_
-#
-##  dockerConfig:
-#     registry: https://index.docker.io/v1/
-#     auth: base64(docker_login:docker_password)
-#
+#  #
+#  # openstack cloud config
+#  #
+#  cloudConfig:
+#    # used by ccm-openstack
+#    cloudConf:
+#      global:
+#        auth-url: _OS_AUTH_URL/v3_
+#        application-credential-id: _OS_APPLICATION_CREDENTIAL_ID_
+#        application-credential-secret: _OS_APPLICATION_CREDENTIAL_SECRET_
+#        region: "__OS_REGION_NAME_"
+#    # used by cluster api provider openstack (capo)
+#    cacert: _REPLACE_WITH_B64ENCODED_CACERT_
+#    cloudsYaml: _REPLACE_WITH_B64_cloud.yaml_
+
+#  dockerConfig:
+#    registry: https://index.docker.io/v1/
+#    auth: base64(docker_login:docker_password)
+
+# 
 # reference to outscale helm values
 #
 outscale: {}
-# sshkeyname: REPLACE_SSH_KEY_NAME_
-# subregionName: "eu-west-2a"
-# bastion:
-#   enable: false
-#   image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
-#   rootDisk:
-#     rootDiskIops: 100
-#     rootDiskSize: 30
-#     rootDiskType: standard
-#   volumes:
-#     - name: data-volume
-#       size: 10
-#       iops: 100
-#       volumeType: standard
-#       subregionName: eu-west-2a
-# controlplane:
-#   version: v1.29.5
-#   replicas: 1
-#   vmType: tinav5.c2r4p3
-#   subregionName: "eu-west-2a"
-# workers:
-#   - name: md-0
-#     version: v1.29.5
-#     replicas: 0
-#     vmType: tinav5.c2r4p3
-#     subregionName: "eu-west-2a"
-#     image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
-#     rootDisk:
-#       rootDiskIops: 100
-#       rootDiskSize: 30
-#       rootDiskType: standard
+#  sshkeyname: REPLACE_SSH_KEY_NAME_
+#  subregionName: "eu-west-2a"
+#  bastion:
+#    enable: false
+#    image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
+#    rootDisk:
+#      rootDiskIops: 100
+#      rootDiskSize: 30
+#      rootDiskType: standard
+#    volumes:
+#      - name: data-volume
+#        size: 10
+#        iops: 100
+#        volumeType: standard
+#        subregionName: eu-west-2a
+#  controlplane:
+#    version: v1.29.5
+#    replicas: 1
+#    vmType: tinav5.c2r4p3
+#    subregionName: "eu-west-2a"
+#  workers:
+#    - name: md-0
+#      version: v1.29.5
+#      replicas: 0
+#      vmType: tinav5.c2r4p3
+#      subregionName: "eu-west-2a"
+#      image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
+#      rootDisk:
+#        rootDiskIops: 100
+#        rootDiskSize: 30
+#        rootDiskType: standard
+
 #  osc_ccm_credentials:
 #    secret_key: ""
 #    access_key: ""
 #    region: ""
+
 #  osc_csi_credentials:
 #    access_key: ""
 #    secret_key: ""
 
+#  dockerConfig:
+#    registry: https://index.docker.io/v1/
+#    auth: base64(docker_login:docker_password)
+
 #
-##  dockerConfig:
-#     registry: https://index.docker.io/v1/
-#     auth: base64(docker_login:docker_password)
+# reference to outscale-clusterclass helm values
+#
+outscale-clusterclass: {}
+# clusterClass:
+#   # name of the clusterclass to use
+#   # this is the concatenation of:
+#   #  - provider name ('outscale', 'openstack')
+#   #  - "-v"
+#   #  - the version of the helm chart "capi-clusterclass" which
+#   #    was used to deploy the clusterclass
+#   name: outscale-v1.0.0
+
+#   # Kubernetes version to use
+#   # /!\ this must be in consistent with clusterClass.variables.vmImageName
+#   kubernetesVersion: v1.28.5
+
+#   # number of ControlPlane nodes
+#   controlPlane:
+#     replicas: 1
+  
+#   # list of MachineDeployments to implement
+#   # along with their properties
+#   workers:
+#     machineDeployments:
+#       - name: md-az1-0
+#         class: md-az1-class
+#         replicas: 1
+
+#   # Values of the variables to be passed to the clusterclass
+#   # so that the CAPI objects can be created properlly
+#   variables:
+#     # properties of the bastion VM
+#     bastion:
+#       enable: false
+#       vmSize: tinav5.c4r8p3
+#       imageName: ubuntu-2204-2204-kubernetes-v1.28.5-2024-01-10
+#       subregionName: eu-west-2a
+#       rootDisk:
+#         iops: 1000
+#         size: 50
+#         type: gp2
+#       allow_cidr: []
+
+#     # Name of the SSH keypair to inject into all the VMs:
+#     # those composing the cluster and the bastion VM if any
+#     sshKeypairName: k8s-infra
+
+#     # Version of CoreDNS to use
+#     # this must be consistent with clusterClass.kubernetesVersion
+#     # for default version for each kubernets versions:
+#     # https://github.com/kubernetes/kubernetes/blob/v1.28.5/cmd/kubeadm/app/constants/constants.go#L344
+#     coreDNSVersion: "v1.10.1"
+
+#     # Name of a valid VM image to use to provision all the
+#     # VMs composing the cluster (control-plane and workers)
+#     vmImageName: "ubuntu-2204-2204-kubernetes-v1.28.5-2024-01-10"
+
+#     # Properties of the control-plane nodes
+#     controlPlane:
+#       vmSize: tinav5.c4r8p2   # mandatory
+#       rootDisk:               # optional (some defaults applies if not provided here)
+#         iops: 1000
+#         size: 50
+#         type: gp2
+    
+#     # Properties of the worker nodes
+#     workers:
+#       vmSize: tinav5.c4r8p3   # mandatory
+#       rootDisk:               # optional (some defaults applies if not provided here)
+#         iops: 500
+#         size: 100
+#         type: gp2
+
+# # List of storageClasses to deploy into the cluster
+# csi:
+#   storageClass: {}
+
+# osc_ccm_credentials:
+#   secret_key: ""
+#   access_key: ""
+#   region: ""
+
+# osc_csi_credentials:
+#   access_key: ""
+#   secret_key: ""
+
+# dockerConfig:
+#   registry: https://index.docker.io/v1/
+#   auth: base64(docker_login:docker_password)

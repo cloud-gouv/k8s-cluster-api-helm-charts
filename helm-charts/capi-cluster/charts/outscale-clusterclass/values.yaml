@@ -1,0 +1,77 @@
+# #
+# # reference to outscale helm values
+# # Note: the structure of these values is quiete different from openstack
+# #       values because outscale is now managed with 'ClusterClasses'
+# clusterClass:
+#   # name of the clusterclass to use
+#   # this is the concatenation of:
+#   #  - provider name ('outscale', 'openstack')
+#   #  - "-v"
+#   #  - the version of the helm chart "capi-clusterclass" which
+#   #    was used to deploy the clusterclass
+#   name: outscale-v1.0.0
+
+#   # Kubernetes version to use
+#   # /!\ this must be in consistent with clusterClass.variables.vmImageName
+#   kubernetesVersion: v1.28.5
+
+#   # number of ControlPlane nodes
+#   controlPlane:
+#     replicas: 1
+  
+#   # list of MachineDeployments to implement
+#   # along with their properties
+#   workers:
+#     machineDeployments:
+#       - name: md-az1-0
+#         class: md-az1-class
+#         replicas: 1
+
+#   # Values of the variables to be passed to the clusterclass
+#   # so that the CAPI objects can be created properlly
+#   variables:
+#     # properties of the bastion VM
+#     bastion:
+#       enable: false
+#       vmSize: tinav5.c4r8p3
+#       imageName: ubuntu-2204-2204-kubernetes-v1.28.5-2024-01-10
+#       subregionName: eu-west-2a
+#       rootDisk:
+#         iops: 1000
+#         size: 50
+#         type: gp2
+#       allow_cidr: []
+
+#     # Name of the SSH keypair to inject into all the VMs:
+#     # those composing the cluster and the bastion VM if any
+#     sshKeypairName: k8s-infra
+
+#     # Version of CoreDNS to use
+#     # this must be consistent with clusterClass.kubernetesVersion
+#     # for default version for each kubernets versions:
+#     # https://github.com/kubernetes/kubernetes/blob/v1.28.5/cmd/kubeadm/app/constants/constants.go#L344
+#     coreDNSVersion: "v1.10.1"
+
+#     # Name of a valid VM image to use to provision all the
+#     # VMs composing the cluster (control-plane and workers)
+#     vmImageName: "ubuntu-2204-2204-kubernetes-v1.28.5-2024-01-10"
+
+#     # Properties of the control-plane nodes
+#     controlPlane:
+#       vmSize: tinav5.c4r8p2   # mandatory
+#       rootDisk:               # optional (some defaults applies if not provided here)
+#         iops: 1000
+#         size: 50
+#         type: gp2
+    
+#     # Properties of the worker nodes
+#     workers:
+#       vmSize: tinav5.c4r8p3   # mandatory
+#       rootDisk:               # optional (some defaults applies if not provided here)
+#         iops: 500
+#         size: 100
+#         type: gp2
+
+# # List of storageClasses to deploy into the cluster
+# csi:
+#   storageClass: {}
