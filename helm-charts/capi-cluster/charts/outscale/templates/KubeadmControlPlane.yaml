@@ -15,6 +15,7 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-path: "/var/log/kubernetes/audit.log"
           audit-policy-file: "/etc/kubernetes/audit-policy.yaml"
+          admission-control-config-file: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
           authorization-mode: "RBAC,Node"
           cloud-provider: "external"
           enable-bootstrap-token-auth: "true"
@@ -399,11 +400,11 @@ spec:
               apiVersion: pod-security.admission.config.k8s.io/v1beta1
               kind: PodSecurityConfiguration
               defaults:
-                enforce: ""
+                enforce: "restricted"
                 enforce-version: "latest"
-                audit: ""
+                audit: "restricted"
                 audit-version: "latest"
-                warn: ""
+                warn: "restricted"
                 warn-version: "latest"
               exemptions:
                 usernames: []
