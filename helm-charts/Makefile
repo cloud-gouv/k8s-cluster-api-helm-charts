@@ -1,9 +1,9 @@
 HELM_VALUE = ""
 CLUSTER_NAME = ""
 
-LOCAL_PATH_VERSION = v0.0.30
+LOCAL_PATH_VERSION = v0.0.30 v0.0.31
 OSC_CCM_VERSION = 0.3.0 0.3.1 0.3.2
-OSC_CSI_VERSION = 1.6.0
+OSC_CSI_VERSION = 1.6.0 1.7.0
 
 index: package-capi-cluster \
        package-capi-cluster-addons \

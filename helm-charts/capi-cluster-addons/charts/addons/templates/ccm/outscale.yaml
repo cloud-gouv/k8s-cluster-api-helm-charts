@@ -33,8 +33,6 @@ spec:
   #      namespace: caaph-system
   valuesTemplate: |
     # https://hub.docker.com/r/outscale/cloud-provider-osc/tags
-    image:
-      tag: v0.2.5
     {{ if .Values.dockerConfig.enabled -}}
     imagePullSecrets:
       - name: regcred
