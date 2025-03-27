@@ -29,7 +29,9 @@ csi: {}
 #  replicas: 1
 #  vmType: tinav5.c2r4p3
 #  subregionName: eu-west-2a
+### choose on the key below : image or imageId, not both
 #  image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
+#  imageId: ami-554cf763
 #  rootDisk:
 #    rootDiskIops: 100
 #    rootDiskSize: 30
@@ -46,7 +48,9 @@ csi: {}
 #    replicas: 0
 #    vmType: tinav5.c2r4p3
 #    subregionName: eu-west-2a
+### choose on the key below : image or imageId, not both
 #    image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
+#    imageId: ami-554cf763
 #    rootDisk:
 #      rootDiskIops: 100
 #      rootDiskSize: 30
