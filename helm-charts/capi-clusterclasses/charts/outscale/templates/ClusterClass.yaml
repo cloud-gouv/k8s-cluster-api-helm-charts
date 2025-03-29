@@ -81,6 +81,7 @@ spec:
   variables:
     - name: bastion
       required: false
+      metadata: {}
       schema:
         openAPIV3Schema:
           type: object
@@ -131,17 +132,18 @@ spec:
                 type: string
               description: list of CIDRs that are allowed to connect to the bastion
               default: []
-          required: []
           default:
             enable: false
     - name: sshKeypairName
       required: true
+      metadata: {}
       schema:
         openAPIV3Schema:
           type: string
           description: name of the SSH Keypair to inject into all the VMs of the cluster
     - name: subregionName
       required: false
+      metadata: {}
       schema:
         openAPIV3Schema:
           type: string
@@ -158,18 +160,21 @@ spec:
       # and for default version for each kubernets versions:
       # https://github.com/kubernetes/kubernetes/blob/v1.28.5/cmd/kubeadm/app/constants/constants.go#L344
       required: true
+      metadata: {}
       schema:
         openAPIV3Schema:
           type: string
           description: coredns image version (corends is not upgraded automaticaly by cluster api)
     - name: vmImageName
       required: true
+      metadata: {}
       schema:
         openAPIV3Schema:
           type: string
           description: name of the image to use to provision controlplane and worker VMs
     - name: controlPlane
       required: true
+      metadata: {}
       schema:
         openAPIV3Schema:
           type: object
@@ -202,6 +207,7 @@ spec:
             - vmSize
     - name: workers
       required: true
+      metadata: {}
       schema:
         openAPIV3Schema:
           type: object
