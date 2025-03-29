@@ -81,6 +81,7 @@ spec:
   variables:
     - name: bastion
       required: false
+      metadata: {}
       schema:
         openAPIV3Schema:
           type: object
