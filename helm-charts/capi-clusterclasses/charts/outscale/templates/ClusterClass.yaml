@@ -585,6 +585,21 @@ spec:
                       {{`{{- end }}`}}
 
     # OscClusterTemplate patches for the bastion
+    # always set bastion state (enable or disable)
+    - name: oct_bastion_enable
+      definitions:
+        - selector:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: OscClusterTemplate
+            matchResources:
+              infrastructureCluster: true
+          jsonPatches:
+            - op: replace
+              path: /spec/template/spec/network/bastion/enable
+              valueFrom:
+                variable: bastion.enable
+
+    # patches bastion properties if enable
     - name: oct_bastion
       enabledIf: {{`"{{ .bastion.enable }}"`}}
       definitions:
