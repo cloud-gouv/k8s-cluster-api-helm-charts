@@ -44,8 +44,10 @@ index-repo:
 
 SHELL := /bin/bash
 check-template:
-	[[ -n "${HELM_VALUE}" && -n "${CLUSTER_NAME}" ]] || exit 1
+	@[[ -n "${HELM_VALUE}" && -n "${CLUSTER_NAME}" ]] || exit 1
 template-capi-cluster: check-template
-	helm template -f ${HELM_VALUE} ${CLUSTER_NAME} capi-cluster
+	@helm template -f ${HELM_VALUE} ${CLUSTER_NAME} capi-cluster
 template-capi-cluster-addons: check-template
-	helm template -f ${HELM_VALUE} ${CLUSTER_NAME} capi-cluster-addons
+	@helm template -f ${HELM_VALUE} ${CLUSTER_NAME} capi-cluster-addons
+template-capi-clusterclasses: check-template
+	@helm template -f ${HELM_VALUE} ${CLUSTER_NAME} capi-clusterclasses
