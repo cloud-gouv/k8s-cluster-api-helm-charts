@@ -7,8 +7,10 @@ spec:
     spec:
       node:
         clusterName: {{ .Values.global.clusterName }}
+        {{- if hasKey .Values.controlplane "image" }}
         image:
           name: {{ .Values.controlplane.image }}
+        {{- end }}
         keypair:
           name: {{ .Values.sshkeyname }}
         vm:
@@ -17,6 +19,9 @@ spec:
           loadBalancerName: {{ template "outscale.defaultLoadbalancerName" $ }}
           role: controlplane
           vmType: {{ .Values.controlplane.vmType }}
+          {{- if hasKey .Values.controlplane "imageId" }}
+          imageId: {{ .Values.controlplane.imageId }}
+          {{- end }}
           subregionName: {{ .Values.controlplane.subregionName  }}
           {{- if hasKey .Values.controlplane "rootDisk" }}
           rootDisk:

@@ -13,7 +13,12 @@ spec:
       name: {{ .Values.global.clusterName }}-vm-bastion
       keypairName: {{ .Values.sshkeyname }}
       vmType: {{ .Values.bastion.vmType }}
+      {{ if hasKey .Values.bastion "image" -}}
       imageName: {{ .Values.bastion.image }}
+      {{ end -}}
+      {{ if hasKey .Values.bastion "imageId" -}}
+      imageId: {{ .Values.bastion.imageId }}
+      {{ end -}}
       deviceName: "/dev/sda1"
       {{ if hasKey .Values.bastion "rootDisk" -}}
       rootDisk:
