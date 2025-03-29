@@ -27,7 +27,7 @@ spec:
     secret:
       enabled: true
       create: false
-      name: cloud-config
+      name: cinder-csi-cloud-config
     logVerbosityLevel: 4
     csi:
       provisioner:
