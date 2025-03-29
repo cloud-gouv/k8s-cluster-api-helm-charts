@@ -1,5 +1,18 @@
 # # Default values for capi-clusterclasses.
 # # This is a YAML-formatted file.
+machineHealthCheck:
+  maxUnhealthy: 100%
+  nodeStartupTimeout: 20m0s
+  unhealthyConditions:
+    - type: Ready
+      status: Unknown
+      timeout: 5m0s
+    - type: Ready
+      status: "False"
+      timeout: 20m0s
+    - status: "True"
+      timeout: 1m0s
+      type: DiskPressure
 
 # # properties of the controlplane
 # controlplane:

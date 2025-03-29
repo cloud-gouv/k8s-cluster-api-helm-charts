@@ -74,6 +74,8 @@ spec:
         {{- end }}
       - name: sshKeypairName
         value: {{ .Values.clusterClass.variables.sshKeypairName }}
+      - name: subregionName
+        value: {{ .Values.clusterClass.variables.subregionName | quote }}
       - name: coreDNSVersion
         value: {{ .Values.clusterClass.variables.coreDNSVersion | quote }}
       - name: vmImageName

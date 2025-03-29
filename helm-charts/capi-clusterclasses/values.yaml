@@ -7,40 +7,58 @@ provider:
   outscale: false
 
 # values that are specific to the provider 'outscale'
-outscale:
-  # properties of the controlplane
-  controlplane:
-    rootDisk:
-      rootDiskIops: 1000
-      rootDiskSize: 50
-      rootDiskType: gp2
+outscale: {}
 
-  # properties of the workers
-  workers:
-    # the names of these dictionaries will be used in the template 'ClusterClass.yaml'
-    # as the names of the 'MachineDeployment classes'
-    
-    # for workers that will *not* be hosted in a specific availability zone
-    md-regionwide-class:
-      rootDisk:
-        rootDiskIops: 100
-        rootDiskSize: 30
-        rootDiskType: standard
-
-    # for workers that will be hosted in a specific availability zone
-    # note that the name 'az1' is irrelevent, it could be anything
-    md-az1-class:
-      subregionName: eu-west-2a
-      rootDisk:
-        rootDiskIops: 100
-        rootDiskSize: 30
-        rootDiskType: standard
-
-    # for workers that will be hosted in a specific availability zone
-    # note that the name 'az2' is irrelevent, it could be anything
-    md-az2-class:
-      subregionName: eu-west-2b
-      rootDisk:
-        rootDiskIops: 100
-        rootDiskSize: 30
-        rootDiskType: standard
+## sample value below
+#outscale:
+#  # properties of machineHealthCheck
+#  machineHealthCheck:
+#    maxUnhealthy: 100%
+#    nodeStartupTimeout: 20m0s
+#    unhealthyConditions:
+#      - type: Ready
+#        status: Unknown
+#        timeout: 5m0s
+#      - type: Ready
+#        status: "False"
+#        timeout: 20m0s
+#      - status: "True"
+#        timeout: 1m0s
+#        type: DiskPressure
+#
+#  # properties of the controlplane
+#  controlplane:
+#    rootDisk:
+#      rootDiskIops: 1000
+#      rootDiskSize: 50
+#      rootDiskType: gp2
+#
+#  # properties of the workers
+#  workers:
+#    # the names of these dictionaries will be used in the template 'ClusterClass.yaml'
+#    # as the names of the 'MachineDeployment classes'
+#
+#    # for workers that will *not* be hosted in a specific availability zone
+#    md-regionwide-class:
+#      rootDisk:
+#        rootDiskIops: 100
+#        rootDiskSize: 30
+#        rootDiskType: standard
+#
+#    # for workers that will be hosted in a specific availability zone
+#    # note that the name 'az1' is irrelevent, it could be anything
+#    md-az1-class:
+#      subregionName: eu-west-2a
+#      rootDisk:
+#        rootDiskIops: 100
+#        rootDiskSize: 30
+#        rootDiskType: standard
+#
+#    # for workers that will be hosted in a specific availability zone
+#    # note that the name 'az2' is irrelevent, it could be anything
+#    md-az2-class:
+#      subregionName: eu-west-2b
+#      rootDisk:
+#        rootDiskIops: 100
+#        rootDiskSize: 30
+#        rootDiskType: standard

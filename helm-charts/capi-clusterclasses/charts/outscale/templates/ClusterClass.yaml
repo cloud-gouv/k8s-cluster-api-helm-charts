@@ -13,12 +13,14 @@ spec:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: OscClusterTemplate
       name: {{ include "outscale.name" . }}
+      namespace: default
 
   controlPlane:
     ref:
       apiVersion: controlplane.cluster.x-k8s.io/v1beta1
       kind: KubeadmControlPlaneTemplate
       name: {{ include "outscale.name" $ }}
+      namespace: default
     namingStrategy:
       template: {{`"{{ .cluster.name }}-{{ .random }}"`}}
     machineInfrastructure:
@@ -26,19 +28,11 @@ spec:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: OscMachineTemplate
         name: {{ include "outscale.name" $ }}-controlplane
+        namespace: default
+    {{- with $.Values.machineHealthCheck }}
     machineHealthCheck:
-      maxUnhealthy: 100%
-      nodeStartupTimeout: 20m0s
-      unhealthyConditions:
-        - type: Ready
-          status: Unknown
-          timeout: 5m0s
-        - type: Ready
-          status: "False"
-          timeout: 20m0s
-        - status: "True"
-          timeout: 1m0s
-          type: DiskPressure
+      {{- . | toYaml | nindent 6 }}
+    {{- end }}
 
   workers:
     machineDeployments:
@@ -57,30 +51,24 @@ spec:
               apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
               kind: KubeadmConfigTemplate
               name: {{ include "outscale.name" $ }}
+              namespace: default
           infrastructure:
             ref:
               apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
               kind: OscMachineTemplate
               name: {{ include "outscale.name" $ }}-worker-{{ $name }}
+              namespace: default
           metadata: {}
+        {{- with $.Values.machineHealthCheck }}
         machineHealthCheck:
-          maxUnhealthy: 100%
-          nodeStartupTimeout: 20m0s
-          unhealthyConditions:
-            - type: Ready
-              status: Unknown
-              timeout: 5m0s
-            - type: Ready
-              status: "False"
-              timeout: 20m0s
-            - status: "True"
-              timeout: 1m0s
-              type: DiskPressure
+          {{- . | toYaml | nindent 10 }}
+        {{- end }}
       {{- end }}
 
   variables:
     - name: bastion
       required: false
+      metadata: {}
       schema:
         openAPIV3Schema:
           type: object
@@ -93,17 +81,14 @@ spec:
             vmSize:
               type: string
               description: size of the bastion VM. This must be a valid Outscale vmType
-              default: tinav5.c4r8p3
               example: tinav5.c4r8p3
             imageName:
               type: string
               description: name of the image to use to provision the bastion VM
-              default: ubuntu-2204-2204-kubernetes-v1.28.5-2024-01-10
               example: ubuntu-2204-2204-kubernetes-v1.28.5-2024-01-10
             subregionName:
               type: string
               description: name of the subregion where the bastion will be deployed
-              default: eu-west-2a
               example: eu-west-2a, eu-west-2b
             rootDisk:
               type: object
@@ -121,27 +106,23 @@ spec:
                   description: type of the root disk
                   default: standard
                   enum: ["standard", "gp2", "io1"]
-              default:
-                iops: 1000
-                size: 50
-                type: standard
             allow_cidr:
               type: array
               items:
                 type: string
               description: list of CIDRs that are allowed to connect to the bastion
-              default: []
-          required: []
           default:
             enable: false
     - name: sshKeypairName
       required: true
+      metadata: {}
       schema:
         openAPIV3Schema:
           type: string
           description: name of the SSH Keypair to inject into all the VMs of the cluster
     - name: subregionName
       required: false
+      metadata: {}
       schema:
         openAPIV3Schema:
           type: string
@@ -149,7 +130,6 @@ spec:
             Name of the Outscale subregion to use to deploy resources that
             do require subregion to be documented (bastion, subnets,
             OscMachineTemplates dedicated one specific AZ)
-          default: eu-west-2a
           example: eu-west-2a, eu-west-2b
     - name: coreDNSVersion
       # coredns is not upgraded automaticaly by cluster api
@@ -158,18 +138,21 @@ spec:
       # and for default version for each kubernets versions:
       # https://github.com/kubernetes/kubernetes/blob/v1.28.5/cmd/kubeadm/app/constants/constants.go#L344
       required: true
+      metadata: {}
       schema:
         openAPIV3Schema:
           type: string
           description: coredns image version (corends is not upgraded automaticaly by cluster api)
     - name: vmImageName
       required: true
+      metadata: {}
       schema:
         openAPIV3Schema:
           type: string
           description: name of the image to use to provision controlplane and worker VMs
     - name: controlPlane
       required: true
+      metadata: {}
       schema:
         openAPIV3Schema:
           type: object
@@ -202,6 +185,7 @@ spec:
             - vmSize
     - name: workers
       required: true
+      metadata: {}
       schema:
         openAPIV3Schema:
           type: object
@@ -574,6 +558,7 @@ spec:
                       {{`{{- end }}`}}
 
     # OscClusterTemplate patches for the bastion
+    # patches bastion properties if enable
     - name: oct_bastion
       enabledIf: {{`"{{ .bastion.enable }}"`}}
       definitions:
@@ -602,7 +587,7 @@ spec:
                   subregionName: {{ .bastion.subregionName }}
                   securityGroupNames:
                     - name: {{ printf "%s-securitygroup-bastion" .builtin.cluster.name }}
-                  publicIpNameAfterBastion: true`}}
+                  publicIpName: {{ printf "%s-publicip-bastion" .builtin.cluster.name }}`}}
             - op: add
               path: /spec/template/spec/network/publicIps/-
               valueFrom:
@@ -635,4 +620,4 @@ spec:
                       ipProtocol: tcp
                       ipRange: {{ $cidr }}
                     {{- end }}`}}
-                  
+
