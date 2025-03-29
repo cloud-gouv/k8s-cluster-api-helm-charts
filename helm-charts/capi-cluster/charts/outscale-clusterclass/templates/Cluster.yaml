@@ -68,9 +68,6 @@ spec:
         {{- if and (hasKey .Values.clusterClass.variables "bastion") .Values.clusterClass.variables.bastion.enable }}
         value:
           {{- .Values.clusterClass.variables.bastion | toYaml | nindent 10 }}
-        {{- else }}
-        value:
-          enable: false
         {{- end }}
       - name: sshKeypairName
         value: {{ .Values.clusterClass.variables.sshKeypairName }}
