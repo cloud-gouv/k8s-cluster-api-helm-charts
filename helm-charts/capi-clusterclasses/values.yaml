@@ -8,8 +8,24 @@ provider:
 
 # values that are specific to the provider 'outscale'
 outscale: {}
+
 ## sample value below
 #outscale:
+#  # properties of machineHealthCheck
+#  machineHealthCheck:
+#    maxUnhealthy: 100%
+#    nodeStartupTimeout: 20m0s
+#    unhealthyConditions:
+#      - type: Ready
+#        status: Unknown
+#        timeout: 5m0s
+#      - type: Ready
+#        status: "False"
+#        timeout: 20m0s
+#      - status: "True"
+#        timeout: 1m0s
+#        type: DiskPressure
+#
 #  # properties of the controlplane
 #  controlplane:
 #    rootDisk:
@@ -21,7 +37,7 @@ outscale: {}
 #  workers:
 #    # the names of these dictionaries will be used in the template 'ClusterClass.yaml'
 #    # as the names of the 'MachineDeployment classes'
-#    
+#
 #    # for workers that will *not* be hosted in a specific availability zone
 #    md-regionwide-class:
 #      rootDisk:

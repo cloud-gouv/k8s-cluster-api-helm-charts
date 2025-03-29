@@ -11,8 +11,7 @@ spec:
     spec:
       network:
         clusterName: "must-be-patched"
-        bastion:        # will be patched by a ClusterClass patch
-          enable: false
+        bastion: {}     # will be patched by a ClusterClass patch
         internetService:
           clusterName: "must-be-patched"
         publicIps:      # will be patched by a ClusterClass patch

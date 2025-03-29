@@ -99,17 +99,14 @@ spec:
             vmSize:
               type: string
               description: size of the bastion VM. This must be a valid Outscale vmType
-              default: tinav5.c4r8p3
               example: tinav5.c4r8p3
             imageName:
               type: string
               description: name of the image to use to provision the bastion VM
-              default: ubuntu-2204-2204-kubernetes-v1.28.5-2024-01-10
               example: ubuntu-2204-2204-kubernetes-v1.28.5-2024-01-10
             subregionName:
               type: string
               description: name of the subregion where the bastion will be deployed
-              default: eu-west-2a
               example: eu-west-2a, eu-west-2b
             rootDisk:
               type: object
@@ -127,16 +124,11 @@ spec:
                   description: type of the root disk
                   default: standard
                   enum: ["standard", "gp2", "io1"]
-              default:
-                iops: 1000
-                size: 50
-                type: standard
             allow_cidr:
               type: array
               items:
                 type: string
               description: list of CIDRs that are allowed to connect to the bastion
-              default: []
           default:
             enable: false
     - name: sshKeypairName
@@ -156,7 +148,6 @@ spec:
             Name of the Outscale subregion to use to deploy resources that
             do require subregion to be documented (bastion, subnets,
             OscMachineTemplates dedicated one specific AZ)
-          default: eu-west-2a
           example: eu-west-2a, eu-west-2b
     - name: coreDNSVersion
       # coredns is not upgraded automaticaly by cluster api
@@ -585,6 +576,21 @@ spec:
                       {{`{{- end }}`}}
 
     # OscClusterTemplate patches for the bastion
+    # always set bastion state (enable or disable)
+    - name: oct_bastion_enable
+      definitions:
+        - selector:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: OscClusterTemplate
+            matchResources:
+              infrastructureCluster: true
+          jsonPatches:
+            - op: add
+              path: "/spec/template/spec/network/bastion/enable"
+              valueFrom:
+                variable: bastion.enable
+
+    # patches bastion properties if enable
     - name: oct_bastion
       enabledIf: {{`"{{ .bastion.enable }}"`}}
       definitions:
