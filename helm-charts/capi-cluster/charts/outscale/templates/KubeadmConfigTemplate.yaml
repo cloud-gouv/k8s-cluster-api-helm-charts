@@ -13,6 +13,7 @@ spec:
           name: {{`"{{ ds.meta_data.local_hostname }}"`}}
           kubeletExtraArgs:
             cloud-provider: "external"
+            provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
             anonymous-auth: "false"
             container-log-max-files: "10"
             container-log-max-size: 50Mi
@@ -23,7 +24,7 @@ spec:
             eviction-soft: imagefs.available<15%,memory.available<300Mi,nodefs.available<10%,nodefs.inodesFree<10%
             eviction-soft-grace-period: imagefs.available=5m0s,memory.available=5m0s,nodefs.available=30m0s,nodefs.inodesFree=30m0s
             fail-swap-on: "true"
-            feature-gates: "EventedPLEG=true,HPAScaleToZero=true,KubeletCgroupDriverFromCRI=true,KubeletPodResourcesGet=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+            feature-gates: "HPAScaleToZero=true,KubeletCgroupDriverFromCRI=true,KubeletPodResourcesGet=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
             image-gc-low-threshold: "50"
             kernel-memcg-notification: "true"
             kube-reserved: "cpu=300m,memory=500Mi,ephemeral-storage=1Gi,pid='1000'"
@@ -35,8 +36,6 @@ spec:
             serialize-image-pulls: "false"
             tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
             tls-min-version: "VersionTLS12"
-            v: "5"
-            provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
             {{- with $pool.nodeLabels }}
             node-labels: "{{ range $i, $k := (keys . | sortAlpha) }}{{ if ne $i 0 }},{{ end }}{{ $k }}={{ index $pool.nodeLabels $k }}{{ end }}"
             {{- end }}
