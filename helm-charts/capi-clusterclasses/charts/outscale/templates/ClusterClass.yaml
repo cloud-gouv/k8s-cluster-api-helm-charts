@@ -13,12 +13,14 @@ spec:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: OscClusterTemplate
       name: {{ include "outscale.name" . }}
+      namespace: default
 
   controlPlane:
     ref:
       apiVersion: controlplane.cluster.x-k8s.io/v1beta1
       kind: KubeadmControlPlaneTemplate
       name: {{ include "outscale.name" $ }}
+      namespace: default
     namingStrategy:
       template: {{`"{{ .cluster.name }}-{{ .random }}"`}}
     machineInfrastructure:
@@ -26,6 +28,7 @@ spec:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: OscMachineTemplate
         name: {{ include "outscale.name" $ }}-controlplane
+        namespace: default
     machineHealthCheck:
       maxUnhealthy: 100%
       nodeStartupTimeout: 20m0s
@@ -57,11 +60,13 @@ spec:
               apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
               kind: KubeadmConfigTemplate
               name: {{ include "outscale.name" $ }}
+              namespace: default
           infrastructure:
             ref:
               apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
               kind: OscMachineTemplate
               name: {{ include "outscale.name" $ }}-worker-{{ $name }}
+              namespace: default
           metadata: {}
         machineHealthCheck:
           maxUnhealthy: 100%
@@ -641,4 +646,4 @@ spec:
                       ipProtocol: tcp
                       ipRange: {{ $cidr }}
                     {{- end }}`}}
-                  
+
