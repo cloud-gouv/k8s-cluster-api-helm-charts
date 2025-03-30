@@ -79,56 +79,24 @@ spec:
         kubeletExtraArgs:
           cloud-provider: "external"
           provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
-          anonymous-auth: "false"
-          container-log-max-files: "10"
-          container-log-max-size: 50Mi
-          event-burst: "100"
-          event-qps: "100"
-          eviction-hard: imagefs.available<10%,memory.available<100Mi,nodefs.available<5%,nodefs.inodesFree<5%
-          eviction-max-pod-grace-period: "180"
-          eviction-soft: imagefs.available<15%,memory.available<300Mi,nodefs.available<10%,nodefs.inodesFree<10%
-          eviction-soft-grace-period: imagefs.available=5m0s,memory.available=5m0s,nodefs.available=30m0s,nodefs.inodesFree=30m0s
-          fail-swap-on: "true"
-          feature-gates: "HPAScaleToZero=true,KubeletCgroupDriverFromCRI=true,KubeletPodResourcesGet=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
-          image-gc-low-threshold: "50"
-          kernel-memcg-notification: "true"
-          kube-reserved: "cpu=300m,memory=500Mi,ephemeral-storage=1Gi,pid='1000'"
-          system-reserved: "cpu=200m,memory=200Mi,ephemeral-storage=1Gi,pid='1000'"
-          max-pods: "110"
-          registry-burst: "10"
-          registry-qps: "5"
-          rotate-certificates: "true"
-          serialize-image-pulls: "false"
-          tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
-          tls-min-version: "VersionTLS12"
+      # Here we specify the directory that contains the patch files
+      # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
+      # See: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
+      #
+      patches:
+        directory: /etc/kubernetes/patches
     joinConfiguration:
       nodeRegistration:
         name: {{`"{{ ds.meta_data.local_hostname }}"`}}
         kubeletExtraArgs:
           cloud-provider: "external"
           provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
-          anonymous-auth: "false"
-          container-log-max-files: "10"
-          container-log-max-size: 50Mi
-          event-burst: "100"
-          event-qps: "100"
-          eviction-hard: imagefs.available<10%,memory.available<100Mi,nodefs.available<5%,nodefs.inodesFree<5%
-          eviction-max-pod-grace-period: "180"
-          eviction-soft: imagefs.available<15%,memory.available<300Mi,nodefs.available<10%,nodefs.inodesFree<10%
-          eviction-soft-grace-period: imagefs.available=5m0s,memory.available=5m0s,nodefs.available=30m0s,nodefs.inodesFree=30m0s
-          fail-swap-on: "true"
-          feature-gates: "HPAScaleToZero=true,KubeletCgroupDriverFromCRI=true,KubeletPodResourcesGet=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
-          image-gc-low-threshold: "50"
-          kernel-memcg-notification: "true"
-          kube-reserved: "cpu=300m,memory=500Mi,ephemeral-storage=1Gi,pid='1000'"
-          system-reserved: "cpu=200m,memory=200Mi,ephemeral-storage=1Gi,pid='1000'"
-          max-pods: "110"
-          registry-burst: "10"
-          registry-qps: "5"
-          rotate-certificates: "true"
-          serialize-image-pulls: "false"
-          tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
-          tls-min-version: "VersionTLS12"
+      # Here we specify the directory that contains the patch files
+      # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
+      # See: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
+      #
+      patches:
+        directory: /etc/kubernetes/patches
 # cloud-init
 ##  Add external volume for etcd
 #    diskSetup:
@@ -156,6 +124,84 @@ spec:
       - for script in $(find /etc/post-kubeadm-commands/ -name '*.sh' -type f | sort);
         do echo "Running script $script"; "$script"; done
     files:
+      # Here we put a patch file for kubeletconfiguration target in strategic patchtype on nodes via KubeadmConfigSpec.files
+      # The naming convention of the patch file is kubeletconfiguration{suffix}+{patchtype}.yaml where {suffix} is an string and {patchtype} is one of the following: strategic, merge, json.
+      # {suffix} determines the order of the patch files. The patches are applied in the alpha-numerical order of the {suffix}.
+      #
+      # See https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
+      #
+      - path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
+        owner: "root:root"
+        permissions: "0644"
+        content: |
+          apiVersion: kubelet.config.k8s.io/v1beta1
+          kind: KubeletConfiguration
+          authentication:
+            anonymous:
+              enabled: false
+          containerLogMaxFiles: 10
+          containerLogMaxSize: "50Mi"
+          eventBurst: 100
+          eventRecordQPS: 100
+          evictionHard:
+            memory.available:  "100Mi"
+            nodefs.available:  "5%"
+            nodefs.inodesFree: "5%"
+            imagefs.available: "10%"
+            imagefs.inodesFree: "5%"
+          evictionSoft:
+            memory.available:  "300Mi"
+            nodefs.available:  "10%"
+            nodefs.inodesFree: "10%"
+            imagefs.available: "15%"
+            imagefs.inodesFree: "5%"
+          evictionSoftGracePeriod:
+            memory.available:  "5m0s"
+            nodefs.available:  "30m0s"
+            nodefs.inodesFree: "30m0s"
+            imagefs.available: "5m0s"
+            imagefs.inodesFree: "5m0s"
+          evictionMaxPodGracePeriod: 180
+          failSwapOn: true
+          imageGCLowThresholdPercent: 50
+          kernelMemcgNotification: true
+          kubeReserved:
+            cpu: "300m"
+            memory: "500Mi"
+            ephemeral-storage: "1Gi"
+            pid: "1000"
+          systemReserved:
+            cpu: "200m"
+            memory: "200Mi"
+            ephemeral-storage: "1Gi"
+            pid: "1000"
+          maxPods: 110
+          registryBurst: 10
+          registryPullQPS: 5
+          serializeImagePulls: false
+          tlsCipherSuites:
+            - "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+            - "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+            - "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256"
+            - "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305"
+            - "TLS_AES_256_GCM_SHA384"
+            - "TLS_AES_128_GCM_SHA256"
+            - "TLS_CHACHA20_POLY1305_SHA256"
+            - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+            - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+            - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256"
+            - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+            - "TLS_RSA_WITH_AES_256_GCM_SHA384"
+            - "TLS_RSA_WITH_AES_128_GCM_SHA256"
+          tlsMinVersion: "VersionTLS12"
+          featureGates:
+            HPAScaleToZero: true
+            KubeletCgroupDriverFromCRI: true
+            KubeletPodResourcesGet: true
+            QOSReserved: true
+            RecoverVolumeExpansionFailure: true
+            SELinuxMountReadWriteOncePod: true
+
       - path: /etc/pre-kubeadm-commands/00-wait_endpoint.sh
         owner: root:root
         permissions: "0755"
