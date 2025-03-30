@@ -14,13 +14,13 @@ spec:
       node:
         clusterName: "must-be-patched"
         image:
-          name: "must-be-patched"
+          name: {{ $mt.image | default "must-be-patched" }} # will be patched by ClusterClass
         keypair:
           name: "must-be-patched"
         vm:
           clusterName: "must-be-patched"
           keypairName: "must-be-patched"
-          vmType: "tinav5.c2r4p3"   # will be patched by ClusterClass
+          vmType: {{ $mt.vmType | default "tinav5.c2r4p3"  }} # will be patched by ClusterClass
           # securityGroupNames: []
           {{- if hasKey $mt "subregionName" }}
           subregionName: {{ $mt.subregionName  }}

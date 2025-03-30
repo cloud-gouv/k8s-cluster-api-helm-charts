@@ -28,6 +28,8 @@ outscale: {}
 #
 #  # properties of the controlplane
 #  controlplane:
+#    image: ubuntu-2204-2204-kubernetes-v1.28.5-2024-01-10
+#    vmType: tinav5.c2r4p3
 #    rootDisk:
 #      rootDiskIops: 1000
 #      rootDiskSize: 50
@@ -40,6 +42,8 @@ outscale: {}
 #
 #    # for workers that will *not* be hosted in a specific availability zone
 #    md-regionwide-class:
+#      image: ubuntu-2204-2204-kubernetes-v1.28.5-2024-01-10
+#      vmType: tinav5.c2r4p3
 #      rootDisk:
 #        rootDiskIops: 100
 #        rootDiskSize: 30

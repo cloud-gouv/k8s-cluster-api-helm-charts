@@ -132,26 +132,23 @@ spec:
             OscMachineTemplates dedicated one specific AZ)
           example: eu-west-2a, eu-west-2b
     - name: coreDNSVersion
-      # coredns is not upgraded automaticaly by cluster api
-      # We need to specify the target version for each cluster/clusterclass
-      # see https://github.com/kubernetes-sigs/cluster-api/issues/6429
-      # and for default version for each kubernets versions:
-      # https://github.com/kubernetes/kubernetes/blob/v1.28.5/cmd/kubeadm/app/constants/constants.go#L344
-      required: true
+      # Not required: CoreDNS version installed by kubeadm and imagebuilder meet kubernetes version
+      required: false
       metadata: {}
       schema:
         openAPIV3Schema:
           type: string
           description: coredns image version (corends is not upgraded automaticaly by cluster api)
     - name: vmImageName
-      required: true
+      required: false
       metadata: {}
       schema:
         openAPIV3Schema:
           type: string
           description: name of the image to use to provision controlplane and worker VMs
+          example: "ubuntu-2204-2204-kubernetes-v1.28.5-2024-01-10"
     - name: controlPlane
-      required: true
+      required: false
       metadata: {}
       schema:
         openAPIV3Schema:
@@ -176,15 +173,14 @@ spec:
                   type: string
                   description: type of the root disk
                   example: standard
-                  enum: ["standard", "gp2", "io1"]
-              required:
-                - iops
-                - size
-                - type
-          required:
-            - vmSize
+#                  enum: ["standard", "gp2", "io1"]
+#              required:
+#                - iops
+#                - size
+#                - type
+
     - name: workers
-      required: true
+      required: false
       metadata: {}
       schema:
         openAPIV3Schema:
@@ -218,8 +214,9 @@ spec:
             - vmSize
 
   patches:
-    # KubeadmControlPlaneTemplate patches
-    - name: kcpt_main
+    # coreDNSVersion patches
+    - name: coreDNSVersion
+      enabledIf: {{ `"{{ if .coreDNSVersion }}true{{end}}"` }}
       definitions:
         - selector:
             apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -227,10 +224,10 @@ spec:
             matchResources:
               controlPlane: true
           jsonPatches:
-            - op: replace
+            - op: add
               path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/dns/imageTag
               valueFrom:
-                template: {{`"{{ .coreDNSVersion }}"`}}
+                variable: coreDNSVersion
 
     # OscMachineTemplate (ControlPlane) patches
     - name: omt_controlplane_main
@@ -245,10 +242,6 @@ spec:
               path: /spec/template/spec/node/clusterName
               valueFrom:
                 variable: builtin.cluster.name
-            - op: replace
-              path: /spec/template/spec/node/image/name
-              valueFrom:
-                variable: vmImageName
             - op: replace
               path: /spec/template/spec/node/keypair/name
               valueFrom:
@@ -265,6 +258,17 @@ spec:
               path: /spec/template/spec/node/vm/loadBalancerName
               valueFrom:
                 template: {{`"{{ printf \"%s-%s\" (lower .builtin.cluster.name | sha256sum | trunc 28 ) \"k8s\" }}"`}}
+
+    # controlplane vmSize patches
+    - name: omt_controlplane_vmsize
+      enabledIf: {{ `'{{ ne .controlPlane.vmSize "" }}'` }}
+      definitions:
+        - selector:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: OscMachineTemplate
+            matchResources:
+              controlPlane: true
+          jsonPatches:
             - op: replace
               path: /spec/template/spec/node/vm/vmType
               valueFrom:
@@ -272,7 +276,7 @@ spec:
 
     # OscMachineTemplate (ControlPlane) patches for RootDisk
     - name: omt_controlplane_rootdisk
-      enabledIf: {{`"{{ hasKey .controlPlane \"rootDisk\" }}"`}}
+      enabledIf: {{ `"{{ if and .controlPlane .controlPlane.rootDisk .controlPlane.rootDisk.iops .controlPlane.rootDisk.size .controlPlane.rootDisk.type }}true{{end}}"` }}
       definitions:
         - selector:
             apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -287,6 +291,35 @@ spec:
                   {{`rootDiskIops: {{ .controlPlane.rootDisk.iops }}
                   rootDiskSize: {{ .controlPlane.rootDisk.size }}
                   rootDiskType: {{ .controlPlane.rootDisk.type }}`}}
+
+    # vmImageName OscMachineTemplate patches
+    - name: vmImageName
+      enabledIf: {{ `"{{ if .vmImageName }}true{{end}}"` }}
+      definitions:
+        - selector:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: OscMachineTemplate
+            matchResources:
+              controlPlane: true
+          jsonPatches:
+            - op: replace
+              path: /spec/template/spec/node/image/name
+              valueFrom:
+                variable: vmImageName
+        - selector:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: OscMachineTemplate
+            matchResources:
+              machineDeploymentClass:
+                names:
+                  {{- range $name, $_ := .Values.workers }}
+                  - {{ $name }}
+                  {{- end }}
+          jsonPatches:
+            - op: replace
+              path: /spec/template/spec/node/image/name
+              valueFrom:
+                variable: vmImageName
 
     # OscMachineTemplate (Workers) patches
     - name: omt_workers_main
@@ -305,10 +338,6 @@ spec:
               path: /spec/template/spec/node/clusterName
               valueFrom:
                 variable: builtin.cluster.name
-            - op: replace
-              path: /spec/template/spec/node/image/name
-              valueFrom:
-                variable: vmImageName
             - op: replace
               path: /spec/template/spec/node/keypair/name
               valueFrom:
