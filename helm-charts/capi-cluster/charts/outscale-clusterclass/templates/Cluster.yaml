@@ -52,6 +52,7 @@ spec:
 
   topology:
     class: {{ .Values.clusterClass.name }}
+    classNamespace: {{ .Values.clusterClass.classNamespace | default "default" }}
     version: {{ .Values.clusterClass.kubernetesVersion | quote }}
     controlPlane:
       replicas: {{ .Values.clusterClass.controlPlane.replicas | default 1 }}
@@ -76,13 +77,19 @@ spec:
         value: {{ .Values.clusterClass.variables.sshKeypairName }}
       - name: subregionName
         value: {{ .Values.clusterClass.variables.subregionName | quote }}
+      {{- if hasKey .Values.clusterClass.variables "coreDNSVersion" }}
       - name: coreDNSVersion
         value: {{ .Values.clusterClass.variables.coreDNSVersion | quote }}
+      {{- end }}
+      {{- if hasKey .Values.clusterClass.variables "vmImageName" }}
       - name: vmImageName
-        value: {{ .Values.clusterClass.variables.vmImageName | quote }}
+        value: {{ .Values.clusterClass.variables.vmImageName | default "" }}
+      {{- end }}
+      {{- if hasKey .Values.clusterClass.variables "controlPlane" }}
       - name: controlPlane
         value:
           {{- .Values.clusterClass.variables.controlPlane | toYaml | nindent 10 }}
+      {{- end }}
       - name: workers
         value:
           {{- .Values.clusterClass.variables.workers | toYaml | nindent 10 }}
