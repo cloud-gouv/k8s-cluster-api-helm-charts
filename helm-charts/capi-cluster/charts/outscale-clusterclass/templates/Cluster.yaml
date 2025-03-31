@@ -76,8 +76,10 @@ spec:
         value: {{ .Values.clusterClass.variables.sshKeypairName }}
       - name: subregionName
         value: {{ .Values.clusterClass.variables.subregionName | quote }}
+      {{- if hasKey .Values.clusterClass.variables "coreDNSVersion" }}
       - name: coreDNSVersion
         value: {{ .Values.clusterClass.variables.coreDNSVersion | quote }}
+      {{- end }}
       - name: vmImageName
         value: {{ .Values.clusterClass.variables.vmImageName | quote }}
       - name: controlPlane

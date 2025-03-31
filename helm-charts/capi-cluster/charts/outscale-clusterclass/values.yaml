@@ -49,7 +49,7 @@
 #     # Version of CoreDNS to use
 #     # this must be consistent with clusterClass.kubernetesVersion
 #     # for default version for each kubernets versions:
-#     # https://github.com/kubernetes/kubernetes/blob/v1.28.5/cmd/kubeadm/app/constants/constants.go#L344
+#     # https://github.com/coredns/deployment/blob/master/kubernetes/CoreDNS-k8s_version.md
 #     coreDNSVersion: "v1.10.1"
 
 #     # Name of a valid VM image to use to provision all the
