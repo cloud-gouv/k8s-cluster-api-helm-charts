@@ -28,6 +28,7 @@ outscale: {}
 #
 #  # properties of the controlplane
 #  controlplane:
+#    vmType: tinav5.c2r4p3
 #    rootDisk:
 #      rootDiskIops: 1000
 #      rootDiskSize: 50
@@ -40,6 +41,7 @@ outscale: {}
 #
 #    # for workers that will *not* be hosted in a specific availability zone
 #    md-regionwide-class:
+#     vmType: tinav5.c2r4p3
 #      rootDisk:
 #        rootDiskIops: 100
 #        rootDiskSize: 30

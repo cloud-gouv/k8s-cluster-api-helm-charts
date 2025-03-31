@@ -20,7 +20,7 @@ spec:
           keypairName: "must-be-patched"
           loadBalancerName: "must-be-patched"
           role: controlplane
-          vmType: "tinav5.c2r4p3"   # will be patched by ClusterClass
+          vmType: {{ .Values.controlplane.vmType | default "tinav5.c2r4p3"  }}
           # securityGroupNames: []
           {{- if hasKey .Values.controlplane "rootDisk" }}
           rootDisk:

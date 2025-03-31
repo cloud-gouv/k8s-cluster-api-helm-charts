@@ -132,17 +132,15 @@ spec:
             OscMachineTemplates dedicated one specific AZ)
           example: eu-west-2a, eu-west-2b
     - name: coreDNSVersion
-      # coredns is not upgraded automaticaly by cluster api
-      # We need to specify the target version for each cluster/clusterclass
-      # see https://github.com/kubernetes-sigs/cluster-api/issues/6429
-      # and for default version for each kubernets versions:
-      # https://github.com/kubernetes/kubernetes/blob/v1.28.5/cmd/kubeadm/app/constants/constants.go#L344
-      required: true
+      # The Coredns version is aligned with the Kubernetes version (via OS image-builder)
+      # You can override the version if necessary.
+      # see https://github.com/coredns/deployment/blob/master/kubernetes/CoreDNS-k8s_version.md
+      required: false
       metadata: {}
       schema:
         openAPIV3Schema:
           type: string
-          description: coredns image version (corends is not upgraded automaticaly by cluster api)
+          description: coredns image version
     - name: vmImageName
       required: true
       metadata: {}
@@ -220,6 +218,7 @@ spec:
   patches:
     # KubeadmControlPlaneTemplate patches
     - name: kcpt_main
+      enabledIf: {{ `"{{ if .coreDNSVersion }}true{{end}}"` }}
       definitions:
         - selector:
             apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -227,10 +226,10 @@ spec:
             matchResources:
               controlPlane: true
           jsonPatches:
-            - op: replace
+            - op: add
               path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/dns/imageTag
               valueFrom:
-                template: {{`"{{ .coreDNSVersion }}"`}}
+                variable: coreDNSVersion
 
     # OscMachineTemplate (ControlPlane) patches
     - name: omt_controlplane_main
@@ -558,7 +557,6 @@ spec:
                       {{`{{- end }}`}}
 
     # OscClusterTemplate patches for the bastion
-    # patches bastion properties if enable
     - name: oct_bastion
       enabledIf: {{`"{{ .bastion.enable }}"`}}
       definitions:
