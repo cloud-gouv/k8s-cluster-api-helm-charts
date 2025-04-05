@@ -45,72 +45,9 @@ spec:
           content: |
             apiVersion: kubelet.config.k8s.io/v1beta1
             kind: KubeletConfiguration
-            authentication:
-              anonymous:
-                enabled: false
-            containerLogMaxFiles: 10
-            containerLogMaxSize: "50Mi"
-            eventBurst: 100
-            eventRecordQPS: 100
-            evictionHard:
-              memory.available:  "100Mi"
-              nodefs.available:  "5%"
-              nodefs.inodesFree: "5%"
-              imagefs.available: "10%"
-              imagefs.inodesFree: "5%"
-            evictionSoft:
-              memory.available:  "300Mi"
-              nodefs.available:  "10%"
-              nodefs.inodesFree: "10%"
-              imagefs.available: "15%"
-              imagefs.inodesFree: "5%"
-            evictionSoftGracePeriod:
-              memory.available:  "5m0s"
-              nodefs.available:  "30m0s"
-              nodefs.inodesFree: "30m0s"
-              imagefs.available: "5m0s"
-              imagefs.inodesFree: "5m0s"
-            evictionMaxPodGracePeriod: 180
-            failSwapOn: true
-            imageGCLowThresholdPercent: 50
-            kernelMemcgNotification: true
-            kubeReserved:
-              cpu: "300m"
-              memory: "500Mi"
-              ephemeral-storage: "1Gi"
-              pid: "1000"
-            systemReserved:
-              cpu: "200m"
-              memory: "200Mi"
-              ephemeral-storage: "1Gi"
-              pid: "1000"
-            maxPods: 110
-            registryBurst: 10
-            registryPullQPS: 5
-            serializeImagePulls: false
-            tlsCipherSuites:
-              - "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
-              - "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
-              - "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256"
-              - "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305"
-              - "TLS_AES_256_GCM_SHA384"
-              - "TLS_AES_128_GCM_SHA256"
-              - "TLS_CHACHA20_POLY1305_SHA256"
-              - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
-              - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
-              - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256"
-              - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
-              - "TLS_RSA_WITH_AES_256_GCM_SHA384"
-              - "TLS_RSA_WITH_AES_128_GCM_SHA256"
-            tlsMinVersion: "VersionTLS12"
-            featureGates:
-              HPAScaleToZero: true
-              KubeletCgroupDriverFromCRI: true
-              KubeletPodResourcesGet: true
-              QOSReserved: true
-              RecoverVolumeExpansionFailure: true
-              SELinuxMountReadWriteOncePod: true
-
+            {{- with $.Values.global.KubeletConfiguration }}
+            {{- tpl (. | toYaml) $ | nindent 12 }}
+            {{- end }}
         - path: /etc/pre-kubeadm-commands/00-wait_endpoint.sh
           owner: root:root
           permissions: "0755"
