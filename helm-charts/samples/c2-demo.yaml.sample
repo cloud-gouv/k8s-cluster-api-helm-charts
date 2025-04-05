@@ -8,6 +8,10 @@ global:
 
   clusterName: c2-demo
 
+  # override one parameter
+  KubeletConfiguration:
+    containerLogMaxFiles: 30
+
   # helm addons
   addons:
     cni:
