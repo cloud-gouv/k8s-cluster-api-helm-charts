@@ -175,7 +175,6 @@ global:
   #
   etcd:
     local:
-      dataDir: "/var/lib/etcd"
       extraArgs:
         auto-compaction-retention: "1"
         quota-backend-bytes: "8589934592"
@@ -184,6 +183,14 @@ global:
         experimental-bootstrap-defrag-threshold-megabytes: "512"
         tls-min-version: "TLS1.2"
         v2-deprecation: "gone"
+  disk:
+    etcd:
+      enabled: false
+    logs:
+      enabled: false
+    data:
+      enabled: false
+
 #
 # reference to openstack helm values
 #
@@ -261,6 +268,12 @@ outscale: {}
 #    replicas: 1
 #    vmType: tinav5.c2r4p3
 #    subregionName: "eu-west-2a"
+#    volumes:
+#      - name: etcd-volume
+#        size: 10
+#        iops: 100
+#        volumeType: gp2
+#        device: /dev/sdb
 #  workers:
 #    - name: md-0
 #      version: v1.29.5

@@ -42,6 +42,12 @@ spec:
           {{- end }}
       etcd:
         local:
+          {{- if .Values.global.disk.etcd.enabled }}
+          dataDir: "/var/lib/etcddisk/etcd"
+          {{- else }}
+          dataDir: "/var/lib/etcd"
+          {{- end }}
+
           {{- with .Values.global.etcd.local }}
           {{- tpl (. | toYaml) $ | nindent 10 }}
           {{- end }}
@@ -80,23 +86,26 @@ spec:
       patches:
         directory: /etc/kubernetes/patches
 # cloud-init
-##  Add external volume for etcd
-#    diskSetup:
-##      partitions:
-##      - device: /dev/vdb
-##        layout: true
-##        overwrite: false
-##        tableType: gpt
-#      filesystems:
-#      - device: /dev/vdb
-#        extraOpts:
-#        - -E
-#        - lazy_itable_init=1,lazy_journal_init=1
-#        filesystem: ext4
-#        label: etcd_disk
-#    mounts:
-#      - - LABEL=etcd_disk
-#        - /var/lib/etcddisk
+# external volume for etcd
+    {{- if .Values.global.disk.etcd.enabled }}
+    diskSetup:
+      partitions:
+      - device: /dev/sda
+        layout: true
+        overwrite: false
+        tableType: gpt
+      filesystems:
+      - device: /dev/sda
+        extraOpts:
+        - -E
+        - lazy_itable_init=1,lazy_journal_init=1
+        filesystem: ext4
+        label: etcd_disk
+    mounts:
+      - - LABEL=etcd_disk
+        - /var/lib/etcddisk
+    {{- end }}
+# external volume for etcd
     preKubeadmCommands:
       - mkdir -p /etc/pre-kubeadm-commands
       - for script in $(find /etc/pre-kubeadm-commands/ -name '*.sh' -type f | sort);
