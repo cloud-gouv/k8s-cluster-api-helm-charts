@@ -137,8 +137,9 @@ global:
     extraArgs:
       allow-privileged: "true"
       authorization-mode: "RBAC,Node"
-      audit-log-maxsize: "100"
-      audit-log-maxbackup: "10"
+      audit-log-maxsize: "100"  # audit log size in MegaBytes before rotation
+      audit-log-maxbackup: "10" # number of audit log to retain
+      audit-log-maxage: "20"    # number of days to retain audit log
       event-ttl: "4h"
       enable-bootstrap-token-auth: "true"
       enable-admission-plugins: "NodeRestriction,AlwaysPullImages"
