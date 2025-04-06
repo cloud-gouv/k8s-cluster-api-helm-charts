@@ -94,6 +94,14 @@ spec:
         layout: true
         overwrite: false
         tableType: gpt
+      - device: /dev/sdb
+        layout: true
+        overwrite: false
+        tableType: gpt
+      - device: /dev/sdc
+        layout: true
+        overwrite: false
+        tableType: gpt
       filesystems:
       - device: /dev/sda
         extraOpts:
@@ -130,6 +138,28 @@ spec:
           {{- with .Values.global.KubeletConfiguration }}
           {{- tpl (. | toYaml) $ | nindent 10 }}
           {{- end }}
+      - path: /etc/pre-kubeadm-commands/00-disk-layout.sh
+        owner: root:root
+        permissions: "0700"
+        content: |
+          #!/bin/bash
+          #
+          # pre-kubadm-scripts
+          #
+          set -e -x
+          sgdisk -n 0:0:0 /dev/sdb
+          partprobe
+          pvcreate /dev/sdb1
+          vgcreate vg-logs /dev/sdb1
+          lvcreate --name lv-logs -l 100%FREE vg-logs
+          mkfs.xfs /dev/vg-logs/lv-logs
+
+          sgdisk -n 0:0:0 /dev/sdc
+          partprobe
+          pvcreate /dev/sdc1
+          vgcreate vg-data /dev/sdc1
+          lvcreate --name lv-data -l 100%FREE vg-data
+          mkfs.xfs /dev/vg-data/lv-data
 
       - path: /etc/pre-kubeadm-commands/00-wait_endpoint.sh
         owner: root:root
