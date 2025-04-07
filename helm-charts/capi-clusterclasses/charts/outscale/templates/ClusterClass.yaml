@@ -231,6 +231,30 @@ spec:
               valueFrom:
                 variable: coreDNSVersion
 
+    # KubeadmControlPlaneTemplate patches
+    - name: kcpt_main_1
+      definitions:
+        - selector:
+            apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+            kind: KubeadmControlPlaneTemplate
+            matchResources:
+              controlPlane: true
+          jsonPatches:
+            - op: replace
+              path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/controllerManager/extraArgs/cluster-name
+              valueFrom:
+                variable: builtin.cluster.name
+            - op: replace
+              path: /spec/template/spec/kubeadmConfigSpec/files
+              valueFrom:
+                template: |
+                  - path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+                    owner: root:root
+                    permissions: "0644"
+                    content: |
+                      [Service]
+                      Environment="DEBUG=true"
+
     # OscMachineTemplate (ControlPlane) patches
     - name: omt_controlplane_main
       definitions:
