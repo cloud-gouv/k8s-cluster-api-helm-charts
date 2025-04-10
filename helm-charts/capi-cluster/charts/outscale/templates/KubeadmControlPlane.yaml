@@ -362,26 +362,10 @@ spec:
             configuration:
               apiVersion: pod-security.admission.config.k8s.io/v1beta1
               kind: PodSecurityConfiguration
-              defaults:
-                enforce: "restricted"
-                enforce-version: "latest"
-                audit: "restricted"
-                audit-version: "latest"
-                warn: "restricted"
-                warn-version: "latest"
-              exemptions:
-                usernames: []
-                runtimeClasses: []
-                namespaces:
-                  - kube-system
-                  - ingress-nginx
-                  - monitoring
-                  - promtail
-                  - argocd                                  # TODO: make this component compliant with our PSS policy
-                  - capi-operator-system                    # TODO: make this component compliant with our PSS policy
-                  - cluster-api-provider-outscale-system    # TODO: make this component compliant with our PSS policy
-                  - loki                                    # TODO: make this component compliant with our PSS policy
-                  - whoami                                  # TODO: make this component compliant with our PSS policy
+              {{- with .Values.global.PodSecurityConfiguration }}
+              {{- tpl (. | toYaml) $ | nindent 14 }}
+              {{- end }}
+
   machineTemplate:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
