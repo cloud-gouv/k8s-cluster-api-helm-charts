@@ -187,6 +187,33 @@ global:
         experimental-bootstrap-defrag-threshold-megabytes: "512"
         tls-min-version: "TLS1.2"
         v2-deprecation: "gone"
+
+  #
+  # configure Pod Security Standards
+  # see: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+  #
+  PodSecurityConfiguration:
+    defaults:
+      enforce: "restricted"
+      enforce-version: "latest"
+      audit: "restricted"
+      audit-version: "latest"
+      warn: "restricted"
+      warn-version: "latest"
+    exemptions:
+      usernames: []
+      runtimeClasses: []
+      namespaces:
+        - kube-system
+        - ingress-nginx
+        - monitoring
+        - promtail
+        - argocd
+        - capi-operator-system
+        - cluster-api-provider-outscale-system
+        - loki
+        - whoami
+
 #
 # reference to openstack helm values
 #
