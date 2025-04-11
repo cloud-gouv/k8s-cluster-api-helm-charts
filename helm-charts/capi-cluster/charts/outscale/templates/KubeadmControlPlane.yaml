@@ -5,7 +5,9 @@ metadata:
   name: {{ .Values.global.clusterName }}-control-plane
 spec:
   kubeadmConfigSpec:
-    verbosity: 5
+    {{- if hasKey .Values.global.kubeadmConfigSpec "verbosity" }}
+    verbosity: {{ .Values.global.kubeadmConfigSpec.verbosity | default 1 }}
+    {{- end }}
     clusterConfiguration:
       apiServer:
         timeoutForControlPlane: 20m0s

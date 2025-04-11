@@ -60,6 +60,12 @@ global:
       enabled: false
 
   #
+  # KubeadmConfigSpec configuration
+  kubeadmConfigSpec: {}
+  #kubeadmConfigSpec:
+  #  verbosity: 5
+
+  #
   # default KubeletConfiguration
   # See https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
   #
