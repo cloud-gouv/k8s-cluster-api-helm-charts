@@ -23,6 +23,9 @@ spec:
           imageId: {{ .Values.controlplane.imageId }}
           {{- end }}
           subregionName: {{ .Values.controlplane.subregionName  }}
+          {{- with .Values.controlplane.tags }}
+          tags: {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- if hasKey .Values.controlplane "rootDisk" }}
           rootDisk:
             rootDiskIops: {{ .Values.controlplane.rootDisk.rootDiskIops | default 100 }}

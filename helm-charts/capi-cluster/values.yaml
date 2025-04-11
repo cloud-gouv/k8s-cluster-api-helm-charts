@@ -297,6 +297,8 @@ outscale: {}
 #    replicas: 1
 #    vmType: tinav5.c2r4p3
 #    subregionName: "eu-west-2a"
+#    tags:
+#      tags.osc.fcu.repulse_server: vm-worker-md-0
 #  workers:
 #    - name: md-0
 #      version: v1.29.5
@@ -304,6 +306,8 @@ outscale: {}
 #      vmType: tinav5.c2r4p3
 #      subregionName: "eu-west-2a"
 #      image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
+#      tags:
+#        tags.osc.fcu.repulse_server: vm-control-plane
 #      rootDisk:
 #        rootDiskIops: 100
 #        rootDiskSize: 30
