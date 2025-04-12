@@ -64,9 +64,6 @@ spec:
               {{- tpl (. | toYaml) $ | nindent 14 }}
               {{- end }}
         initConfiguration:
-          localAPIEndpoint:
-            advertiseAddress: "0.0.0.0"
-            bindPort: 6443
           skipPhases:
             - addon/kube-proxy
           nodeRegistration:
@@ -82,10 +79,6 @@ spec:
           patches:
             directory: /etc/kubernetes/patches
         joinConfiguration:
-          controlPlane:
-            localAPIEndpoint:
-              advertiseAddress: "0.0.0.0"
-              bindPort: 6443
           discovery: {}
           skipPhases:
             - addon/kube-proxy

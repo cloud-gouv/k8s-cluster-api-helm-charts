@@ -165,6 +165,9 @@ outscale: {}
 #      rootDiskIops: 1000
 #      rootDiskSize: 50
 #      rootDiskType: gp2
+#    # anti affinity
+#    tags:
+#      tags.osc.fcu.repulse_server: vm-control-plane
 #
 #  # properties of the workers
 #  workers:
@@ -173,11 +176,14 @@ outscale: {}
 #
 #    # for workers that will *not* be hosted in a specific availability zone
 #    md-regionwide-class:
-#     vmType: tinav5.c2r4p3
+#      vmType: tinav5.c2r4p3
 #      rootDisk:
 #        rootDiskIops: 100
 #        rootDiskSize: 30
 #        rootDiskType: standard
+#      # anti affinity
+#      tags:
+#        tags.osc.fcu.repulse_server: vm-regionwide
 #
 #    # for workers that will be hosted in a specific availability zone
 #    # note that the name 'az1' is irrelevent, it could be anything
