@@ -9,7 +9,11 @@ metadata:
 spec:
   template:
     spec:
-      verbosity: 5
+      {{- if hasKey .Values.global.kubeadmConfigSpec "verbosity" }}
+      verbosity: {{ .Values.global.kubeadmConfigSpec.verbosity }}
+      {{- else }}
+      verbosity: 1
+      {{- end }}
       useExperimentalRetryJoin: true
       joinConfiguration:
         skipPhases:
@@ -107,7 +111,7 @@ spec:
               https::Proxy {{ .Values.global.https_proxy | quote }};
               {{- end }}
             }
-        - path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+        - path: /etc/systemd/system/containerd.service.d/00-http-proxy.conf
           owner: "root:root"
           permissions: "0644"
           content: |
@@ -120,5 +124,5 @@ spec:
             {{- end }}
             {{- if .Values.global.no_proxy }}
             # TODO: fix pods.cidrBlocks, services.cidrBlocks
-            Environment="NO_PROXY=.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,192.168.0.0/16"
+            Environment="NO_PROXY={{ .Values.global.no_proxy }}"
             {{- end }}

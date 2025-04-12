@@ -210,7 +210,7 @@ spec:
               {{- end }}
               {{- if .Values.global.no_proxy }}
               # TODO: fix pods.cidrBlocks, services.cidrBlocks
-              Environment="NO_PROXY=.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,192.168.0.0/16"
+              Environment="NO_PROXY={{ .Values.global.no_proxy }}"
               {{- end }}
 
           - path: /etc/kubernetes/audit-policy.yaml
