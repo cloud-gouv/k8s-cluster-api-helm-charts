@@ -244,16 +244,18 @@ spec:
               path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/controllerManager/extraArgs/cluster-name
               valueFrom:
                 variable: builtin.cluster.name
-            - op: replace
-              path: /spec/template/spec/kubeadmConfigSpec/files
+            # append a new files in cloud-init
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/files/-"
               valueFrom:
                 template: |
-                  - path: /etc/systemd/system/containerd.service.d/http-proxy.conf
-                    owner: root:root
-                    permissions: "0644"
-                    content: |
-                      [Service]
-                      Environment="DEBUG=true"
+                  # This a cloud-init files item (not list)
+                  path: /etc/systemd/system/containerd.service.d/http-proxy-debug.conf
+                  owner: root:root
+                  permissions: "0644"
+                  content: |
+                    [Service]
+                    Environment="DEBUG=true"
 
     # OscMachineTemplate (ControlPlane) patches
     - name: omt_controlplane_main

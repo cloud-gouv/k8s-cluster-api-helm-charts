@@ -135,6 +135,7 @@ spec:
               {{- with .Values.global.KubeletConfiguration }}
               {{- tpl (. | toYaml) $ | nindent 14 }}
               {{- end }}
+
           - path: /etc/pre-kubeadm-commands/00-wait_endpoint.sh
             owner: root:root
             permissions: "0755"
@@ -191,6 +192,7 @@ spec:
                 https::Proxy {{ .Values.global.https_proxy | quote }};
                 {{- end }}
                 }
+
           - path: /etc/systemd/system/containerd.service.d/http-proxy.conf
             owner: "root:root"
             permissions: "0644"
@@ -206,6 +208,7 @@ spec:
               # TODO: fix pods.cidrBlocks, services.cidrBlocks
               Environment="NO_PROXY=.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,192.168.0.0/16"
               {{- end }}
+
           - path: /etc/kubernetes/audit-policy.yaml
             owner: "root:root"
             permissions: "0600"
