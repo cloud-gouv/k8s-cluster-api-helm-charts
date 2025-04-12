@@ -391,8 +391,8 @@ spec:
                       - ingress-nginx
                       - monitoring
                       - promtail
-                      - argocd                                  # TODO: make this component compliant with our PSS policy
-                      - capi-operator-system                    # TODO: make this component compliant with our PSS policy
-                      - cluster-api-provider-outscale-system    # TODO: make this component compliant with our PSS policy
-                      - loki                                    # TODO: make this component compliant with our PSS policy
-                      - whoami                                  # TODO: make this component compliant with our PSS policy
+                      - argocd
+                      - capi-operator-system
+                      - cluster-api-provider-outscale-system
+                      - loki
+                      - whoami
