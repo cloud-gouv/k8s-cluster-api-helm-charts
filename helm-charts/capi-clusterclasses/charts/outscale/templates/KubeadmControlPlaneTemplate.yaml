@@ -16,7 +16,11 @@ spec:
       rolloutBefore:
         certificatesExpiryDays: 45
       kubeadmConfigSpec:
-        verbosity: 5
+        {{- if hasKey .Values.global.kubeadmConfigSpec "verbosity" }}
+        verbosity: {{ .Values.global.kubeadmConfigSpec.verbosity }}
+        {{- else }}
+        verbosity: 1
+        {{- end }}
         useExperimentalRetryJoin: true
         clusterConfiguration:
           apiServer:
@@ -379,23 +383,6 @@ spec:
                 configuration:
                   apiVersion: pod-security.admission.config.k8s.io/v1beta1
                   kind: PodSecurityConfiguration
-                  defaults:
-                    enforce: ""
-                    enforce-version: "latest"
-                    audit: ""
-                    audit-version: "latest"
-                    warn: ""
-                    warn-version: "latest"
-                  exemptions:
-                    usernames: []
-                    runtimeClasses: []
-                    namespaces:
-                      - kube-system
-                      - ingress-nginx
-                      - monitoring
-                      - promtail
-                      - argocd
-                      - capi-operator-system
-                      - cluster-api-provider-outscale-system
-                      - loki
-                      - whoami
+                  {{- with .Values.global.PodSecurityConfiguration }}
+                  {{- tpl (. | toYaml) $ | nindent 18 }}
+                  {{- end }}
