@@ -193,7 +193,7 @@ spec:
                 {{- end }}
                 }
 
-          - path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+          - path: /etc/systemd/system/containerd.service.d/00-http-proxy.conf
             owner: "root:root"
             permissions: "0644"
             content: |
