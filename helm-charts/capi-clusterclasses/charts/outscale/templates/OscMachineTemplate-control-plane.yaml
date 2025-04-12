@@ -22,6 +22,9 @@ spec:
           role: controlplane
           vmType: {{ .Values.controlplane.vmType | default "tinav5.c2r4p3"  }}
           # securityGroupNames: []
+          {{- with .Values.controlplane.tags }}
+          tags: {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- if hasKey .Values.controlplane "rootDisk" }}
           rootDisk:
             rootDiskIops: {{ .Values.controlplane.rootDisk.rootDiskIops | default 100 }}
