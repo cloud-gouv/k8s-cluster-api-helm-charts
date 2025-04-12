@@ -8,6 +8,16 @@ provider:
 
 # global values common to all subcharts
 global:
+  #http_proxy: ""
+  #https_proxy: ""
+  #no_proxy: ""
+
+  #
+  # KubeadmConfigSpec configuration
+  kubeadmConfigSpec: {}
+  #kubeadmConfigSpec:
+  #  verbosity: 5
+
   #
   # default KubeletConfiguration
   # See https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
@@ -137,6 +147,31 @@ global:
         tls-min-version: "TLS1.2"
         v2-deprecation: "gone"
 
+  #
+  # configure Pod Security Standards
+  # see: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+  #
+  PodSecurityConfiguration:
+    defaults:
+      enforce: "restricted"
+      enforce-version: "latest"
+      audit: "restricted"
+      audit-version: "latest"
+      warn: "restricted"
+      warn-version: "latest"
+    exemptions:
+      usernames: []
+      runtimeClasses: []
+      namespaces:
+        - kube-system
+        - ingress-nginx
+        - monitoring
+        - promtail
+        - argocd
+        - capi-operator-system
+        - cluster-api-provider-outscale-system
+        - loki
+        - whoami
 
 # values that are specific to the provider 'outscale'
 outscale: {}
