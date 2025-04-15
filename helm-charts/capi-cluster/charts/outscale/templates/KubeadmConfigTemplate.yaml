@@ -8,7 +8,7 @@ spec:
   template:
     spec:
       {{- if hasKey $.Values.global.kubeadmConfigSpec "verbosity" }}
-      verbosity: {{ $.Values.global.kubeadmConfigSpec.verbosity | default 1 }}
+      verbosity: {{ $.Values.global.kubeadmConfigSpec.verbosity }}
       {{- end }}
       joinConfiguration:
         nodeRegistration:
@@ -20,6 +20,13 @@ spec:
             {{- with $pool.nodeLabels }}
             node-labels: "{{ range $i, $k := (keys . | sortAlpha) }}{{ if ne $i 0 }},{{ end }}{{ $k }}={{ index $pool.nodeLabels $k }}{{ end }}"
             {{- end }}
+            {{- if eq $.Values.global.kubeletExtraArgsEnabled true }}
+            # Here we specify the kubeletextraargs
+            {{- with $.Values.global.kubeletExtraArgs }}
+            {{- tpl (. | toYaml) $ | nindent 12 }}
+            {{- end }}
+            {{- end }}
+        {{- if eq $.Values.global.KubeletConfigurationEnabled true }}
         #
         # Here we specify the directory that contains the patch files
         # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
@@ -27,6 +34,7 @@ spec:
         #
         patches:
           directory: /etc/kubernetes/patches
+        {{- end }}
       preKubeadmCommands:
         - mkdir -p /etc/pre-kubeadm-commands
         - for script in $(find /etc/pre-kubeadm-commands/ -name '*.sh' -type f | sort);
@@ -36,6 +44,7 @@ spec:
         - for script in $(find /etc/post-kubeadm-commands/ -name '*.sh' -type f | sort);
           do echo "Running script $script"; "$script"; done
       files:
+        {{- if eq $.Values.global.KubeletConfigurationEnabled true }}
         # Here we put a patch file for kubeletconfiguration target in strategic patchtype on nodes via KubeadmConfigSpec.files
         # The naming convention of the patch file is kubeletconfiguration{suffix}+{patchtype}.yaml where {suffix} is an string and {patchtype} is one of the following: strategic, merge, json.
         # {suffix} determines the order of the patch files. The patches are applied in the alpha-numerical order of the {suffix}.
@@ -51,6 +60,7 @@ spec:
             {{- with $.Values.global.KubeletConfiguration }}
             {{- tpl (. | toYaml) $ | nindent 12 }}
             {{- end }}
+        {{- end }}
         - path: /etc/pre-kubeadm-commands/00-wait_endpoint.sh
           owner: root:root
           permissions: "0755"

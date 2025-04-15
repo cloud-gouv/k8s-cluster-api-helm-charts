@@ -65,10 +65,40 @@ global:
   #kubeadmConfigSpec:
   #  verbosity: 5
 
+  # default kubeletExtraArgs configuration
+  # for compatibility mode with legacy charts
+  # mutualy exclusive with KubeletConfiguration
+  kubeletExtraArgsEnabled: true
+  kubeletExtraArgs:
+    anonymous-auth: "false"
+    container-log-max-files: "10"
+    container-log-max-size: 50Mi
+    event-burst: "100"
+    event-qps: "100"
+    eviction-hard: imagefs.available<10%,memory.available<100Mi,nodefs.available<5%,nodefs.inodesFree<5%
+    eviction-max-pod-grace-period: "180"
+    eviction-soft: imagefs.available<15%,memory.available<300Mi,nodefs.available<10%,nodefs.inodesFree<10%
+    eviction-soft-grace-period: imagefs.available=5m0s,memory.available=5m0s,nodefs.available=30m0s,nodefs.inodesFree=30m0s
+    fail-swap-on: "true"
+    feature-gates: "HPAScaleToZero=true,KubeletCgroupDriverFromCRI=true,KubeletPodResourcesGet=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+    image-gc-low-threshold: "50"
+    kernel-memcg-notification: "true"
+    kube-reserved: "cpu=300m,memory=500Mi,ephemeral-storage=1Gi,pid='1000'"
+    system-reserved: "cpu=200m,memory=200Mi,ephemeral-storage=1Gi,pid='1000'"
+    max-pods: "110"
+    registry-burst: "10"
+    registry-qps: "5"
+    rotate-certificates: "true"
+    serialize-image-pulls: "false"
+    tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+    tls-min-version: "VersionTLS12"
+
   #
   # default KubeletConfiguration
   # See https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
+  # mutualy exclusive with kubeletExtraArgs
   #
+  KubeletConfigurationEnabled: false
   KubeletConfiguration:
     authentication:
       anonymous:
@@ -140,17 +170,32 @@ global:
   # See: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/
   #
   apiServer:
+    extraVolumes:
+      # specify audit-logs path (legacy mode)
+      - name: "audit-logs"
+        mountPath: "/var/log/kubernetes"
+        hostPath: "/var/log/kubernetes"
+
+      # specify audit-logs under dedicated audit dir
+#      - name: "audit-logs"
+#        mountPath: "/var/log/kubernetes/audit/"
+#        hostPath: "/var/log/kubernetes/audit/"
+#        pathType: "DirectoryOrCreate"
     extraArgs:
+      # specify audit-logs path (legacy mode)
+      audit-log-path: "/var/log/kubernetes/audit.log"
+      # specify audit-logs under dedicated audit dir
+      #audit-log-path: "/var/log/kubernetes/audit/audit.log"
       allow-privileged: "true"
       authorization-mode: "RBAC,Node"
       audit-log-maxsize: "100"  # audit log size in MegaBytes before rotation
       audit-log-maxbackup: "10" # number of audit log to retain
-      audit-log-maxage: "20"    # number of days to retain audit log
+      #audit-log-maxage: "20"    # number of days to retain audit log
       event-ttl: "4h"
       enable-bootstrap-token-auth: "true"
       enable-admission-plugins: "NodeRestriction,AlwaysPullImages"
       feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
-      profiling: "false"
+      #profiling: "false"
       requestheader-allowed-names: "front-proxy-client"
       requestheader-client-ca-file: "/etc/kubernetes/pki/front-proxy-ca.crt"
       requestheader-extra-headers-prefix: "X-Remote-Extra-"
@@ -165,7 +210,7 @@ global:
   controllerManager:
     extraArgs:
       allocate-node-cidrs: "false"
-      profiling: "false"
+      #profiling: "false"
       feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
       tls-min-version: "VersionTLS12"
       tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
@@ -175,7 +220,7 @@ global:
   #
   scheduler:
     extraArgs:
-      profiling: "false"
+      #profiling: "false"
       feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
       tls-min-version: "VersionTLS12"
       tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
@@ -200,10 +245,10 @@ global:
   #
   PodSecurityConfiguration:
     defaults:
-      enforce: "restricted"
-      enforce-version: "latest"
       audit: "restricted"
       audit-version: "latest"
+      enforce: "restricted"
+      enforce-version: "latest"
       warn: "restricted"
       warn-version: "latest"
     exemptions:
@@ -214,11 +259,11 @@ global:
         - ingress-nginx
         - monitoring
         - promtail
-        - argocd
-        - capi-operator-system
-        - cluster-api-provider-outscale-system
-        - loki
-        - whoami
+        - argocd                                  # TODO: make this component compliant with our PSS policy
+        - capi-operator-system                    # TODO: make this component compliant with our PSS policy
+        - cluster-api-provider-outscale-system    # TODO: make this component compliant with our PSS policy
+        - loki                                    # TODO: make this component compliant with our PSS policy
+        - whoami                                  # TODO: make this component compliant with our PSS policy
 
 #
 # reference to openstack helm values
