@@ -259,7 +259,7 @@ global:
         - ingress-nginx
         - monitoring
         - promtail
-        - "argocd                                  # TODO: make this component compliant with our PSS policy"
+        - "'argocd'                                  # TODO: make this component compliant with our PSS policy"
         - capi-operator-system                    # TODO: make this component compliant with our PSS policy
         - cluster-api-provider-outscale-system    # TODO: make this component compliant with our PSS policy
         - loki                                    # TODO: make this component compliant with our PSS policy
