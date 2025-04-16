@@ -172,30 +172,30 @@ global:
   apiServer:
     extraVolumes:
       # specify audit-logs path (legacy mode)
-      - name: "audit-logs"
-        mountPath: "/var/log/kubernetes"
-        hostPath: "/var/log/kubernetes"
+      #- name: "audit-logs"
+      #  mountPath: "/var/log/kubernetes"
+      #  hostPath: "/var/log/kubernetes"
 
       # specify audit-logs under dedicated audit dir
-#      - name: "audit-logs"
-#        mountPath: "/var/log/kubernetes/audit/"
-#        hostPath: "/var/log/kubernetes/audit/"
-#        pathType: "DirectoryOrCreate"
+       - name: "audit-logs"
+         mountPath: "/var/log/kubernetes/audit/"
+         hostPath: "/var/log/kubernetes/audit/"
+         pathType: "DirectoryOrCreate"
     extraArgs:
       # specify audit-logs path (legacy mode)
-      audit-log-path: "/var/log/kubernetes/audit.log"
+      # audit-log-path: "/var/log/kubernetes/audit.log"
       # specify audit-logs under dedicated audit dir
-      #audit-log-path: "/var/log/kubernetes/audit/audit.log"
+      audit-log-path: "/var/log/kubernetes/audit/audit.log"
       allow-privileged: "true"
       authorization-mode: "RBAC,Node"
       audit-log-maxsize: "100"  # audit log size in MegaBytes before rotation
       audit-log-maxbackup: "10" # number of audit log to retain
-      #audit-log-maxage: "20"    # number of days to retain audit log
+      audit-log-maxage: "20"    # number of days to retain audit log
       event-ttl: "4h"
       enable-bootstrap-token-auth: "true"
       enable-admission-plugins: "NodeRestriction,AlwaysPullImages"
       feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
-      #profiling: "false"
+      profiling: "false"
       requestheader-allowed-names: "front-proxy-client"
       requestheader-client-ca-file: "/etc/kubernetes/pki/front-proxy-ca.crt"
       requestheader-extra-headers-prefix: "X-Remote-Extra-"
@@ -210,7 +210,7 @@ global:
   controllerManager:
     extraArgs:
       allocate-node-cidrs: "false"
-      #profiling: "false"
+      profiling: "false"
       feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
       tls-min-version: "VersionTLS12"
       tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
@@ -220,7 +220,7 @@ global:
   #
   scheduler:
     extraArgs:
-      #profiling: "false"
+      profiling: "false"
       feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
       tls-min-version: "VersionTLS12"
       tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
