@@ -68,7 +68,7 @@ global:
   # default kubeletExtraArgs configuration
   # for compatibility mode with legacy charts
   # mutualy exclusive with KubeletConfiguration
-  kubeletExtraArgsEnabled: true
+  kubeletExtraArgsEnabled: false
   kubeletExtraArgs:
     anonymous-auth: "false"
     container-log-max-files: "10"
@@ -98,7 +98,7 @@ global:
   # See https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
   # mutualy exclusive with kubeletExtraArgs
   #
-  KubeletConfigurationEnabled: false
+  KubeletConfigurationEnabled: true
   KubeletConfiguration:
     authentication:
       anonymous:
