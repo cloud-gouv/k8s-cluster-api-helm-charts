@@ -140,7 +140,15 @@ global:
   # See: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/
   #
   apiServer:
+    extraVolumes:
+      # specify audit-logs under dedicated audit dir
+       - name: "audit-logs"
+         mountPath: "/var/log/kubernetes/audit/"
+         hostPath: "/var/log/kubernetes/audit/"
+         pathType: "DirectoryOrCreate"
     extraArgs:
+      # specify audit-logs under dedicated audit dir
+      audit-log-path: "/var/log/kubernetes/audit/audit.log"
       allow-privileged: "true"
       authorization-mode: "RBAC,Node"
       audit-log-maxsize: "100"  # audit log size in MegaBytes before rotation
@@ -200,10 +208,10 @@ global:
   #
   PodSecurityConfiguration:
     defaults:
-      enforce: "restricted"
-      enforce-version: "latest"
       audit: "restricted"
       audit-version: "latest"
+      enforce: "restricted"
+      enforce-version: "latest"
       warn: "restricted"
       warn-version: "latest"
     exemptions:

@@ -6,14 +6,13 @@ metadata:
 spec:
   kubeadmConfigSpec:
     {{- if hasKey .Values.global.kubeadmConfigSpec "verbosity" }}
-    verbosity: {{ .Values.global.kubeadmConfigSpec.verbosity | default 1 }}
+    verbosity: {{ .Values.global.kubeadmConfigSpec.verbosity }}
     {{- end }}
     clusterConfiguration:
       apiServer:
         timeoutForControlPlane: 20m0s
         extraArgs:
           cloud-provider: "external"
-          audit-log-path: "/var/log/kubernetes/audit/audit.log"
           audit-policy-file: "/etc/kubernetes/audit-policy.yaml"
           admission-control-config-file: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
           # encryption-provider-config: "xxxx"
@@ -26,10 +25,9 @@ spec:
             hostPath: "/etc/kubernetes/audit-policy.yaml"
             mountPath: "/etc/kubernetes/audit-policy.yaml"
             readOnly: true
-          - name: "audit-logs"
-            mountPath: "/var/log/kubernetes/audit/"
-            hostPath: "/var/log/kubernetes/audit/"
-            pathType: "DirectoryOrCreate"
+          {{- with .Values.global.apiServer.extraVolumes }}
+          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- end }}
           - name: "admission-pss"
             pathType: "File"
             hostPath: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
