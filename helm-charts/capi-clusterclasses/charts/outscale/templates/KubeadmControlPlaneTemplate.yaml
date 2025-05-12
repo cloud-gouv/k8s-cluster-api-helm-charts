@@ -16,13 +16,24 @@ spec:
       rolloutBefore:
         certificatesExpiryDays: 45
       kubeadmConfigSpec:
-        verbosity: 5
+        {{- if hasKey .Values.global.kubeadmConfigSpec "verbosity" }}
+        verbosity: {{ .Values.global.kubeadmConfigSpec.verbosity }}
+        {{- else }}
+        verbosity: 1
+        {{- end }}
         useExperimentalRetryJoin: true
         clusterConfiguration:
           apiServer:
             timeoutForControlPlane: 20m0s
             extraArgs:
               cloud-provider: "external"
+              audit-log-path: "/var/log/kubernetes/audit/audit.log"
+              audit-policy-file: "/etc/kubernetes/audit-policy.yaml"
+              admission-control-config-file: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
+              # encryption-provider-config: "xxxx"
+              {{- with .Values.global.apiServer.extraArgs }}
+              {{- tpl (. | toYaml) $ | nindent 14 }}
+              {{- end }}
             extraVolumes:
               - name: "audit-policy"
                 pathType: "File"
@@ -30,8 +41,9 @@ spec:
                 mountPath: "/etc/kubernetes/audit-policy.yaml"
                 readOnly: true
               - name: "audit-logs"
-                hostPath: "/var/log/kubernetes"
-                mountPath: "/var/log/kubernetes"
+                mountPath: "/var/log/kubernetes/audit/"
+                hostPath: "/var/log/kubernetes/audit/"
+                pathType: "DirectoryOrCreate"
               - name: "admission-pss"
                 pathType: "File"
                 hostPath: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
@@ -40,11 +52,22 @@ spec:
           controllerManager:
             extraArgs:
               cloud-provider: "external"
+              cluster-name: "must-be-patched" # will be patched by a ClusterClass patch
+              {{- with .Values.global.controllerManager.extraArgs }}
+              {{- tpl (. | toYaml) $ | nindent 14 }}
+              {{- end }}
           dns: {}   # will be patched by a ClusterClass patch
+          etcd:
+            local:
+              {{- with .Values.global.etcd.local }}
+              {{- tpl (. | toYaml) $ | nindent 14 }}
+              {{- end }}
+          scheduler:
+            extraArgs:
+              {{- with .Values.global.scheduler.extraArgs }}
+              {{- tpl (. | toYaml) $ | nindent 14 }}
+              {{- end }}
         initConfiguration:
-          localAPIEndpoint:
-            advertiseAddress: "0.0.0.0"
-            bindPort: 6443
           skipPhases:
             - addon/kube-proxy
           nodeRegistration:
@@ -53,11 +76,13 @@ spec:
             kubeletExtraArgs:
               cloud-provider: "external"
               provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
+          # Here we specify the directory that contains the patch files
+          # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
+          # See: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
+          #
+          patches:
+            directory: /etc/kubernetes/patches
         joinConfiguration:
-          controlPlane:
-            localAPIEndpoint:
-              advertiseAddress: "0.0.0.0"
-              bindPort: 6443
           discovery: {}
           skipPhases:
             - addon/kube-proxy
@@ -67,6 +92,12 @@ spec:
             kubeletExtraArgs:
               cloud-provider: "external"
               provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
+          # Here we specify the directory that contains the patch files
+          # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
+          # See: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
+          #
+          patches:
+            directory: /etc/kubernetes/patches
         # #  Add an external volume dedicated to etcd
         # diskSetup:
         #   partitions:
@@ -93,6 +124,22 @@ spec:
           - for script in $(find /etc/post-kubeadm-commands/ -name '*.sh' -type f | sort);
             do echo "Running script $script"; "$script"; done
         files:
+          # Here we put a patch file for kubeletconfiguration target in strategic patchtype on nodes via KubeadmConfigSpec.files
+          # The naming convention of the patch file is kubeletconfiguration{suffix}+{patchtype}.yaml where {suffix} is an string and {patchtype} is one of the following: strategic, merge, json.
+          # {suffix} determines the order of the patch files. The patches are applied in the alpha-numerical order of the {suffix}.
+          #
+          # See https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
+          #
+          - path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
+            owner: "root:root"
+            permissions: "0644"
+            content: |
+              apiVersion: kubelet.config.k8s.io/v1beta1
+              kind: KubeletConfiguration
+              {{- with .Values.global.KubeletConfiguration }}
+              {{- tpl (. | toYaml) $ | nindent 14 }}
+              {{- end }}
+
           - path: /etc/pre-kubeadm-commands/00-wait_endpoint.sh
             owner: root:root
             permissions: "0755"
@@ -137,18 +184,6 @@ spec:
               echo "## restart containerd"
               systemctl daemon-reload
               systemctl restart containerd
-          - path: /etc/post-kubeadm-commands/10-tweak-kubeapi-memlimit.sh.disable
-            owner: root:root
-            permissions: "0700"
-            content: |
-              #!/bin/bash
-              grep '^      limits:' /etc/kubernetes/manifests/kube-apiserver.yaml >/dev/null 2>&1 && exit 0
-              MEM=$(free -m | grep '^Mem:' | awk '{print $2;}')
-              CPU=$(grep '^processor' /proc/cpuinfo | wc -l)
-              sed -i "/^ *requests:/i\      limits:\n        memory: $((10+3*$MEM/4))M\n        cpu: $((750*$CPU))m" /etc/kubernetes/manifests/kube-apiserver.yaml
-              sed -i "/^ *requests:/a\        memory: 512M" /etc/kubernetes/manifests/kube-apiserver.yaml
-              sync
-              systemctl restart kubelet
           - path: /etc/apt/apt.conf.d/99proxy
             owner: "root:root"
             permissions: "0644"
@@ -161,7 +196,8 @@ spec:
                 https::Proxy {{ .Values.global.https_proxy | quote }};
                 {{- end }}
                 }
-          - path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+
+          - path: /etc/systemd/system/containerd.service.d/00-http-proxy.conf
             owner: "root:root"
             permissions: "0644"
             content: |
@@ -173,8 +209,10 @@ spec:
               Environment="HTTPS_PROXY={{ .Values.global.https_proxy }}"
               {{- end }}
               {{- if .Values.global.no_proxy }}
-              Environment="NO_PROXY=.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,192.168.0.0/16,{{ .Values.global.pods.cidrBlocks }},{{ .Values.global.services.cidrBlocks }}"
+              # TODO: fix pods.cidrBlocks, services.cidrBlocks
+              Environment="NO_PROXY={{ .Values.global.no_proxy }}"
               {{- end }}
+
           - path: /etc/kubernetes/audit-policy.yaml
             owner: "root:root"
             permissions: "0600"
@@ -345,18 +383,6 @@ spec:
                 configuration:
                   apiVersion: pod-security.admission.config.k8s.io/v1beta1
                   kind: PodSecurityConfiguration
-                  defaults:
-                    enforce: ""
-                    enforce-version: "latest"
-                    audit: ""
-                    audit-version: "latest"
-                    warn: ""
-                    warn-version: "latest"
-                  exemptions:
-                    usernames: []
-                    runtimeClasses: []
-                    namespaces:
-                      - kube-system
-                      - ingress-nginx
-                      - monitoring
-                      - promtail
+                  {{- with .Values.global.PodSecurityConfiguration }}
+                  {{- tpl (. | toYaml) $ | nindent 18 }}
+                  {{- end }}

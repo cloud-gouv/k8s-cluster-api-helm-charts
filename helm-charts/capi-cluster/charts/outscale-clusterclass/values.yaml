@@ -30,6 +30,12 @@
 #   # Values of the variables to be passed to the clusterclass
 #   # so that the CAPI objects can be created properlly
 #   variables:
+#     # http_proxy used in nodes (apt, containerd)
+#     proxy:
+#       http_proxy: ""
+#       https_proxy: ""
+#       no_proxy: ""
+#
 #     # properties of the bastion VM
 #     bastion:
 #       enable: false

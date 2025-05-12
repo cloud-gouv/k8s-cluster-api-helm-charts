@@ -32,6 +32,8 @@ csi: {}
 ### choose on the key below : image or imageId, not both
 #  image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
 #  imageId: ami-554cf763
+#  tags:
+#    tags.osc.fcu.repulse_server: vm-control-plane
 #  rootDisk:
 #    rootDiskIops: 100
 #    rootDiskSize: 30
@@ -51,6 +53,8 @@ csi: {}
 ### choose on the key below : image or imageId, not both
 #    image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
 #    imageId: ami-554cf763
+#    tags:
+#      tags.osc.fcu.repulse_server: vm-worker-md-0
 #    rootDisk:
 #      rootDiskIops: 100
 #      rootDiskSize: 30

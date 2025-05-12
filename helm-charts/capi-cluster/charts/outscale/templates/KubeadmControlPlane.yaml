@@ -5,40 +5,29 @@ metadata:
   name: {{ .Values.global.clusterName }}-control-plane
 spec:
   kubeadmConfigSpec:
-    verbosity: 5
+    {{- if hasKey .Values.global.kubeadmConfigSpec "verbosity" }}
+    verbosity: {{ .Values.global.kubeadmConfigSpec.verbosity }}
+    {{- end }}
     clusterConfiguration:
       apiServer:
         timeoutForControlPlane: 20m0s
         extraArgs:
-          allow-privileged: "true"
-          audit-log-maxsize: "100"
-          audit-log-maxbackup: "10"
-          audit-log-path: "/var/log/kubernetes/audit.log"
+          cloud-provider: "external"
           audit-policy-file: "/etc/kubernetes/audit-policy.yaml"
           admission-control-config-file: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
-          authorization-mode: "RBAC,Node"
-          cloud-provider: "external"
-          enable-bootstrap-token-auth: "true"
-          enable-admission-plugins: "NodeRestriction,AlwaysPullImages"
           # encryption-provider-config: "xxxx"
-          event-ttl: "4h"
-          feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
-          requestheader-allowed-names: "front-proxy-client"
-          requestheader-client-ca-file: "/etc/kubernetes/pki/front-proxy-ca.crt"
-          requestheader-extra-headers-prefix: "X-Remote-Extra-"
-          requestheader-group-headers: "X-Remote-Group"
-          requestheader-username-headers: "X-Remote-User"
-          tls-min-version: "VersionTLS12"
-          tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+          {{- with .Values.global.apiServer.extraArgs }}
+          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- end }}
         extraVolumes:
           - name: "audit-policy"
             pathType: "File"
             hostPath: "/etc/kubernetes/audit-policy.yaml"
             mountPath: "/etc/kubernetes/audit-policy.yaml"
             readOnly: true
-          - name: "audit-logs"
-            hostPath: "/var/log/kubernetes"
-            mountPath: "/var/log/kubernetes"
+          {{- with .Values.global.apiServer.extraVolumes }}
+          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- end }}
           - name: "admission-pss"
             pathType: "File"
             hostPath: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
@@ -46,28 +35,21 @@ spec:
             readOnly: true
       controllerManager:
         extraArgs:
-          allocate-node-cidrs: "false"
           cloud-provider: "external"
           cluster-name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
-          feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
-          tls-min-version: "VersionTLS12"
-          tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+          {{- with .Values.global.controllerManager.extraArgs }}
+          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- end }}
       etcd:
         local:
-          dataDir: "/var/lib/etcd"
-          extraArgs:
-            auto-compaction-retention: "1"
-            quota-backend-bytes: "8589934592"
-            experimental-initial-corrupt-check: "true"
-            experimental-warning-apply-duration: "200ms"
-            experimental-bootstrap-defrag-threshold-megabytes: "512"
-            tls-min-version: "TLS1.2"
-            v2-deprecation: "gone"
+          {{- with .Values.global.etcd.local }}
+          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- end }}
       scheduler:
         extraArgs:
-          feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
-          tls-min-version: "VersionTLS12"
-          tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+          {{- with .Values.global.scheduler.extraArgs }}
+          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- end }}
     initConfiguration:
       {{ if and .Values.global.addons.cni.enabled ( eq .Values.global.addons.cni.type "cilium" ) -}}
       # cilium replace kube-proxy
@@ -79,56 +61,24 @@ spec:
         kubeletExtraArgs:
           cloud-provider: "external"
           provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
-          anonymous-auth: "false"
-          container-log-max-files: "10"
-          container-log-max-size: 50Mi
-          event-burst: "100"
-          event-qps: "100"
-          eviction-hard: imagefs.available<10%,memory.available<100Mi,nodefs.available<5%,nodefs.inodesFree<5%
-          eviction-max-pod-grace-period: "180"
-          eviction-soft: imagefs.available<15%,memory.available<300Mi,nodefs.available<10%,nodefs.inodesFree<10%
-          eviction-soft-grace-period: imagefs.available=5m0s,memory.available=5m0s,nodefs.available=30m0s,nodefs.inodesFree=30m0s
-          fail-swap-on: "true"
-          feature-gates: "HPAScaleToZero=true,KubeletCgroupDriverFromCRI=true,KubeletPodResourcesGet=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
-          image-gc-low-threshold: "50"
-          kernel-memcg-notification: "true"
-          kube-reserved: "cpu=300m,memory=500Mi,ephemeral-storage=1Gi,pid='1000'"
-          system-reserved: "cpu=200m,memory=200Mi,ephemeral-storage=1Gi,pid='1000'"
-          max-pods: "110"
-          registry-burst: "10"
-          registry-qps: "5"
-          rotate-certificates: "true"
-          serialize-image-pulls: "false"
-          tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
-          tls-min-version: "VersionTLS12"
+      # Here we specify the directory that contains the patch files
+      # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
+      # See: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
+      #
+      patches:
+        directory: /etc/kubernetes/patches
     joinConfiguration:
       nodeRegistration:
         name: {{`"{{ ds.meta_data.local_hostname }}"`}}
         kubeletExtraArgs:
           cloud-provider: "external"
           provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
-          anonymous-auth: "false"
-          container-log-max-files: "10"
-          container-log-max-size: 50Mi
-          event-burst: "100"
-          event-qps: "100"
-          eviction-hard: imagefs.available<10%,memory.available<100Mi,nodefs.available<5%,nodefs.inodesFree<5%
-          eviction-max-pod-grace-period: "180"
-          eviction-soft: imagefs.available<15%,memory.available<300Mi,nodefs.available<10%,nodefs.inodesFree<10%
-          eviction-soft-grace-period: imagefs.available=5m0s,memory.available=5m0s,nodefs.available=30m0s,nodefs.inodesFree=30m0s
-          fail-swap-on: "true"
-          feature-gates: "HPAScaleToZero=true,KubeletCgroupDriverFromCRI=true,KubeletPodResourcesGet=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
-          image-gc-low-threshold: "50"
-          kernel-memcg-notification: "true"
-          kube-reserved: "cpu=300m,memory=500Mi,ephemeral-storage=1Gi,pid='1000'"
-          system-reserved: "cpu=200m,memory=200Mi,ephemeral-storage=1Gi,pid='1000'"
-          max-pods: "110"
-          registry-burst: "10"
-          registry-qps: "5"
-          rotate-certificates: "true"
-          serialize-image-pulls: "false"
-          tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
-          tls-min-version: "VersionTLS12"
+      # Here we specify the directory that contains the patch files
+      # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
+      # See: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
+      #
+      patches:
+        directory: /etc/kubernetes/patches
 # cloud-init
 ##  Add external volume for etcd
 #    diskSetup:
@@ -156,6 +106,22 @@ spec:
       - for script in $(find /etc/post-kubeadm-commands/ -name '*.sh' -type f | sort);
         do echo "Running script $script"; "$script"; done
     files:
+      # Here we put a patch file for kubeletconfiguration target in strategic patchtype on nodes via KubeadmConfigSpec.files
+      # The naming convention of the patch file is kubeletconfiguration{suffix}+{patchtype}.yaml where {suffix} is an string and {patchtype} is one of the following: strategic, merge, json.
+      # {suffix} determines the order of the patch files. The patches are applied in the alpha-numerical order of the {suffix}.
+      #
+      # See https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
+      #
+      - path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
+        owner: "root:root"
+        permissions: "0644"
+        content: |
+          apiVersion: kubelet.config.k8s.io/v1beta1
+          kind: KubeletConfiguration
+          {{- with .Values.global.KubeletConfiguration }}
+          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- end }}
+
       - path: /etc/pre-kubeadm-commands/00-wait_endpoint.sh
         owner: root:root
         permissions: "0755"
@@ -396,26 +362,10 @@ spec:
             configuration:
               apiVersion: pod-security.admission.config.k8s.io/v1beta1
               kind: PodSecurityConfiguration
-              defaults:
-                enforce: "restricted"
-                enforce-version: "latest"
-                audit: "restricted"
-                audit-version: "latest"
-                warn: "restricted"
-                warn-version: "latest"
-              exemptions:
-                usernames: []
-                runtimeClasses: []
-                namespaces:
-                  - kube-system
-                  - ingress-nginx
-                  - monitoring
-                  - promtail
-                  - argocd                                  # TODO: make this component compliant with our PSS policy
-                  - capi-operator-system                    # TODO: make this component compliant with our PSS policy
-                  - cluster-api-provider-outscale-system    # TODO: make this component compliant with our PSS policy
-                  - loki                                    # TODO: make this component compliant with our PSS policy
-                  - whoami                                  # TODO: make this component compliant with our PSS policy
+              {{- with .Values.global.PodSecurityConfiguration }}
+              {{- tpl (. | toYaml) $ | nindent 14 }}
+              {{- end }}
+
   machineTemplate:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1

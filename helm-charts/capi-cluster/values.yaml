@@ -14,7 +14,7 @@ global:
     cidrBlocks: "172.16.0.0/16"
   services:
     cidrBlocks: "10.96.0.0/12"
-  
+
   # helmchartproxy installed inside workload cluster
   # helm addons
   addons:
@@ -58,6 +58,175 @@ global:
       version: v1.14.5
     storagelocal:
       enabled: false
+
+  #
+  # KubeadmConfigSpec configuration
+  kubeadmConfigSpec: {}
+  #kubeadmConfigSpec:
+  #  verbosity: 5
+
+  #
+  # default KubeletConfiguration
+  # See https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
+  #
+  KubeletConfiguration:
+    authentication:
+      anonymous:
+        enabled: false
+    containerLogMaxFiles: 10
+    containerLogMaxSize: "50Mi"
+    eventBurst: 100
+    eventRecordQPS: 100
+    evictionHard:
+      memory.available:  "100Mi"
+      nodefs.available:  "5%"
+      nodefs.inodesFree: "5%"
+      imagefs.available: "10%"
+      imagefs.inodesFree: "5%"
+    evictionSoft:
+      memory.available:  "300Mi"
+      nodefs.available:  "10%"
+      nodefs.inodesFree: "10%"
+      imagefs.available: "15%"
+      imagefs.inodesFree: "5%"
+    evictionSoftGracePeriod:
+      memory.available:  "5m0s"
+      nodefs.available:  "30m0s"
+      nodefs.inodesFree: "30m0s"
+      imagefs.available: "5m0s"
+      imagefs.inodesFree: "5m0s"
+    evictionMaxPodGracePeriod: 180
+    failSwapOn: true
+    imageGCLowThresholdPercent: 50
+    kernelMemcgNotification: true
+    kubeReserved:
+      cpu: "300m"
+      memory: "500Mi"
+      ephemeral-storage: "1Gi"
+      pid: "1000"
+    systemReserved:
+      cpu: "200m"
+      memory: "200Mi"
+      ephemeral-storage: "1Gi"
+      pid: "1000"
+    maxPods: 110
+    registryBurst: 10
+    registryPullQPS: 5
+    serializeImagePulls: false
+    tlsCipherSuites:
+      - "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+      - "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+      - "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256"
+      - "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305"
+      - "TLS_AES_256_GCM_SHA384"
+      - "TLS_AES_128_GCM_SHA256"
+      - "TLS_CHACHA20_POLY1305_SHA256"
+      - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+      - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+      - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256"
+      - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+      - "TLS_RSA_WITH_AES_256_GCM_SHA384"
+      - "TLS_RSA_WITH_AES_128_GCM_SHA256"
+    tlsMinVersion: "VersionTLS12"
+    featureGates:
+      HPAScaleToZero: true
+      KubeletCgroupDriverFromCRI: true
+      KubeletPodResourcesGet: true
+      QOSReserved: true
+      RecoverVolumeExpansionFailure: true
+      SELinuxMountReadWriteOncePod: true
+  #
+  # apiServer configuration
+  # See: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/
+  #
+  apiServer:
+    extraVolumes:
+      # specify audit-logs under dedicated audit dir
+       - name: "audit-logs"
+         mountPath: "/var/log/kubernetes/audit/"
+         hostPath: "/var/log/kubernetes/audit/"
+         pathType: "DirectoryOrCreate"
+    extraArgs:
+      # specify audit-logs under dedicated audit dir
+      audit-log-path: "/var/log/kubernetes/audit/audit.log"
+      allow-privileged: "true"
+      authorization-mode: "RBAC,Node"
+      audit-log-maxsize: "100"  # audit log size in MegaBytes before rotation
+      audit-log-maxbackup: "10" # number of audit log to retain
+      audit-log-maxage: "20"    # number of days to retain audit log
+      event-ttl: "4h"
+      enable-bootstrap-token-auth: "true"
+      enable-admission-plugins: "NodeRestriction,AlwaysPullImages"
+      feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+      profiling: "false"
+      requestheader-allowed-names: "front-proxy-client"
+      requestheader-client-ca-file: "/etc/kubernetes/pki/front-proxy-ca.crt"
+      requestheader-extra-headers-prefix: "X-Remote-Extra-"
+      requestheader-group-headers: "X-Remote-Group"
+      requestheader-username-headers: "X-Remote-User"
+      tls-min-version: "VersionTLS12"
+      tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+  #
+  # controllerManager configuration
+  # See: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/
+  #
+  controllerManager:
+    extraArgs:
+      allocate-node-cidrs: "false"
+      profiling: "false"
+      feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+      tls-min-version: "VersionTLS12"
+      tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+  #
+  # scheduler configuration
+  # See: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/
+  #
+  scheduler:
+    extraArgs:
+      profiling: "false"
+      feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+      tls-min-version: "VersionTLS12"
+      tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+  #
+  # etcd configuration
+  #
+  etcd:
+    local:
+      dataDir: "/var/lib/etcd"
+      extraArgs:
+        auto-compaction-retention: "1"
+        quota-backend-bytes: "8589934592"
+        experimental-initial-corrupt-check: "true"
+        experimental-warning-apply-duration: "200ms"
+        experimental-bootstrap-defrag-threshold-megabytes: "512"
+        tls-min-version: "TLS1.2"
+        v2-deprecation: "gone"
+
+  #
+  # configure Pod Security Standards
+  # see: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+  #
+  PodSecurityConfiguration:
+    defaults:
+      audit: "restricted"
+      audit-version: "latest"
+      enforce: "restricted"
+      enforce-version: "latest"
+      warn: "restricted"
+      warn-version: "latest"
+    exemptions:
+      usernames: []
+      runtimeClasses: []
+      namespaces:
+        - kube-system
+        - ingress-nginx
+        - monitoring
+        - promtail
+        - argocd
+        - capi-operator-system
+        - cluster-api-provider-outscale-system
+        - loki
+        - whoami
 
 #
 # reference to openstack helm values
@@ -112,7 +281,7 @@ openstack: {}
 #    registry: https://index.docker.io/v1/
 #    auth: base64(docker_login:docker_password)
 
-# 
+#
 # reference to outscale helm values
 #
 outscale: {}
@@ -136,6 +305,8 @@ outscale: {}
 #    replicas: 1
 #    vmType: tinav5.c2r4p3
 #    subregionName: "eu-west-2a"
+#    tags:
+#      tags.osc.fcu.repulse_server: vm-worker-md-0
 #  workers:
 #    - name: md-0
 #      version: v1.29.5
@@ -143,6 +314,8 @@ outscale: {}
 #      vmType: tinav5.c2r4p3
 #      subregionName: "eu-west-2a"
 #      image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
+#      tags:
+#        tags.osc.fcu.repulse_server: vm-control-plane
 #      rootDisk:
 #        rootDiskIops: 100
 #        rootDiskSize: 30
@@ -181,7 +354,7 @@ outscale-clusterclass: {}
 #   # number of ControlPlane nodes
 #   controlPlane:
 #     replicas: 1
-  
+
 #   # list of MachineDeployments to implement
 #   # along with their properties
 #   workers:
@@ -193,6 +366,12 @@ outscale-clusterclass: {}
 #   # Values of the variables to be passed to the clusterclass
 #   # so that the CAPI objects can be created properlly
 #   variables:
+#     # http_proxy used in nodes (apt, containerd)
+#     proxy:
+#       http_proxy: ""
+#       https_proxy: ""
+#       no_proxy: ""
+#
 #     # properties of the bastion VM
 #     bastion:
 #       enable: false
@@ -226,7 +405,7 @@ outscale-clusterclass: {}
 #         iops: 1000
 #         size: 50
 #         type: gp2
-    
+
 #     # Properties of the worker nodes
 #     workers:
 #       vmSize: tinav5.c4r8p3   # mandatory

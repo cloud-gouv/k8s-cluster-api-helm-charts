@@ -64,6 +64,11 @@ spec:
       {{- end }}
 
     variables:
+      {{- if and (hasKey .Values.clusterClass.variables "proxy") .Values.clusterClass.variables.proxy.http_proxy }}
+      - name: proxy
+        value:
+          {{- .Values.clusterClass.variables.proxy | toYaml | nindent 10 }}
+      {{- end }}
       - name: bastion
         {{- if and (hasKey .Values.clusterClass.variables "bastion") .Values.clusterClass.variables.bastion.enable }}
         value:

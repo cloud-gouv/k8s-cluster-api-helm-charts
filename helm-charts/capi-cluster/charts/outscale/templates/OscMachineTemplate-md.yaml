@@ -24,6 +24,9 @@ spec:
           imageId: {{ $pool.imageId }}
           {{- end }}
           subregionName: {{ $pool.subregionName  }}
+          {{- with $pool.tags }}
+          tags: {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- if hasKey $pool "rootDisk" }}
           rootDisk:
             rootDiskIops: {{ $pool.rootDisk.rootDiskIops | default 100 }}

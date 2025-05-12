@@ -6,6 +6,7 @@
 provider:
   outscale: true
 
+global: {}
 # values that are specific to the provider 'outscale'
 #outscale: {}
 ## sample value below

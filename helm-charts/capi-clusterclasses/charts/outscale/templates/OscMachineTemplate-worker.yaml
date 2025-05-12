@@ -25,6 +25,9 @@ spec:
           {{- if hasKey $mt "subregionName" }}
           subregionName: {{ $mt.subregionName  }}
           {{- end }}
+          {{- with $mt.tags }}
+          tags: {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- if hasKey $mt "rootDisk" }}
           rootDisk:
             rootDiskIops: {{ $mt.rootDisk.rootDiskIops | default 100 }}

@@ -22,7 +22,7 @@ spec:
       name: {{ include "outscale.name" $ }}
       namespace: default
     namingStrategy:
-      template: {{`"{{ .cluster.name }}-{{ .random }}"`}}
+      template: {{`"{{ .cluster.name }}-controlplane-{{ .random }}"`}}
     machineInfrastructure:
       ref:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -66,6 +66,25 @@ spec:
       {{- end }}
 
   variables:
+    - name: proxy
+      required: false
+      metadata: {}
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            http_proxy:
+              type: string
+              description: http_proxy
+              example: "http://192.168.1.1:8080"
+            https_proxy:
+              type: string
+              description: https_proxy
+              example: "http://192.168.1.1:8080"
+            no_proxy:
+              type: string
+              description: http_proxy
+              example: "svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,10.96.0.0/12,172.16.0.0"
     - name: bastion
       required: false
       metadata: {}
@@ -230,6 +249,113 @@ spec:
               path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/dns/imageTag
               valueFrom:
                 variable: coreDNSVersion
+
+    # KubeadmControlPlaneTemplate patches
+    - name: kcpt_main_1
+      definitions:
+        - selector:
+            apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+            kind: KubeadmControlPlaneTemplate
+            matchResources:
+              controlPlane: true
+          jsonPatches:
+            - op: replace
+              path: /spec/template/spec/kubeadmConfigSpec/clusterConfiguration/controllerManager/extraArgs/cluster-name
+              valueFrom:
+                variable: builtin.cluster.name
+
+    # patches proxy in KubeadmControlPlaneTemplate and KubeadmConfigTemplate
+    - name: proxy
+      enabledIf: {{`"{{ hasKey .proxy \"http_proxy\" }}"`}}
+      definitions:
+        - selector:
+            apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+            kind: KubeadmControlPlaneTemplate
+            matchResources:
+              controlPlane: true
+          jsonPatches:
+            # append a new files in cloud-init
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/files/-"
+              valueFrom:
+                template: |
+                  # This a cloud-init files item (not list)
+                  # Create numbered file with last number
+                  # We can't have same filename in clusterclass and kubeadmcontrolplanetemplate
+                  path: /etc/systemd/system/containerd.service.d/99-http-proxy.conf
+                  owner: root:root
+                  permissions: "0644"
+                  content: |
+                    [Service]
+                    Environment="HTTP_PROXY={{`{{ .proxy.http_proxy }}`}}"
+                    Environment="HTTPS_PROXY={{`{{ .proxy.https_proxy }}`}}"
+                    Environment="NO_PROXY={{`{{ .proxy.no_proxy }}`}}"
+            # append a new files in cloud-init
+            - op: add
+              path: "/spec/template/spec/kubeadmConfigSpec/files/-"
+              valueFrom:
+                template: |
+                  # This a cloud-init files item (not list)
+                  # Create numbered file with last number
+                  # We can't have same filename in clusterclass and kubeadmcontrolplanetemplate
+                  path: /etc/apt/apt.conf.d/99zproxy
+                  owner: root:root
+                  permissions: "0644"
+                  content: |
+                    Acquire {
+                      {{- if $values.global.http_proxy }}
+                      http::Proxy {{`{{ .proxy.http_proxy | quote }}`}};
+                      {{- end }}
+                      {{- if $values.global.https_proxy }}
+                      https::Proxy {{`{{ .proxy.https_proxy | quote }}`}};
+                      {{- end }}
+                    }
+        - selector:
+            apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+            kind: KubeadmConfigTemplate
+            matchResources:
+              machineDeploymentClass:
+                names:
+                  {{- range $name, $_ := .Values.workers }}
+                  - {{ $name }}
+                  {{- end }}
+          jsonPatches:
+            # append a new files in cloud-init
+            - op: add
+              path: "/spec/template/spec/files/-"
+              valueFrom:
+                template: |
+                  # This a cloud-init files item (not list)
+                  # Create numbered file with last number
+                  # We can't have same filename in clusterclass and kubeadmcontrolplanetemplate
+                  path: /etc/systemd/system/containerd.service.d/99-http-proxy.conf
+                  owner: root:root
+                  permissions: "0644"
+                  content: |
+                    [Service]
+                    Environment="HTTP_PROXY={{`{{ .proxy.http_proxy }}`}}"
+                    Environment="HTTPS_PROXY={{`{{ .proxy.https_proxy }}`}}"
+                    Environment="NO_PROXY={{`{{ .proxy.no_proxy }}`}}"
+            # append a new files in cloud-init
+            - op: add
+              path: "/spec/template/spec/files/-"
+              valueFrom:
+                template: |
+                  # This a cloud-init files item (not list)
+                  # Create numbered file with last number
+                  # We can't have same filename in clusterclass and kubeadmcontrolplanetemplate
+                  path: /etc/apt/apt.conf.d/99zproxy
+                  owner: root:root
+                  permissions: "0644"
+                  content: |
+                    Acquire {
+                      {{- if $values.global.http_proxy }}
+                      http::Proxy {{`{{ .proxy.http_proxy | quote }}`}};
+                      {{- end }}
+                      {{- if $values.global.https_proxy }}
+                      https::Proxy {{`{{ .proxy.https_proxy | quote }}`}};
+                      {{- end }}
+                    }
 
     # OscMachineTemplate (ControlPlane) patches
     - name: omt_controlplane_main
