@@ -8,6 +8,7 @@ addons:
   ingress: {}
   certmanager: {}
   csi: {}
+  kubevip: {}
 # sshkeyname: REPLACE_MY_KEY
 
 #router: router_services

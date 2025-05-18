@@ -45,6 +45,7 @@ spec:
         owner: root:root
         path: /etc/pre-kubeadm-commands/10-containerd-restart.sh
         permissions: "0700"
+      {{ if and .Values.global.addons.kubevip.enabled ( eq .Values.global.addons.kubevip.type "kube-vip" ) -}}
       - path: /etc/kubernetes/manifests/kube-vip.yaml
         owner: "root:root"
         permissions: "0600"
@@ -98,7 +99,7 @@ spec:
                 value: {{ .Values.controlplane.apiServerFixedIP }}
               - name: prometheus_server
                 value: :2112
-              image: ghcr.io/kube-vip/kube-vip:v0.8.0
+              image: ghcr.io/kube-vip/kube-vip:{{ .Values.global.addons.kubevip.version }}
               imagePullPolicy: IfNotPresent
               name: kube-vip
               resources: {}
@@ -192,6 +193,7 @@ spec:
         owner: root:root
         path: /etc/post-kubeadm-commands/50-kube-vip-restore.sh
         permissions: "0700"
+      {{ end -}}
       - content: |
           #!/bin/bash
           grep '^      limits:' /etc/kubernetes/manifests/kube-apiserver.yaml >/dev/null 2>&1 && exit 0
