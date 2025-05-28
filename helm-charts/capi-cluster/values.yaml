@@ -288,9 +288,9 @@ openstack: {}
 #
 # reference to outscale helm values
 #
-outscale: {}
+outscale:
 #  sshkeyname: REPLACE_SSH_KEY_NAME_
-#  multiaz: false
+  multiaz: false
 #  region: eu-west-2            # Mandatory if multiaz: true
 #  subregionName: "eu-west-2a"  # Ignored if multiaz: true
 #  bastion:
