@@ -290,7 +290,9 @@ openstack: {}
 #
 outscale: {}
 #  sshkeyname: REPLACE_SSH_KEY_NAME_
-#  subregionName: "eu-west-2a"
+#  multiaz: false
+#  region: eu-west-2            # Mandatory if multiaz: true
+#  subregionName: "eu-west-2a"  # Ignored if multiaz: true
 #  bastion:
 #    enable: false
 #    image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19

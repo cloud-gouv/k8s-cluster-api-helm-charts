@@ -11,6 +11,21 @@ Define Loadbalancer name : outscale limitation is max length 32
 {{- $loadbalancername }}
 {{- end }}
 
+{{- define "outscale.validate" }}
+{{- if .Values.multiaz }}
+  {{- if not .Values.region }}
+    {{- fail "Defining a region is required when multiaz is true" }}
+  {{- end }}
+  {{- if lt (int .Values.controlplane.replicas) 3 }}
+    {{- fail "When using multiaz, you must have at lease 3 replicas for the controlplane" }}
+  {{- end }}
+{{- else }}
+  {{- if not .Values.subregionName }}
+    {{- fail "Defining subregionName is required when multiaz is false" }}
+  {{- end }}
+{{- end }}
+{{- end }}
+
 {{- define "outscale.subregionsLabels" }}
 - a
 {{- if .multiaz }}
