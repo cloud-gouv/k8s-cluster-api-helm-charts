@@ -34,6 +34,7 @@ spec:
     {{- end }}
     internetService:
       clusterName: {{ .Values.global.clusterName }}
+      name: {{ .Values.global.clusterName }}-igw
     publicIps:
       - name: {{ .Values.global.clusterName }}-publicip-nat-a
     {{- if .Values.multiaz }}
@@ -59,15 +60,20 @@ spec:
         loadbalancerprotocol: TCP
       loadbalancername: {{ template "outscale.defaultLoadbalancerName" $ }}
       loadbalancertype: internet-facing
+      securitygroupname: {{ .Values.global.clusterName }}-securitygroup-lb
+      subnetname: {{ .Values.global.clusterName }}-subnet-kcp-a
     natServices:
-      - clusterName: {{ .Values.global.clusterName }}
+      - name: {{ .Values.global.clusterName }}-nat-a
+        clusterName: {{ .Values.global.clusterName }}
         publicipname: {{ .Values.global.clusterName }}-publicip-nat-a
         subnetname: {{ .Values.global.clusterName }}-subnet-public-a
     {{- if .Values.multiaz }}
       - clusterName: {{ .Values.global.clusterName }}
+        name: {{ .Values.global.clusterName }}-nat-b
         publicipname: {{ .Values.global.clusterName }}-publicip-nat-b
         subnetname: {{ .Values.global.clusterName }}-subnet-public-b
       - clusterName: {{ .Values.global.clusterName }}
+        name: {{ .Values.global.clusterName }}-nat-c
         publicipname: {{ .Values.global.clusterName }}-publicip-nat-c
         subnetname: {{ .Values.global.clusterName }}-subnet-public-c
     {{- end }}
@@ -79,6 +85,44 @@ spec:
       - {{ .Values.global.clusterName }}-subnet-kcp-b
       - {{ .Values.global.clusterName }}-subnet-kcp-c
     {{- end }}
+    routeTables:
+    - name: {{ .Values.global.clusterName }}-rtb-2a-kw
+      subnets:
+      - {{ .Values.global.clusterName }}-subnet-kw-a
+      - {{ .Values.global.clusterName }}-subnet-kcp-a
+      routes:
+      - name: {{ .Values.global.clusterName }}-route-2a-nat
+        targetName: {{ .Values.global.clusterName }}-nat-a
+        targetType: nat
+        destination: "0.0.0.0/0"
+    - name: {{ .Values.global.clusterName }}-rtb-2b-private
+      subnets:
+      - {{ .Values.global.clusterName }}-subnet-kw-b
+      - {{ .Values.global.clusterName }}-subnet-kcp-b
+      routes:
+      - name: {{ .Values.global.clusterName }}-route-2b-nat
+        targetName: {{ .Values.global.clusterName }}-nat-b
+        targetType: nat
+        destination: "0.0.0.0/0"
+    - name: {{ .Values.global.clusterName }}-rtb-2c-private
+      subnets:
+      - {{ .Values.global.clusterName }}-subnet-kw-c
+      - {{ .Values.global.clusterName }}-subnet-kcp-c
+      routes:
+      - name: {{ .Values.global.clusterName }}-route-2c-nat
+        targetName: {{ .Values.global.clusterName }}-nat-c
+        targetType: nat
+        destination: "0.0.0.0/0"
+    - name: {{ .Values.global.clusterName }}-rtb-public
+      subnets:
+      - {{ .Values.global.clusterName }}-subnet-public-a
+      - {{ .Values.global.clusterName }}-subnet-public-b
+      - {{ .Values.global.clusterName }}-subnet-public-c
+      routes:
+      - name: {{ .Values.global.clusterName }}-igw
+        targetName: {{ .Values.global.clusterName }}-igw
+        targetType: gateway
+        destination: "0.0.0.0/0"
     securityGroups:
     {{- if .Values.bastion.enable }}
     - description: Security Group bastion with {{ .Values.global.clusterName }}
