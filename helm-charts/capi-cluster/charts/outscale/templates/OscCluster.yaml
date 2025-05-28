@@ -26,8 +26,8 @@ spec:
         rootDiskSize: {{ .Values.bastion.rootDisk.rootDiskSize | default 30 }}
         rootDiskType: {{ .Values.bastion.rootDisk.rootDiskType | default "standard" }}
       {{ end -}}
-      subnetName: {{ .Values.global.clusterName }}-subnet-public
-      subregionName: {{ .Values.bastion.subregionName  }}
+      subnetName: {{ .Values.global.clusterName }}-subnet-public-a
+      subregionName: {{ .Values.region }}a
       securityGroupNames:
         - name: {{ .Values.global.clusterName }}-securitygroup-bastion
       publicIpName: {{ .Values.global.clusterName }}-publicip-bastion
@@ -35,7 +35,11 @@ spec:
     internetService:
       clusterName: {{ .Values.global.clusterName }}
     publicIps:
-      - name: {{ .Values.global.clusterName }}-publicip-nat
+      - name: {{ .Values.global.clusterName }}-publicip-nat-a
+    {{- if .Values.multiaz }}
+      - name: {{ .Values.global.clusterName }}-publicip-nat-b
+      - name: {{ .Values.global.clusterName }}-publicip-nat-c
+    {{- end }}
     {{- if .Values.bastion.enable }}
       - name: {{ .Values.global.clusterName }}-publicip-bastion
     {{- end }}
@@ -55,10 +59,26 @@ spec:
         loadbalancerprotocol: TCP
       loadbalancername: {{ template "outscale.defaultLoadbalancerName" $ }}
       loadbalancertype: internet-facing
-    natService:
-      clusterName: {{ .Values.global.clusterName }}
+    natServices:
+      - clusterName: {{ .Values.global.clusterName }}
+        publicipname: {{ .Values.global.clusterName }}-publicip-nat-a
+        subnetname: {{ .Values.global.clusterName }}-subnet-public-a
+    {{- if .Values.multiaz }}
+      - clusterName: {{ .Values.global.clusterName }}
+        publicipname: {{ .Values.global.clusterName }}-publicip-nat-b
+        subnetname: {{ .Values.global.clusterName }}-subnet-public-b
+      - clusterName: {{ .Values.global.clusterName }}
+        publicipname: {{ .Values.global.clusterName }}-publicip-nat-c
+        subnetname: {{ .Values.global.clusterName }}-subnet-public-c
+    {{- end }}
     net:
       clusterName: {{ .Values.global.clusterName }}
+    controlPlaneSubnets:
+      - {{ .Values.global.clusterName }}-subnet-kcp-a
+    {{- if .Values.multiaz }}
+      - {{ .Values.global.clusterName }}-subnet-kcp-b
+      - {{ .Values.global.clusterName }}-subnet-kcp-c
+    {{- end }}
     securityGroups:
     {{- if .Values.bastion.enable }}
     - description: Security Group bastion with {{ .Values.global.clusterName }}
@@ -89,25 +109,25 @@ spec:
         fromPortRange: 10250
         toPortRange: 10250
         ipProtocol: tcp
-        ipRange: 10.0.3.0/24
+        ipRange: 10.0.4.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kw-nodeip-kcp
         flow: Inbound
         toPortRange: 32767
         fromPortRange: 30000
         ipProtocol: tcp
-        ipRange: 10.0.4.0/24
+        ipRange: 10.0.8.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kubelet-kcp
         flow: Inbound
         fromPortRange: 10250
         toPortRange: 10250
         ipProtocol: tcp
-        ipRange: 10.0.4.0/24
+        ipRange: 10.0.8.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kw-nodeip-kw
         flow: Inbound
         fromPortRange: 30000
         toPortRange: 32767
         ipProtocol: tcp
-        ipRange: 10.0.3.0/24
+        ipRange: 10.0.4.0/22
     - description: Security Group Kcp with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-kcp
       securityGroupRules:
@@ -122,43 +142,43 @@ spec:
         fromPortRange: 6443
         toPortRange: 6443
         ipProtocol: tcp
-        ipRange: 10.0.2.0/24
+        ipRange: 10.0.12.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kw
         flow: Inbound
         fromPortRange: 6443
         toPortRange: 6443
         ipProtocol: tcp
-        ipRange: 10.0.3.0/24
+        ipRange: 10.0.4.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kcp
         flow: Inbound
         fromPortRange: 6443
         toPortRange: 6443
         ipProtocol: tcp
-        ipRange: 10.0.4.0/24
+        ipRange: 10.0.8.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kcp-nodeip-kw
         flow: Inbound
         fromPortRange: 30000
         toPortRange: 32767
         ipProtocol: tcp
-        ipRange: 10.0.3.0/24
+        ipRange: 10.0.4.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-etcd
         flow: Inbound
         fromPortRange: 2378
         toPortRange: 2380
         ipProtocol: tcp
-        ipRange: 10.0.4.0/24
+        ipRange: 10.0.8.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kubelet-kcp
         flow: Inbound
         fromPortRange: 10250
         toPortRange: 10252
         ipProtocol: tcp
-        ipRange: 10.0.4.0/24
+        ipRange: 10.0.8.0/22
       - name: {{ .Values.global.clusterName }}-securitugrouprule-kcp-nodeip-kcp
         flow: Inbound
         fromPortRange: 30000
         toPortRange: 32767
         ipProtocol: tcp
-        ipRange: 10.0.4.0/24
+        ipRange: 10.0.8.0/22
     - description: Security Group Lb with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-lb
       securityGroupRules:
@@ -167,7 +187,7 @@ spec:
         fromPortRange: 6443
         toPortRange: 6443
         ipProtocol: tcp
-        ipRange: 10.0.4.0/24
+        ipRange: 10.0.8.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-lb
         flow: Inbound
         fromPortRange: 6443
@@ -251,16 +271,36 @@ spec:
         fromPortRange: 22
         toPortRange: 22
         ipProtocol: tcp
-        ipRange: 10.0.2.0/24
+        ipRange: 10.0.12.0/22
       {{ end -}}
       tag: OscK8sMainSG
     subnets:
     - ipSubnetRange: 10.0.4.0/24
-      name: {{ .Values.global.clusterName }}-subnet-kcp
-      subregionName: {{ .Values.subregionName  }}
-    - ipSubnetRange: 10.0.3.0/24
-      name: {{ .Values.global.clusterName }}-subnet-kw
-      subregionName: {{ .Values.subregionName  }}
-    - ipSubnetRange: 10.0.2.0/24
-      name: {{ .Values.global.clusterName }}-subnet-public
-      subregionName: {{ .Values.subregionName  }}
+      name: {{ .Values.global.clusterName }}-subnet-kw-a
+      subregionName: {{ .Values.region }}a
+    - ipSubnetRange: 10.0.8.0/24
+      name: {{ .Values.global.clusterName }}-subnet-kcp-a
+      subregionName: {{ .Values.region }}a
+    - ipSubnetRange: 10.0.12.0/24
+      name: {{ .Values.global.clusterName }}-subnet-public-a
+      subregionName: {{ .Values.region }}a
+    {{- if .Values.multiaz }}
+    - ipSubnetRange: 10.0.5.0/24
+      name: {{ .Values.global.clusterName }}-subnet-kw-b
+      subregionName: {{ .Values.region }}b
+    - ipSubnetRange: 10.0.6.0/24
+      name: {{ .Values.global.clusterName }}-subnet-kw-c
+      subregionName: {{ .Values.region }}c
+    - ipSubnetRange: 10.0.9.0/24
+      name: {{ .Values.global.clusterName }}-subnet-kcp-b
+      subregionName: {{ .Values.region }}b
+    - ipSubnetRange: 10.0.10.0/24
+      name: {{ .Values.global.clusterName }}-subnet-kcp-c
+      subregionName: {{ .Values.region }}c
+    - ipSubnetRange: 10.0.13.0/24
+      name: {{ .Values.global.clusterName }}-subnet-public-b
+      subregionName: {{ .Values.region }}b
+    - ipSubnetRange: 10.0.14.0/24
+      name: {{ .Values.global.clusterName }}-subnet-public-c
+      subregionName: {{ .Values.region }}c
+    {{- end }}

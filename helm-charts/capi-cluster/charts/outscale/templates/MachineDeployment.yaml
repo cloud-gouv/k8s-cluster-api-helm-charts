@@ -1,13 +1,15 @@
 {{- $values := .Values }}
 {{- range $name, $pool := .Values.workers }}
+{{- range (include "outscale.subregionsLabels" $values | fromYamlArray) }}
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
-  name: {{ $.Values.global.clusterName }}-{{ $name }}
+  name: {{ $.Values.global.clusterName }}-{{ $name }}-{{ . }}
 spec:
   clusterName: {{ $.Values.global.clusterName }}
-  replicas: {{ $pool.replicas | default 0 }}
+  {{- $context := dict "subregion" . "replicas" $pool.replicas "multiaz" $.Values.multiaz }}
+  replicas: {{ include "outscale.computeReplicas" $context }}
   minReadySeconds: 0
   progressDeadlineSeconds: 600
   revisionHistoryLimit: 1
@@ -29,7 +31,7 @@ spec:
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: OscMachineTemplate
-        name: {{ $.Values.global.clusterName }}-{{ $name }}-{{ $pool.version }}
+        name: {{ $.Values.global.clusterName }}-{{ $name }}-{{ $pool.version }}-{{ . }}
       version: {{ $pool.version }}
----
+{{- end }}
 {{- end }}

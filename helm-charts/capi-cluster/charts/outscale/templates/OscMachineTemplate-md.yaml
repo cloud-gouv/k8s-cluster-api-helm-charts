@@ -1,10 +1,11 @@
 {{- $values := .Values }}
 {{- range $name, $pool := .Values.workers }}
+{{- range (include "outscale.subregionsLabels" $values | fromYamlArray) }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OscMachineTemplate
 metadata:
-  name: {{ $.Values.global.clusterName }}-{{ $name }}-{{ $pool.version }}
+  name: {{ $.Values.global.clusterName }}-{{ $name }}-{{ $pool.version }}-{{ . }}
 spec:
   template:
     spec:
@@ -23,9 +24,12 @@ spec:
           {{- if hasKey $pool "imageId" }}
           imageId: {{ $pool.imageId }}
           {{- end }}
-          subregionName: {{ $pool.subregionName  }}
+          subregionName: {{ $.Values.region  }}{{ . }}
+          subnetName: {{ $.Values.global.clusterName }}-subnet-kw-{{ . }}
           {{- with $pool.tags }}
-          tags: {{- toYaml . | nindent 12 }}
+          tags:
+            tags.osc.fcu.repulse_server: vm-worker-{{ $pool.name }}
+          {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- if hasKey $pool "rootDisk" }}
           rootDisk:
@@ -36,5 +40,5 @@ spec:
         {{- with $pool.volumes }}
         volumes: {{- toYaml . | nindent 10 }}
         {{- end }}
----
+{{- end }}
 {{- end }}

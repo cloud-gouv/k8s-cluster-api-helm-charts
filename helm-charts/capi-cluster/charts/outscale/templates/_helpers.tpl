@@ -11,3 +11,31 @@ Define Loadbalancer name : outscale limitation is max length 32
 {{- $loadbalancername }}
 {{- end }}
 
+{{- define "outscale.subregionsLabels" }}
+- a
+{{- if .multiaz }}
+- b
+- c
+{{- end }}
+{{- end }}
+
+{{- define "outscale.computeReplicas" }}
+{{- $currentSubRegion := .subregion }}
+{{- $totalReplicas := .replicas }}
+{{- $multiaz := .multiaz }}
+{{- $replicaDivider := 1 }}
+{{- if $multiaz }}
+{{- $replicaDivider = 3 }}
+{{- end }}
+{{- $orphanReplicas := mod $totalReplicas $replicaDivider }}
+{{- $baseReplicas := div $totalReplicas $replicaDivider }}
+{{- if (eq $orphanReplicas 0) }}
+{{- $baseReplicas }}
+{{- else if (eq $currentSubRegion "a") }}
+{{- add1 $baseReplicas }}
+{{- else if (and (gt $orphanReplicas 1) (eq $currentSubRegion "b")) }}
+{{- add1 $baseReplicas }}
+{{- else }}
+{{- $baseReplicas }}
+{{- end }}
+{{- end }}
