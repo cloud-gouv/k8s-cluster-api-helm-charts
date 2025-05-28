@@ -19,6 +19,18 @@ Define Loadbalancer name : outscale limitation is max length 32
 {{- end }}
 {{- end }}
 
+{{/*
+Function to compute number of replicas for a given subnet AZ. Given
+the overall replicas for the nodepool and if we are using multiAZ or not.
+Takes a dict as argument such as
+{
+    subregion: "a",
+    replicas: 5,
+    multiaz: true
+}
+Returns:
+2
+*/}}
 {{- define "outscale.computeReplicas" }}
 {{- $currentSubRegion := .subregion }}
 {{- $totalReplicas := .replicas }}

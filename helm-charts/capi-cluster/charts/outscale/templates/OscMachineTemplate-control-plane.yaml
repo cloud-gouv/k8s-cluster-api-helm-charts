@@ -23,12 +23,10 @@ spec:
           imageId: {{ .Values.controlplane.imageId }}
           {{- end }}
           {{- if not .Values.multiaz }}
-          subregionName: {{ .Values.region  }}a
+          subregionName: {{ .Values.controlplane.subregionName  }}
           {{- end }}
           {{- with .Values.controlplane.tags }}
-          tags:
-            tags.osc.fcu.repulse_server: vm-control-plane
-          {{- toYaml . | nindent 12 }}
+          tags: {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- if hasKey .Values.controlplane "rootDisk" }}
           rootDisk:
