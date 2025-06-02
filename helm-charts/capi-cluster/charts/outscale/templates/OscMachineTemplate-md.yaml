@@ -29,7 +29,6 @@ spec:
           subnetName: {{ $.Values.global.clusterName }}-subnet-kw-{{ . }}
           {{- with $pool.tags }}
           tags:
-            tags.osc.fcu.repulse_server: vm-worker-{{ $pool.name }}
           {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- if hasKey $pool "rootDisk" }}
