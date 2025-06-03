@@ -27,10 +27,10 @@ spec:
           {{- end }}
           subregionName: {{ $.Values.region  }}{{ . }}
           subnetName: {{ $.Values.global.clusterName }}-subnet-kw-{{ . }}
-          {{- with $pool.tags }}
+          {{- $dict1 := $pool.tags | default dict }}
+          {{- $tags := merge $dict1 (include "outscale.kwDefaultTags" (dict "ctx" $.Values "name" $name) | fromYaml ) }}
           tags:
-          {{- toYaml . | nindent 12 }}
-          {{- end }}
+          {{- $tags | toYaml | nindent 12 }}
           {{- if hasKey $pool "rootDisk" }}
           rootDisk:
             rootDiskIops: {{ $pool.rootDisk.rootDiskIops | default 100 }}
@@ -66,9 +66,10 @@ spec:
           imageId: {{ $pool.imageId }}
           {{- end }}
           subregionName: {{ $pool.subregionName  }}
-          {{- with $pool.tags }}
-          tags: {{- toYaml . | nindent 12 }}
-          {{- end }}
+          {{- $dict1 := $pool.tags | default dict }}
+          {{- $tags := merge $dict1 (include "outscale.kwDefaultTags" (dict "ctx" $.Values "name" $name) | fromYaml ) }}
+          tags:
+          {{- $tags | toYaml | nindent 12 }}
           {{- if hasKey $pool "rootDisk" }}
           rootDisk:
             rootDiskIops: {{ $pool.rootDisk.rootDiskIops | default 100 }}

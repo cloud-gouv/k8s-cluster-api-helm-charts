@@ -25,9 +25,10 @@ spec:
           {{- if not .Values.multiaz }}
           subregionName: {{ .Values.controlplane.subregionName  }}
           {{- end }}
-          {{- with .Values.controlplane.tags }}
-          tags: {{- toYaml . | nindent 12 }}
-          {{- end }}
+          {{- $dict1 := .Values.controlplane.tags | default dict }}
+          {{- $tags := merge $dict1 (include "outscale.kcpDefaultTags" . | fromYaml ) }}
+          tags:
+          {{- $tags | toYaml | nindent 12 }}
           {{- if hasKey .Values.controlplane "rootDisk" }}
           rootDisk:
             rootDiskIops: {{ .Values.controlplane.rootDisk.rootDiskIops | default 100 }}

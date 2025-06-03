@@ -66,3 +66,27 @@ Returns:
 {{- $baseReplicas }}
 {{- end }}
 {{- end }}
+
+{{/*
+Produce default tags for controlplane nodes
+Returns a dict:
+  tags.osc.fcu.repulse_server: xxx-{{ .Values.global.clusterName }}
+*/}}
+{{- define "outscale.kcpDefaultTags" -}}
+{{- $tags := dict }}
+{{- $tags = set $tags "tags.osc.fcu.repulse_server" (printf "kcp-%s" .Values.global.clusterName) }}
+{{- $tags | toYaml }}
+{{- end }}
+
+{{/*
+Produce default tags for worker nodes
+Returns a dict:
+  tags.osc.fcu.repulse_server: xxx-{{ .Values.global.clusterName }}-poolName
+*/}}
+{{- define "outscale.kwDefaultTags" -}}
+{{ $ctx := .ctx }}
+{{ $poolName := .name }}
+{{- $tags := dict }}
+{{- $tags = set $tags "tags.osc.fcu.repulse_server" (printf "kw-%s-%s" $ctx.global.clusterName $poolName) }}
+{{- $tags | toYaml }}
+{{- end }}
