@@ -1,5 +1,47 @@
 {{- $values := .Values }}
 {{- range $name, $pool := .Values.workers }}
+{{ if $.Values.multiaz }}
+{{- range (include "outscale.subregionsLabels" $values | fromYamlArray) }}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OscMachineTemplate
+metadata:
+  name: {{ $.Values.global.clusterName }}-{{ $name }}-{{ $pool.version }}-{{ . }}
+spec:
+  template:
+    spec:
+      node:
+        clusterName: {{ $.Values.global.clusterName }}
+        {{- if hasKey $pool "image" }}
+        image:
+          name: {{ $pool.image }}
+        {{- end }}
+        keypair:
+          name: {{ $.Values.sshkeyname }}
+        vm:
+          clusterName: {{ $.Values.global.clusterName }}
+          keypairName: {{ $.Values.sshkeyname }}
+          vmType: {{ $pool.vmType }}
+          {{- if hasKey $pool "imageId" }}
+          imageId: {{ $pool.imageId }}
+          {{- end }}
+          subregionName: {{ $.Values.region  }}{{ . }}
+          subnetName: {{ $.Values.global.clusterName }}-subnet-kw-{{ . }}
+          {{- $dict1 := $pool.tags | default dict }}
+          {{- $tags := merge $dict1 (include "outscale.kwDefaultTags" (dict "ctx" $.Values "name" $name) | fromYaml ) }}
+          tags:
+          {{- $tags | toYaml | nindent 12 }}
+          {{- if hasKey $pool "rootDisk" }}
+          rootDisk:
+            rootDiskIops: {{ $pool.rootDisk.rootDiskIops | default 100 }}
+            rootDiskSize: {{ $pool.rootDisk.rootDiskSize | default 30 }}
+            rootDiskType: {{ $pool.rootDisk.rootDiskType | default "standard" }}
+          {{- end }}
+        {{- with $pool.volumes }}
+        volumes: {{- toYaml . | nindent 10 }}
+        {{- end }}
+{{- end }}
+{{- else }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OscMachineTemplate
@@ -24,9 +66,10 @@ spec:
           imageId: {{ $pool.imageId }}
           {{- end }}
           subregionName: {{ $pool.subregionName  }}
-          {{- with $pool.tags }}
-          tags: {{- toYaml . | nindent 12 }}
-          {{- end }}
+          {{- $dict1 := $pool.tags | default dict }}
+          {{- $tags := merge $dict1 (include "outscale.kwDefaultTags" (dict "ctx" $.Values "name" $name) | fromYaml ) }}
+          tags:
+          {{- $tags | toYaml | nindent 12 }}
           {{- if hasKey $pool "rootDisk" }}
           rootDisk:
             rootDiskIops: {{ $pool.rootDisk.rootDiskIops | default 100 }}
@@ -36,5 +79,5 @@ spec:
         {{- with $pool.volumes }}
         volumes: {{- toYaml . | nindent 10 }}
         {{- end }}
----
+{{- end }}
 {{- end }}
