@@ -19,7 +19,9 @@ csi: {}
 #
 # outscale
 #sshkeyname: REPLACE_MY_KEY
-#subregionName: "eu-west-2a"
+#multiaz: false
+#region: eu-west-2            # Mandatory if multiaz: true
+#subregionName: "eu-west-2a"  # Ignored if multiaz: true
 #
 #bastion:
 #  enable: false

@@ -11,3 +11,82 @@ Define Loadbalancer name : outscale limitation is max length 32
 {{- $loadbalancername }}
 {{- end }}
 
+{{- define "outscale.validate" }}
+{{- if .Values.multiaz }}
+  {{- if not .Values.region }}
+    {{- fail "Defining a region is required when multiaz is true" }}
+  {{- end }}
+  {{- if lt (int .Values.controlplane.replicas) 3 }}
+    {{- fail "When using multiaz, you must have at lease 3 replicas for the controlplane" }}
+  {{- end }}
+{{- else }}
+  {{- if not .Values.subregionName }}
+    {{- fail "Defining subregionName is required when multiaz is false" }}
+  {{- end }}
+{{- end }}
+{{- end }}
+
+{{- define "outscale.subregionsLabels" }}
+- a
+{{- if .multiaz }}
+- b
+- c
+{{- end }}
+{{- end }}
+
+{{/*
+Function to compute number of replicas for a given subnet AZ. Given
+the overall replicas for the nodepool and if we are using multiAZ or not.
+Takes a dict as argument such as
+{
+    subregion: "a",
+    replicas: 5,
+    multiaz: true
+}
+Returns:
+2
+*/}}
+{{- define "outscale.computeReplicas" }}
+{{- $currentSubRegion := .subregion }}
+{{- $totalReplicas := .replicas }}
+{{- $multiaz := .multiaz }}
+{{- $replicaDivider := 1 }}
+{{- if $multiaz }}
+{{- $replicaDivider = 3 }}
+{{- end }}
+{{- $orphanReplicas := mod $totalReplicas $replicaDivider }}
+{{- $baseReplicas := div $totalReplicas $replicaDivider }}
+{{- if (eq $orphanReplicas 0) }}
+{{- $baseReplicas }}
+{{- else if (eq $currentSubRegion "a") }}
+{{- add1 $baseReplicas }}
+{{- else if (and (gt $orphanReplicas 1) (eq $currentSubRegion "b")) }}
+{{- add1 $baseReplicas }}
+{{- else }}
+{{- $baseReplicas }}
+{{- end }}
+{{- end }}
+
+{{/*
+Produce default tags for controlplane nodes
+Returns a dict:
+  tags.osc.fcu.repulse_server: xxx-{{ .Values.global.clusterName }}
+*/}}
+{{- define "outscale.kcpDefaultTags" -}}
+{{- $tags := dict }}
+{{- $tags = set $tags "tags.osc.fcu.repulse_server" (printf "kcp-%s" .Values.global.clusterName) }}
+{{- $tags | toYaml }}
+{{- end }}
+
+{{/*
+Produce default tags for worker nodes
+Returns a dict:
+  tags.osc.fcu.repulse_server: xxx-{{ .Values.global.clusterName }}-poolName
+*/}}
+{{- define "outscale.kwDefaultTags" -}}
+{{ $ctx := .ctx }}
+{{ $poolName := .name }}
+{{- $tags := dict }}
+{{- $tags = set $tags "tags.osc.fcu.repulse_server" (printf "kw-%s-%s" $ctx.global.clusterName $poolName) }}
+{{- $tags | toYaml }}
+{{- end }}
