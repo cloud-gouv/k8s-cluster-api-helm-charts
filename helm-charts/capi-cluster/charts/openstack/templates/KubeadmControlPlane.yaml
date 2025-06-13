@@ -5,35 +5,109 @@ metadata:
   name: {{ .Values.global.clusterName }}-control-plane
 spec:
   kubeadmConfigSpec:
-##  Add external volume for etcd
-#    diskSetup:
-##      partitions:
-##      - device: /dev/vdb
-##        layout: true
-##        overwrite: false
-##        tableType: gpt
-#      filesystems:
-#      - device: /dev/vdb
-#        extraOpts:
-#        - -E
-#        - lazy_itable_init=1,lazy_journal_init=1
-#        filesystem: ext4
-#        label: etcd_disk
-#    mounts:
-#      - - LABEL=etcd_disk
-#        - /var/lib/etcddisk
+    {{- if hasKey .Values.global.kubeadmConfigSpec "verbosity" }}
+    verbosity: {{ .Values.global.kubeadmConfigSpec.verbosity }}
+    {{- end }}
+    clusterConfiguration:
+      apiServer:
+        timeoutForControlPlane: 20m0s
+        extraArgs:
+          cloud-provider: "external"
+          audit-policy-file: "/etc/kubernetes/audit-policy.yaml"
+          admission-control-config-file: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
+          # encryption-provider-config: "xxxx"
+          {{- with .Values.global.apiServer.extraArgs }}
+          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- end }}
+        extraVolumes:
+          - name: "audit-policy"
+            pathType: "File"
+            hostPath: "/etc/kubernetes/audit-policy.yaml"
+            mountPath: "/etc/kubernetes/audit-policy.yaml"
+            readOnly: true
+          {{- with .Values.global.apiServer.extraVolumes }}
+          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- end }}
+          - name: "admission-pss"
+            pathType: "File"
+            hostPath: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
+            mountPath: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
+            readOnly: true
+      controllerManager:
+        extraArgs:
+          cloud-provider: "external"
+          cluster-name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+          {{- with .Values.global.controllerManager.extraArgs }}
+          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- end }}
+      etcd:
+        local:
+          {{- with .Values.global.etcd.local }}
+          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- end }}
+      scheduler:
+        extraArgs:
+          {{- with .Values.global.scheduler.extraArgs }}
+          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- end }}
+    initConfiguration:
+      {{ if and .Values.global.addons.cni.enabled ( eq .Values.global.addons.cni.type "cilium" ) -}}
+      # cilium replace kube-proxy
+      skipPhases:
+        - addon/kube-proxy
+      {{ end -}}
+      nodeRegistration:
+        name: {{`"{{ local_hostname }}"`}}
+        kubeletExtraArgs:
+          cloud-provider: "external"
+          provider-id: {{`"openstack:///{{ instance_id }}"`}}
+      # Here we specify the directory that contains the patch files
+      # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
+      # See: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
+      #
+      patches:
+        directory: /etc/kubernetes/patches
+    joinConfiguration:
+      nodeRegistration:
+        name: {{`"{{ local_hostname }}"`}}
+        kubeletExtraArgs:
+          cloud-provider: "external"
+          provider-id: {{`"openstack:///{{ instance_id }}"`}}
+      # Here we specify the directory that contains the patch files
+      # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
+      # See: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
+      #
+      patches:
+        directory: /etc/kubernetes/patches
     preKubeadmCommands:
-      - echo debug-pre > /tmp/out
       - mkdir -p /etc/pre-kubeadm-commands
       - for script in $(find /etc/pre-kubeadm-commands/ -name '*.sh' -type f | sort);
         do echo "Running script $script"; "$script"; done
     postKubeadmCommands:
-      - echo debug-post >> /tmp/out
       - mkdir -p /etc/post-kubeadm-commands
       - for script in $(find /etc/post-kubeadm-commands/ -name '*.sh' -type f | sort);
         do echo "Running script $script"; "$script"; done
     files:
-      - content: |
+      # Here we put a patch file for kubeletconfiguration target in strategic patchtype on nodes via KubeadmConfigSpec.files
+      # The naming convention of the patch file is kubeletconfiguration{suffix}+{patchtype}.yaml where {suffix} is an string and {patchtype} is one of the following: strategic, merge, json.
+      # {suffix} determines the order of the patch files. The patches are applied in the alpha-numerical order of the {suffix}.
+      #
+      # See https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
+      #
+      - path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
+        owner: "root:root"
+        permissions: "0644"
+        content: |
+          apiVersion: kubelet.config.k8s.io/v1beta1
+          kind: KubeletConfiguration
+          {{- with .Values.global.KubeletConfiguration }}
+          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- end }}
+
+      - path: /etc/pre-kubeadm-commands/10-containerd-restart.sh
+        owner: root:root
+        permissions: "0700"
+        content: |
           #!/bin/bash
           #
           # pre-kubadm-scripts
@@ -42,9 +116,6 @@ spec:
           # apply containerd config before kubeadm
           systemctl daemon-reload
           systemctl restart containerd
-        owner: root:root
-        path: /etc/pre-kubeadm-commands/10-containerd-restart.sh
-        permissions: "0700"
       {{ if and .Values.global.addons.kubevip.enabled ( eq .Values.global.addons.kubevip.type "kube-vip" ) -}}
       - path: /etc/kubernetes/manifests/kube-vip.yaml
         owner: "root:root"
@@ -124,11 +195,14 @@ spec:
                 type: File
               name: etchosts
           status: {}
-      - content: 127.0.0.1 localhost kubernetes
+      - path: /etc/kube-vip.hosts
         owner: root:root
-        path: /etc/kube-vip.hosts
         permissions: "0644"
-      - content: |
+        content: 127.0.0.1 localhost kubernetes
+      - path: /etc/pre-kubeadm-commands/50-kube-vip-prepare.sh
+        owner: root:root
+        permissions: "0700"
+        content: |
           #!/bin/bash
           # Copyright 2020 The Kubernetes Authors.
           #
@@ -164,10 +238,10 @@ spec:
             sed -i 's#path: /etc/kubernetes/admin.conf#path: /etc/kubernetes/super-admin.conf#' \
               /etc/kubernetes/manifests/kube-vip.yaml
           fi
+      - path: /etc/post-kubeadm-commands/50-kube-vip-restore.sh
         owner: root:root
-        path: /etc/pre-kubeadm-commands/50-kube-vip-prepare.sh
         permissions: "0700"
-      - content: |
+        content: |
           #!/bin/bash
           set -e
           # Configure the workaround required for kubeadm init with kube-vip:
@@ -190,11 +264,11 @@ spec:
             sed -i 's#path: /etc/kubernetes/super-admin.conf#path: /etc/kubernetes/admin.conf#' \
               /etc/kubernetes/manifests/kube-vip.yaml
           fi
-        owner: root:root
-        path: /etc/post-kubeadm-commands/50-kube-vip-restore.sh
-        permissions: "0700"
       {{ end -}}
-      - content: |
+      - path: /etc/post-kubeadm-commands/10-tweak-kubeapi-memlimit.sh
+        owner: root:root
+        permissions: "0700"
+        content: |
           #!/bin/bash
           grep '^      limits:' /etc/kubernetes/manifests/kube-apiserver.yaml >/dev/null 2>&1 && exit 0
           MEM=$(free -m | grep '^Mem:' | awk '{print $2;}')
@@ -203,9 +277,6 @@ spec:
           sed -i "/^ *requests:/a\        memory: 512M" /etc/kubernetes/manifests/kube-apiserver.yaml
           sync
           systemctl restart kubelet
-        owner: root:root
-        path: /etc/post-kubeadm-commands/10-tweak-kubeapi-memlimit.sh
-        permissions: "0700"
       - path: /etc/apt/apt.conf.d/99proxy
         owner: "root:root"
         permissions: "0644"
@@ -232,36 +303,180 @@ spec:
           {{- if .Values.global.no_proxy }}
           Environment="NO_PROXY=.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,192.168.0.0/16,{{ .Values.global.pods.cidrBlocks }},{{ .Values.global.services.cidrBlocks }}"
           {{- end }}
-    clusterConfiguration:
-      apiServer:
-        extraArgs:
-          cloud-provider: external
-      controllerManager:
-        extraArgs:
-          cloud-provider: external
-### use external etcd volume dir
-#      etcd:
-#        local:
-#          dataDir: /var/lib/etcddisk/etcd ## We Change the etcd data dir when moving to dedicated volume (because of "dir is not empty")
-#          extraArgs:
-#            quota-backend-bytes: "8589934592"
-    initConfiguration:
-      {{ if and .Values.global.addons.cni.enabled ( eq .Values.global.addons.cni.type "cilium" ) -}}
-      # cilium replace kube-proxy
-      skipPhases:
-        - addon/kube-proxy
-      {{ end -}}
-      nodeRegistration:
-        kubeletExtraArgs:
-          cloud-provider: external
-          provider-id: {{`'openstack:///{{ instance_id }}'`}}
-        name: {{`'{{ local_hostname }}'`}}
-    joinConfiguration:
-      nodeRegistration:
-        kubeletExtraArgs:
-          cloud-provider: external
-          provider-id: {{`'openstack:///{{ instance_id }}'`}}
-        name: {{`'{{ local_hostname }}'`}}
+      - path: /etc/kubernetes/audit-policy.yaml
+        owner: "root:root"
+        permissions: "0600"
+        content: |
+          apiVersion: audit.k8s.io/v1
+          kind: Policy
+          rules:
+          - level: None
+            users:
+            - system:serviceaccount:kube-system:kube-proxy
+            verbs:
+            - watch
+            resources:
+            - group: ""
+              resources:
+              - endpoints
+              - services
+              - services/status
+          - level: None
+            userGroups:
+            - system:nodes
+            verbs:
+            - get
+            resources:
+            - group: ""
+              resources:
+              - nodes
+              - nodes/status
+          - level: None
+            users:
+            - system:kube-controller-manager
+            - system:kube-scheduler
+            - system:serviceaccount:kube-system:endpoint-controller
+            verbs:
+            - get
+            - update
+            namespaces:
+            - kube-system
+            resources:
+            - group: ""
+              resources:
+              - endpoints
+          - level: None
+            users:
+            - system:apiserver
+            verbs:
+            - get
+            resources:
+            - group: ""
+              resources:
+              - namespaces
+              - namespaces/status
+              - namespaces/finalize
+          - level: None
+            users:
+            - system:kube-controller-manager
+            verbs:
+            - get
+            - list
+            resources:
+            - group: metrics.k8s.io
+          - level: None
+            nonResourceURLs:
+            - /healthz*
+            - /version
+            - /swagger*
+          - level: None
+            resources:
+            - group: ""
+              resources:
+              - events
+          - level: None
+            users:
+            - system:serviceaccount:kube-system:generic-garbage-collector
+            verbs:
+            - get
+            - list
+            - watch
+          - level: Request
+            userGroups:
+            - system:nodes
+            verbs:
+            - update
+            - patch
+            resources:
+            - group: ""
+              resources:
+              - nodes/status
+              - pods/status
+            omitStages:
+            - RequestReceived
+          - level: Request
+            users:
+            - system:serviceaccount:kube-system:namespace-controller
+            verbs:
+            - deletecollection
+            omitStages:
+            - RequestReceived
+          - level: Metadata
+            resources:
+            - group: ""
+              resources:
+              - secrets
+              - configmaps
+            - group: authentication.k8s.io
+              resources:
+              - tokenreviews
+            omitStages:
+            - RequestReceived
+          - level: Request
+            verbs:
+            - get
+            - list
+            - watch
+            resources:
+            - group: ""
+            - group: admissionregistration.k8s.io
+            - group: apiextensions.k8s.io
+            - group: apiregistration.k8s.io
+            - group: apps
+            - group: authentication.k8s.io
+            - group: authorization.k8s.io
+            - group: autoscaling
+            - group: batch
+            - group: certificates.k8s.io
+            - group: extensions
+            - group: metrics.k8s.io
+            - group: networking.k8s.io
+            - group: policy
+            - group: rbac.authorization.k8s.io
+            - group: settings.k8s.io
+            - group: storage.k8s.io
+            omitStages:
+            - RequestReceived
+          - level: RequestResponse
+            resources:
+            - group: ""
+            - group: admissionregistration.k8s.io
+            - group: apiextensions.k8s.io
+            - group: apiregistration.k8s.io
+            - group: apps
+            - group: authentication.k8s.io
+            - group: authorization.k8s.io
+            - group: autoscaling
+            - group: batch
+            - group: certificates.k8s.io
+            - group: extensions
+            - group: metrics.k8s.io
+            - group: networking.k8s.io
+            - group: policy
+            - group: rbac.authorization.k8s.io
+            - group: settings.k8s.io
+            - group: storage.k8s.io
+            omitStages:
+            - RequestReceived
+          - level: Metadata
+            omitStages:
+            - RequestReceived
+      - path: /etc/kubernetes/kube-apiserver-admission-pss.yaml
+        owner: root:root
+        permissions: "0444"
+        content: |
+          # Do not apply default pod security admission
+          apiVersion: apiserver.config.k8s.io/v1
+          kind: AdmissionConfiguration
+          plugins:
+          - name: PodSecurity
+            configuration:
+              apiVersion: pod-security.admission.config.k8s.io/v1beta1
+              kind: PodSecurityConfiguration
+              {{- with .Values.global.PodSecurityConfiguration }}
+              {{- tpl (. | toYaml) $ | nindent 14 }}
+              {{- end }}
+
   machineTemplate:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1

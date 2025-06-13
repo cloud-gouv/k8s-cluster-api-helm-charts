@@ -26,6 +26,26 @@ spec:
         - - LABEL={{ $pool.additionalBlockDevices.name }}_disk
           - /mnt/disk
       {{- end }}
+      {{- if hasKey $.Values.global.kubeadmConfigSpec "verbosity" }}
+      verbosity: {{ $.Values.global.kubeadmConfigSpec.verbosity | default 1 }}
+      {{- end }}
+      joinConfiguration:
+        nodeRegistration:
+          imagePullPolicy: IfNotPresent
+          name: {{`"{{ local_hostname }}"`}}
+          kubeletExtraArgs:
+            cloud-provider: "external"
+            provider-id: {{`"openstack:///{{ instance_id }}"`}}
+            {{- with $pool.nodeLabels }}
+            node-labels: "{{ range $i, $k := (keys . | sortAlpha) }}{{ if ne $i 0 }},{{ end }}{{ $k }}={{ index $pool.nodeLabels $k }}{{ end }}"
+            {{- end }}
+        #
+        # Here we specify the directory that contains the patch files
+        # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
+        # See: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
+        #
+        patches:
+          directory: /etc/kubernetes/patches
       preKubeadmCommands:
         - echo debug-pre > /tmp/out
         - mkdir -p /etc/pre-kubeadm-commands
@@ -37,7 +57,25 @@ spec:
         - for script in $(find /etc/post-kubeadm-commands/ -name '*.sh' -type f | sort);
           do echo "Running script $script"; "$script"; done
       files:
-        - content: |
+        # Here we put a patch file for kubeletconfiguration target in strategic patchtype on nodes via KubeadmConfigSpec.files
+        # The naming convention of the patch file is kubeletconfiguration{suffix}+{patchtype}.yaml where {suffix} is an string and {patchtype} is one of the following: strategic, merge, json.
+        # {suffix} determines the order of the patch files. The patches are applied in the alpha-numerical order of the {suffix}.
+        #
+        # See https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
+        #
+        - path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
+          owner: "root:root"
+          permissions: "0644"
+          content: |
+            apiVersion: kubelet.config.k8s.io/v1beta1
+            kind: KubeletConfiguration
+            {{- with $.Values.global.KubeletConfiguration }}
+            {{- tpl (. | toYaml) $ | nindent 12 }}
+            {{- end }}
+        - path: /etc/pre-kubeadm-commands/10-containerd-restart.sh
+          owner: root:root
+          permissions: "0700"
+          content: |
             #!/bin/bash
             #
             # pre-kubadm-scripts
@@ -46,9 +84,6 @@ spec:
             # apply containerd config before kubeadm
             systemctl daemon-reload
             systemctl restart containerd
-          owner: root:root
-          path: /etc/pre-kubeadm-commands/10-containerd-restart.sh
-          permissions: "0700"
         - path: /etc/apt/apt.conf.d/99proxy
           owner: "root:root"
           permissions: "0644"
@@ -75,14 +110,5 @@ spec:
             {{- if $.Values.global.no_proxy }}
             Environment="NO_PROXY=.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,192.168.0.0/16,{{ $.Values.global.pods.cidrBlocks }},{{ $.Values.global.services.cidrBlocks }}"
             {{- end }}
-      joinConfiguration:
-        nodeRegistration:
-          kubeletExtraArgs:
-            cloud-provider: external
-            provider-id: {{`'openstack:///{{ instance_id }}'`}}
-            {{- with $pool.nodeLabels }}
-            node-labels: "{{ range $i, $k := (keys . | sortAlpha) }}{{ if ne $i 0 }},{{ end }}{{ $k }}={{ index $pool.nodeLabels $k }}{{ end }}"
-            {{- end }}
-          name: {{`'{{ local_hostname }}'`}}
 ---
 {{- end }}
