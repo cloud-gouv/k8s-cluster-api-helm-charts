@@ -39,7 +39,7 @@ global:
       type: osc-bsu-csi # or cinder-csi
       version: 1.6.0    # for cinder-csi: 2.31.0
     kubevip:
-      enabled: false
+      enabled: true
       type: kube-vip
       version: v0.8.10
     metallb:
