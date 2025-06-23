@@ -20,6 +20,10 @@ spec:
             {{- with $pool.nodeLabels }}
             node-labels: "{{ range $i, $k := (keys . | sortAlpha) }}{{ if ne $i 0 }},{{ end }}{{ $k }}={{ index $pool.nodeLabels $k }}{{ end }}"
             {{- end }}
+          taints:
+          - key: "key1"
+            value: "value1"
+            effect: "NoSchedule"
         #
         # Here we specify the directory that contains the patch files
         # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
