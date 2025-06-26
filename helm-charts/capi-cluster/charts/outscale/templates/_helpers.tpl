@@ -90,3 +90,12 @@ Returns a dict:
 {{- $tags = set $tags "tags.osc.fcu.repulse_server" (printf "kw-%s-%s" $ctx.global.clusterName $poolName) }}
 {{- $tags | toYaml }}
 {{- end }}
+
+{{/*
+Slugify an IP range
+Usage: {{ include "outscale.IpSlugify" "1.1.1.1/32" }}
+Result: "1-1-1-1-32"
+*/}}
+{{- define "outscale.IpSlugify" -}}
+{{ . | replace "/" "-"  | replace "." "-" | trimSuffix "-" | trimPrefix "-" -}}
+{{- end }}

@@ -26,7 +26,8 @@ csi: {}
 #bastion:
 #  enable: false
 #loadbalancername: my-lb
-#controlplane:
+apiAllowedCidr:
+  - 0.0.0.0/0
 #  version: v1.29.5
 #  replicas: 1
 #  vmType: tinav5.c2r4p3
