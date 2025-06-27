@@ -26,6 +26,9 @@ csi: {}
 #bastion:
 #  enable: false
 #loadbalancername: my-lb
+#loadbalancertype: internet-facing
+allow_cidr_api:
+  - 0.0.0.0/0
 #controlplane:
 #  version: v1.29.5
 #  replicas: 1
