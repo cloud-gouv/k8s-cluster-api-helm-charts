@@ -169,7 +169,7 @@ spec:
         ipProtocol: tcp
         ipRange: 10.0.4.0/24
       securityGroupRules:
-      {{- range $i, $cidr := $allowCidrApi }}
+      {{- range $i, $cidr := .Values.allow_cidr_api }}
       - name: {{ $.Values.global.clusterName }}-securitygrouprule-lb-{{ $i }}
         flow: Inbound
         fromPortRange: 6443
