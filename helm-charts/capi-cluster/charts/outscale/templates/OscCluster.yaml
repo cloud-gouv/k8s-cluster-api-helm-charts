@@ -168,7 +168,6 @@ spec:
         toPortRange: 6443
         ipProtocol: tcp
         ipRange: 10.0.4.0/24
-      {{- $allowCidrApi := .Values.allow_cidr_api | default (list "0.0.0.0/0") }}
       securityGroupRules:
       {{- range $i, $cidr := $allowCidrApi }}
       - name: {{ $.Values.global.clusterName }}-securitygrouprule-lb-{{ $i }}
