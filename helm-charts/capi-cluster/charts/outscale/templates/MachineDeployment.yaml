@@ -31,7 +31,10 @@ spec:
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: OscMachineTemplate
-        name: {{ $.Values.global.clusterName }}-{{ $name }}-{{ $pool.version }}{{ if $.Values.multiaz }}-{{ . }}{{ end }}
+        name: {{- $base := printf "%s-%s-%s" $.Values.global.clusterName $name $pool.version -}}
+              {{- if $.Values.multiaz }}{{- $base = printf "%s-%s" $base . }}{{- end -}}
+              {{- $hash := sha256sum $pool.image | trunc 8 -}}
+              {{- printf "%s-%s" $base $hash | trunc 63 | indent 1 }}
       version: {{ $pool.version }}
 {{- end }}
 {{- end }}

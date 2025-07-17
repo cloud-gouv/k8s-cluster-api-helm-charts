@@ -47,7 +47,7 @@ global:
 
 outscale:
   sshkeyname: REPLACE_SSH_KEY_NAME_
-  subregionname: eu-west-2a
+  subregionName: eu-west-2a
   osc_ccm_credentials:
     secret_key: ""
     access_key: ""
@@ -71,7 +71,7 @@ outscale:
   controlplane:
     version: v1.30.5
     replicas: 1
-    image: ubuntu-2204-2204-kubernetes-v1.30.5-2024-10-21
+    image: ubuntu-2204-2204-kubernetes-v1.30.5-2024-10-22
     vmType: tinav5.c4r8p2
     subregionName: eu-west-2a
     rootDisk:

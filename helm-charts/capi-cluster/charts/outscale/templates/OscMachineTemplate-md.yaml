@@ -6,7 +6,9 @@
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OscMachineTemplate
 metadata:
-  name: {{ $.Values.global.clusterName }}-{{ $name }}-{{ $pool.version }}-{{ . }}
+  name: {{- $base := printf "%s-%s-%s-%s" $.Values.global.clusterName $name $pool.version . -}}
+        {{- $hash := sha256sum $pool.image | trunc 8 -}}
+        {{- printf "%s-%s" $base $hash | trunc 63 | indent 1 }}
 spec:
   template:
     spec:
@@ -46,7 +48,9 @@ spec:
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OscMachineTemplate
 metadata:
-  name: {{ $.Values.global.clusterName }}-{{ $name }}-{{ $pool.version }}
+  name: {{- $base := printf "%s-%s-%s" $.Values.global.clusterName $name $pool.version -}}
+        {{- $hash := sha256sum $pool.image | trunc 8 -}}
+        {{- printf "%s-%s" $base $hash | trunc 63 | nindent 4 }}
 spec:
   template:
     spec:

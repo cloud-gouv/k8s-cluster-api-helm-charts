@@ -1,7 +1,9 @@
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OscMachineTemplate
 metadata:
-  name: {{ .Values.global.clusterName }}-control-plane-{{ .Values.controlplane.version }}
+  name: {{- $base := printf "%s-%s-%s" .Values.global.clusterName "control-plane" .Values.controlplane.version -}}
+        {{- $hash := sha256sum .Values.controlplane.image | trunc 8 -}}
+        {{- printf "%s-%s" $base $hash | trunc 63 | indent 1 }}
 spec:
   template:
     spec:
