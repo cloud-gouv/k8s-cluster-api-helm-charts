@@ -370,9 +370,12 @@ spec:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: OscMachineTemplate
-      name: {{- $base := printf "%s-%s-%s" .Values.global.clusterName "control-plane" .Values.controlplane.version -}}
-            {{- $hash := sha256sum .Values.controlplane.image | trunc 8 -}}
-            {{- printf "%s-%s" $base $hash | trunc 63 | indent 1 }}
+      name: {{ include "outscale.generatedName" (dict
+        "clusterName" .Values.global.clusterName
+        "nodeType" "cp"
+        "kubeVersion" .Values.controlplane.version
+        "imageId" .Values.controlplane.image
+      ) }}
   replicas: {{ .Values.controlplane.replicas | default 1 }}
   version: {{ .Values.controlplane.version }}
   rolloutStrategy:

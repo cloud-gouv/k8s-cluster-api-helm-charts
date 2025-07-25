@@ -2,13 +2,24 @@
 {{- range $name, $pool := .Values.workers }}
 {{ if $.Values.multiaz }}
 {{- range (include "outscale.subregionsLabels" $values | fromYamlArray) }}
+{{- $poolName := printf "%s-%s" $name . -}}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OscMachineTemplate
 metadata:
-  name: {{- $base := printf "%s-%s-%s-%s" $.Values.global.clusterName $name $pool.version . -}}
-        {{- $hash := sha256sum $pool.image | trunc 8 -}}
-        {{- printf "%s-%s" $base $hash | trunc 63 | indent 1 }}
+  name: {{ include "outscale.generatedName" (dict
+    "clusterName" $.Values.global.clusterName
+    "nodeType" "worker"
+    "poolName" $poolName
+    "kubeVersion" $pool.version
+    "imageId" $pool.image
+  ) }}
+  labels:
+    cluster-name: {{ $.Values.global.clusterName }}
+    node-type: "worker"
+    pool-name: {{ $poolName }}
+    kube-version: {{ $pool.version }}
+    image-name: {{ $pool.image }}
 spec:
   template:
     spec:
@@ -44,13 +55,24 @@ spec:
         {{- end }}
 {{- end }}
 {{- else }}
+{{- $poolName := $name -}}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OscMachineTemplate
 metadata:
-  name: {{- $base := printf "%s-%s-%s" $.Values.global.clusterName $name $pool.version -}}
-        {{- $hash := sha256sum $pool.image | trunc 8 -}}
-        {{- printf "%s-%s" $base $hash | trunc 63 | nindent 4 }}
+  name: {{ include "outscale.generatedName" (dict
+    "clusterName" $.Values.global.clusterName
+    "nodeType" "worker"
+    "poolName" $name
+    "kubeVersion" $pool.version
+    "imageId" $pool.image
+  ) }}
+  labels:
+    cluster-name: {{ $.Values.global.clusterName }}
+    node-type: "worker"
+    pool-name: {{ $poolName }}
+    kube-version: {{ $pool.version }}
+    image-name: {{ $pool.image }}
 spec:
   template:
     spec:
