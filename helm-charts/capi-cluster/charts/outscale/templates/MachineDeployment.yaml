@@ -1,6 +1,17 @@
 {{- $values := .Values }}
 {{- range $name, $pool := .Values.workers }}
 {{- range (include "outscale.subregionsLabels" $values | fromYamlArray) }}
+
+{{- $poolName := printf "%s" $name }}
+{{- if $.Values.multiaz }}{{- $poolName = printf "%s-%s" $name . }}{{- end -}}
+{{- $generatedName := include "outscale.generatedName" (dict
+  "clusterName" $.Values.global.clusterName
+  "nodeType" "worker"
+  "poolName" $poolName
+  "kubeVersion" $pool.version
+  "imageId" $pool.image
+) }}
+
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
@@ -31,10 +42,7 @@ spec:
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: OscMachineTemplate
-        name: {{- $base := printf "%s-%s-%s" $.Values.global.clusterName $name $pool.version -}}
-              {{- if $.Values.multiaz }}{{- $base = printf "%s-%s" $base . }}{{- end -}}
-              {{- $hash := sha256sum $pool.image | trunc 8 -}}
-              {{- printf "%s-%s" $base $hash | trunc 63 | indent 1 }}
+        name: {{ $generatedName }}
       version: {{ $pool.version }}
 {{- end }}
 {{- end }}

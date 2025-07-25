@@ -1,9 +1,17 @@
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OscMachineTemplate
 metadata:
-  name: {{- $base := printf "%s-%s-%s" .Values.global.clusterName "control-plane" .Values.controlplane.version -}}
-        {{- $hash := sha256sum .Values.controlplane.image | trunc 8 -}}
-        {{- printf "%s-%s" $base $hash | trunc 63 | indent 1 }}
+  name: {{ include "outscale.generatedName" (dict
+    "clusterName" .Values.global.clusterName
+    "nodeType" "cp"
+    "kubeVersion" .Values.controlplane.version
+    "imageId" .Values.controlplane.image
+  ) }}
+  labels:
+    cluster-name: {{ .Values.global.clusterName }}
+    node-type: "control-plane"
+    kube-version:  {{ .Values.controlplane.version }}
+    image-name:  {{ .Values.controlplane.image }}
 spec:
   template:
     spec:

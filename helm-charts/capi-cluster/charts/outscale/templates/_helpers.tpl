@@ -99,3 +99,45 @@ Result: "1-1-1-1-32"
 {{- define "outscale.IpSlugify" -}}
 {{ . | replace "/" "-"  | replace "." "-" | trimSuffix "-" | trimPrefix "-" -}}
 {{- end }}
+
+
+{{/*
+uniq name max 63 carac) for worker or controlplane node
+based on:
+- clusterName
+- nodeType (worker | cp)
+- poolName (if worker)
+- kubeVersion
+- imageId
+
+Format :
+  - Worker:     <cluster>-<clusterHash>-<poolHash>-<imgKubeHash>
+  - ControlPlane: <cluster>-<clusterHash>-cp-<imgKubeHash>
+
+Usage :
+  {{ include "outscale.generatedName" (dict "clusterName" .Values.global.clusterName "nodeType" "worker" "poolName" $pool.name "kubeVersion" $pool.version "imageId" $pool.image) }}
+*/}}
+{{- define "outscale.generatedName" -}}
+{{- $type := .nodeType | default "worker" -}}
+{{- $imageId := .imageId | default "img" -}}
+{{- $kubeVersion := .kubeVersion | default "v1" -}}
+{{- $imageKubeHash := sha256sum (printf "%s-%s" $imageId $kubeVersion) | trunc 8 -}}
+{{- $clusterHash := sha256sum .clusterName | trunc 8 -}}
+
+{{- if eq $type "worker" -}}
+  {{- $pool := .poolName | default "pool" -}}
+  {{- $poolHash := sha256sum $pool | trunc 8 -}}
+  {{- $maxClusterLen := sub 63 (add (int (len $clusterHash)) (int (len $poolHash)) (int (len $imageKubeHash)) 3) -}}
+  {{- $cluster := .clusterName | trunc (int $maxClusterLen) | trimSuffix "-" -}}
+  {{- printf "%s-%s-%s-%s" $cluster $clusterHash $poolHash $imageKubeHash | toYaml -}}
+
+{{- else if eq $type "cp" -}}
+  {{- $cpTag := "cp" -}}
+  {{- $maxClusterLen := sub 63 (add (int (len $clusterHash)) (int (len $cpTag)) (int (len $imageKubeHash)) 3) -}}
+  {{- $cluster := .clusterName | trunc (int $maxClusterLen) | trimSuffix "-" -}}
+  {{- printf "%s-%s-%s-%s" $cluster $clusterHash $cpTag $imageKubeHash | toYaml -}}
+
+{{- else -}}
+  {{- fail (printf "Invalid nodeType: '%s'. Must be 'worker' or 'cp'" $type) -}}
+{{- end -}}
+{{- end }}
