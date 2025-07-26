@@ -28,6 +28,7 @@ csi: {}
 #loadbalancername: my-lb
 apiAllowedCidr:
   - 0.0.0.0/0
+#controlplane:
 #  version: v1.29.5
 #  replicas: 1
 #  vmType: tinav5.c2r4p3
