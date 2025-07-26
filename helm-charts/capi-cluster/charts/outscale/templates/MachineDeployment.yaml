@@ -1,48 +1,72 @@
-{{- $values := .Values }}
-{{- range $name, $pool := .Values.workers }}
-{{- range (include "outscale.subregionsLabels" $values | fromYamlArray) }}
+{{- /* Common initialization */ -}}
 
-{{- $poolName := printf "%s" $name }}
-{{- if $.Values.multiaz }}{{- $poolName = printf "%s-%s" $name . }}{{- end -}}
-{{- $generatedName := include "outscale.generatedName" (dict
-  "clusterName" $.Values.global.clusterName
-  "nodeType" "worker"
-  "poolName" $poolName
-  "kubeVersion" $pool.version
-  "imageId" $pool.image
-) }}
+{{- $values := .Values }}
+{{- $clusterName := $values.global.clusterName }}
+{{- $isMultiaz := $values.multiaz | default false }}
+{{- range $name, $pool := $values.workers }}
+  {{- $subregions := (include "outscale.subregionsLabels" $values | fromYamlArray) }}
+  {{- if not $isMultiaz }}
+    {{- $subregions = list "" }}
+  {{- end }}
+
+  {{- range $subregion := $subregions }}
+    {{- $poolName := $name }}
+    {{- if $isMultiaz }}
+      {{- $poolName = printf "%s-%s" $name $subregion }}
+    {{- end }}
+
+    {{- $mdName := printf "%s-%s" $clusterName $name }}
+    {{- if $isMultiaz }}
+      {{- $mdName = printf "%s-%s" $mdName $subregion }}
+    {{- end }}
+
+    {{- $context := dict
+      "subregion" $subregion
+      "replicas" $pool.replicas
+      "multiaz" $isMultiaz
+    }}
+    {{- $computedReplicas := include "outscale.computeReplicas" $context }}
+
+    {{- $bootstrapName := printf "%s-%s" $clusterName $name }}
+
+    {{- $generatedName := include "outscale.generatedName" (dict
+      "clusterName" $clusterName
+      "nodeType" "worker"
+      "poolName" $poolName
+      "kubeVersion" $pool.version
+      "imageId" $pool.image
+    ) }}
 
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
-  name: {{ $.Values.global.clusterName }}-{{ $name }}{{ if $.Values.multiaz }}-{{ . }}{{ end }}
+  name: {{ $mdName }}
 spec:
-  clusterName: {{ $.Values.global.clusterName }}
-  {{- $context := dict "subregion" . "replicas" $pool.replicas "multiaz" $.Values.multiaz }}
-  replicas: {{ include "outscale.computeReplicas" $context }}
+  clusterName: {{ $clusterName }}
+  replicas: {{ $computedReplicas }}
   minReadySeconds: 0
   progressDeadlineSeconds: 600
   revisionHistoryLimit: 1
   selector:
     matchLabels: null
   strategy:
+    type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
-    type: RollingUpdate
   template:
     spec:
+      clusterName: {{ $clusterName }}
       bootstrap:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
-          name: {{ $.Values.global.clusterName }}-{{ $name }}
-      clusterName: {{ $.Values.global.clusterName }}
+          name: {{ $bootstrapName }}
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: OscMachineTemplate
         name: {{ $generatedName }}
       version: {{ $pool.version }}
-{{- end }}
+  {{- end }}
 {{- end }}

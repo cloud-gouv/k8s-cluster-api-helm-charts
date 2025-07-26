@@ -1,12 +1,16 @@
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: OscMachineTemplate
-metadata:
-  name: {{ include "outscale.generatedName" (dict
+{{- /* Common initialization */ -}}
+{{- $generatedName := include "outscale.generatedName" (dict
     "clusterName" .Values.global.clusterName
     "nodeType" "cp"
     "kubeVersion" .Values.controlplane.version
     "imageId" .Values.controlplane.image
   ) }}
+
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OscMachineTemplate
+metadata:
+  name: {{ $generatedName }}
   labels:
     cluster-name: {{ .Values.global.clusterName }}
     node-type: "control-plane"
