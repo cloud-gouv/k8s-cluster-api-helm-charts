@@ -12,6 +12,14 @@ addons:
 certmanager: {}
 csi: {}
 
+# Allow to change default network CIDR.
+# There is a lot of logic behind so for now you can only change
+# the default 10.0.0.0/16 network by changing the second bit. For
+# example setting `networkId: 123` would create network and routes
+# for CIDR 10.123.0.0/16.
+# WARNING: Please remember "10.96.0.0/12" and "10.42.0.0/16" are reserved by default.
+networkId: 0
+
 #dockerConfig:
 #  registry: https://index.docker.io/v1/
 #  auth: base64(docker_login:docker_password)
