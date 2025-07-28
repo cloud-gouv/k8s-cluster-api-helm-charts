@@ -143,31 +143,31 @@ spec:
         fromPortRange: 179
         toPortRange: 179
         ipProtocol: tcp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kubelet-kw
         flow: Inbound
         fromPortRange: 10250
         toPortRange: 10250
         ipProtocol: tcp
-        ipRange: 10.0.4.0/22
+        ipRange: 10.{{ .Values.networkId }}.4.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kw-nodeip-kcp
         flow: Inbound
         toPortRange: 32767
         fromPortRange: 30000
         ipProtocol: tcp
-        ipRange: 10.0.8.0/22
+        ipRange: 10.{{ .Values.networkId }}.8.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kubelet-kcp
         flow: Inbound
         fromPortRange: 10250
         toPortRange: 10250
         ipProtocol: tcp
-        ipRange: 10.0.8.0/22
+        ipRange: 10.{{ .Values.networkId }}.8.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kw-nodeip-kw
         flow: Inbound
         fromPortRange: 30000
         toPortRange: 32767
         ipProtocol: tcp
-        ipRange: 10.0.4.0/22
+        ipRange: 10.{{ .Values.networkId }}.4.0/22
     - description: Security Group Kcp with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-kcp
       securityGroupRules:
@@ -176,49 +176,49 @@ spec:
         fromPortRange: 179
         toPortRange: 179
         ipProtocol: tcp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygrouprule-api-lb
         flow: Inbound
         fromPortRange: 6443
         toPortRange: 6443
         ipProtocol: tcp
-        ipRange: 10.0.12.0/22
+        ipRange: 10.{{ .Values.networkId }}.12.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kw
         flow: Inbound
         fromPortRange: 6443
         toPortRange: 6443
         ipProtocol: tcp
-        ipRange: 10.0.4.0/22
+        ipRange: 10.{{ .Values.networkId }}.4.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kcp
         flow: Inbound
         fromPortRange: 6443
         toPortRange: 6443
         ipProtocol: tcp
-        ipRange: 10.0.8.0/22
+        ipRange: 10.{{ .Values.networkId }}.8.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kcp-nodeip-kw
         flow: Inbound
         fromPortRange: 30000
         toPortRange: 32767
         ipProtocol: tcp
-        ipRange: 10.0.4.0/22
+        ipRange: 10.{{ .Values.networkId }}.4.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-etcd
         flow: Inbound
         fromPortRange: 2378
         toPortRange: 2380
         ipProtocol: tcp
-        ipRange: 10.0.8.0/22
+        ipRange: 10.{{ .Values.networkId }}.8.0/22
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kubelet-kcp
         flow: Inbound
         fromPortRange: 10250
         toPortRange: 10252
         ipProtocol: tcp
-        ipRange: 10.0.8.0/22
+        ipRange: 10.{{ .Values.networkId }}.8.0/22
       - name: {{ .Values.global.clusterName }}-securitugrouprule-kcp-nodeip-kcp
         flow: Inbound
         fromPortRange: 30000
         toPortRange: 32767
         ipProtocol: tcp
-        ipRange: 10.0.8.0/22
+        ipRange: 10.{{ .Values.networkId }}.8.0/22
     - description: Security Group Lb with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-lb
       securityGroupRules:
@@ -227,7 +227,7 @@ spec:
         fromPortRange: 6443
         toPortRange: 6443
         ipProtocol: tcp
-        ipRange: 10.0.8.0/22
+        ipRange: 10.{{ .Values.networkId }}.8.0/22
       {{- range $cidr := .Values.apiAllowedCidr }}
       - name: {{ $.Values.global.clusterName }}-securitygrouprule-lb-{{ include "outscale.IpSlugify" $cidr }}
         flow: Inbound
@@ -244,104 +244,104 @@ spec:
         fromPortRange: 1
         toPortRange: 65535
         ipProtocol: "-1"
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-calico-vxlan
         flow: Inbound
         fromPortRange: 4789
         toPortRange: 4789
         ipProtocol: udp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-typha
         flow: Inbound
         fromPortRange: 5473
         toPortRange: 5473
         ipProtocol: udp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-wireguard
         flow: Inbound
         fromPortRange: 51820
         toPortRange: 51820
         ipProtocol: udp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-wireguard-ipv6
         flow: Inbound
         fromPortRange: 51821
         toPortRange: 51821
         ipProtocol: udp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-flannel
         flow: Inbound
         fromPortRange: 4789
         toPortRange: 4789
         ipProtocol: udp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-flannel-udp
         flow: Inbound
         fromPortRange: 8285
         toPortRange: 8285
         ipProtocol: udp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       # icmp
       - name: {{ .Values.global.clusterName }}-securitygroup-icmp
         flow: Inbound
         fromPortRange: 8
         toPortRange: 8
         ipProtocol: icmp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       # cilium
       - name: {{ .Values.global.clusterName }}-securitygroup-cilium-vxlan
         flow: Inbound
         fromPortRange: 8472
         toPortRange: 8472
         ipProtocol: udp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-cilium-health
         flow: Inbound
         fromPortRange: 4240
         toPortRange: 4240
         ipProtocol: tcp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-cilium-hubble
         flow: Inbound
         fromPortRange: 4244
         toPortRange: 4244
         ipProtocol: tcp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       {{ if .Values.bastion.enable -}}
       - name: {{ .Values.global.clusterName }}-securitygrouprule-ssh
         flow: Inbound
         fromPortRange: 22
         toPortRange: 22
         ipProtocol: tcp
-        ipRange: 10.0.12.0/22
+        ipRange: 10.{{ .Values.networkId }}.12.0/22
       {{ end -}}
       tag: OscK8sMainSG
     subnets:
-    - ipSubnetRange: 10.0.4.0/24
+    - ipSubnetRange: 10.{{ .Values.networkId }}.4.0/24
       name: {{ .Values.global.clusterName }}-subnet-kw-a
       subregionName: {{ .Values.region }}a
-    - ipSubnetRange: 10.0.8.0/24
+    - ipSubnetRange: 10.{{ .Values.networkId }}.8.0/24
       name: {{ .Values.global.clusterName }}-subnet-kcp-a
       subregionName: {{ .Values.region }}a
-    - ipSubnetRange: 10.0.12.0/24
+    - ipSubnetRange: 10.{{ .Values.networkId }}.12.0/24
       name: {{ .Values.global.clusterName }}-subnet-public-a
       subregionName: {{ .Values.region }}a
-    - ipSubnetRange: 10.0.5.0/24
+    - ipSubnetRange: 10.{{ .Values.networkId }}.5.0/24
       name: {{ .Values.global.clusterName }}-subnet-kw-b
       subregionName: {{ .Values.region }}b
-    - ipSubnetRange: 10.0.6.0/24
+    - ipSubnetRange: 10.{{ .Values.networkId }}.6.0/24
       name: {{ .Values.global.clusterName }}-subnet-kw-c
       subregionName: {{ .Values.region }}c
-    - ipSubnetRange: 10.0.9.0/24
+    - ipSubnetRange: 10.{{ .Values.networkId }}.9.0/24
       name: {{ .Values.global.clusterName }}-subnet-kcp-b
       subregionName: {{ .Values.region }}b
-    - ipSubnetRange: 10.0.10.0/24
+    - ipSubnetRange: 10.{{ .Values.networkId }}.10.{{ .Values.networkId }}/24
       name: {{ .Values.global.clusterName }}-subnet-kcp-c
       subregionName: {{ .Values.region }}c
-    - ipSubnetRange: 10.0.13.0/24
+    - ipSubnetRange: 10.{{ .Values.networkId }}.13.0/24
       name: {{ .Values.global.clusterName }}-subnet-public-b
       subregionName: {{ .Values.region }}b
-    - ipSubnetRange: 10.0.14.0/24
+    - ipSubnetRange: 10.{{ .Values.networkId }}.14.0/24
       name: {{ .Values.global.clusterName }}-subnet-public-c
       subregionName: {{ .Values.region }}c
 {{- else }}
@@ -430,31 +430,31 @@ spec:
         fromPortRange: 179
         toPortRange: 179
         ipProtocol: tcp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kubelet-kw
         flow: Inbound
         fromPortRange: 10250
         toPortRange: 10250
         ipProtocol: tcp
-        ipRange: 10.0.3.0/24
+        ipRange: 10.{{ .Values.networkId }}.3.0/24
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kw-nodeip-kcp
         flow: Inbound
         toPortRange: 32767
         fromPortRange: 30000
         ipProtocol: tcp
-        ipRange: 10.0.4.0/24
+        ipRange: 10.{{ .Values.networkId }}.4.0/24
       - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kubelet-kcp
         flow: Inbound
         fromPortRange: 10250
         toPortRange: 10250
         ipProtocol: tcp
-        ipRange: 10.0.4.0/24
+        ipRange: 10.{{ .Values.networkId }}.4.0/24
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kw-nodeip-kw
         flow: Inbound
         fromPortRange: 30000
         toPortRange: 32767
         ipProtocol: tcp
-        ipRange: 10.0.3.0/24
+        ipRange: 10.{{ .Values.networkId }}.3.0/24
     - description: Security Group Kcp with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-kcp
       securityGroupRules:
@@ -463,49 +463,49 @@ spec:
         fromPortRange: 179
         toPortRange: 179
         ipProtocol: tcp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygrouprule-api-lb
         flow: Inbound
         fromPortRange: 6443
         toPortRange: 6443
         ipProtocol: tcp
-        ipRange: 10.0.2.0/24
+        ipRange: 10.{{ .Values.networkId }}.2.0/24
       - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kw
         flow: Inbound
         fromPortRange: 6443
         toPortRange: 6443
         ipProtocol: tcp
-        ipRange: 10.0.3.0/24
+        ipRange: 10.{{ .Values.networkId }}.3.0/24
       - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kcp
         flow: Inbound
         fromPortRange: 6443
         toPortRange: 6443
         ipProtocol: tcp
-        ipRange: 10.0.4.0/24
+        ipRange: 10.{{ .Values.networkId }}.4.0/24
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kcp-nodeip-kw
         flow: Inbound
         fromPortRange: 30000
         toPortRange: 32767
         ipProtocol: tcp
-        ipRange: 10.0.3.0/24
+        ipRange: 10.{{ .Values.networkId }}.3.0/24
       - name: {{ .Values.global.clusterName }}-securitygrouprule-etcd
         flow: Inbound
         fromPortRange: 2378
         toPortRange: 2380
         ipProtocol: tcp
-        ipRange: 10.0.4.0/24
+        ipRange: 10.{{ .Values.networkId }}.4.0/24
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kubelet-kcp
         flow: Inbound
         fromPortRange: 10250
         toPortRange: 10252
         ipProtocol: tcp
-        ipRange: 10.0.4.0/24
+        ipRange: 10.{{ .Values.networkId }}.4.0/24
       - name: {{ .Values.global.clusterName }}-securitugrouprule-kcp-nodeip-kcp
         flow: Inbound
         fromPortRange: 30000
         toPortRange: 32767
         ipProtocol: tcp
-        ipRange: 10.0.4.0/24
+        ipRange: 10.{{ .Values.networkId }}.4.0/24
     - description: Security Group Lb with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-lb
       securityGroupRules:
@@ -514,7 +514,7 @@ spec:
         fromPortRange: 6443
         toPortRange: 6443
         ipProtocol: tcp
-        ipRange: 10.0.4.0/24
+        ipRange: 10.{{ .Values.networkId }}.4.0/24
       {{- range $cidr := .Values.apiAllowedCidr }}
       - name: {{ $.Values.global.clusterName }}-securitygrouprule-lb-{{ include "outscale.IpSlugify" $cidr }}
         flow: Inbound
@@ -531,86 +531,86 @@ spec:
         fromPortRange: 1
         toPortRange: 65535
         ipProtocol: "-1"
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-calico-vxlan
         flow: Inbound
         fromPortRange: 4789
         toPortRange: 4789
         ipProtocol: udp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-typha
         flow: Inbound
         fromPortRange: 5473
         toPortRange: 5473
         ipProtocol: udp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-wireguard
         flow: Inbound
         fromPortRange: 51820
         toPortRange: 51820
         ipProtocol: udp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-wireguard-ipv6
         flow: Inbound
         fromPortRange: 51821
         toPortRange: 51821
         ipProtocol: udp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-flannel
         flow: Inbound
         fromPortRange: 4789
         toPortRange: 4789
         ipProtocol: udp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-flannel-udp
         flow: Inbound
         fromPortRange: 8285
         toPortRange: 8285
         ipProtocol: udp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       # icmp
       - name: {{ .Values.global.clusterName }}-securitygroup-icmp
         flow: Inbound
         fromPortRange: 8
         toPortRange: 8
         ipProtocol: icmp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       # cilium
       - name: {{ .Values.global.clusterName }}-securitygroup-cilium-vxlan
         flow: Inbound
         fromPortRange: 8472
         toPortRange: 8472
         ipProtocol: udp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-cilium-health
         flow: Inbound
         fromPortRange: 4240
         toPortRange: 4240
         ipProtocol: tcp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-cilium-hubble
         flow: Inbound
         fromPortRange: 4244
         toPortRange: 4244
         ipProtocol: tcp
-        ipRange: 10.0.0.0/16
+        ipRange: 10.{{ .Values.networkId }}.0.0/16
       {{ if .Values.bastion.enable -}}
       - name: {{ .Values.global.clusterName }}-securitygrouprule-ssh
         flow: Inbound
         fromPortRange: 22
         toPortRange: 22
         ipProtocol: tcp
-        ipRange: 10.0.2.0/24
+        ipRange: 10.{{ .Values.networkId }}.2.0/24
       {{ end -}}
       tag: OscK8sMainSG
     subnets:
-    - ipSubnetRange: 10.0.4.0/24
+    - ipSubnetRange: 10.{{ .Values.networkId }}.4.0/24
       name: {{ .Values.global.clusterName }}-subnet-kcp
       subregionName: {{ .Values.subregionName  }}
-    - ipSubnetRange: 10.0.3.0/24
+    - ipSubnetRange: 10.{{ .Values.networkId }}.3.0/24
       name: {{ .Values.global.clusterName }}-subnet-kw
       subregionName: {{ .Values.subregionName  }}
-    - ipSubnetRange: 10.0.2.0/24
+    - ipSubnetRange: 10.{{ .Values.networkId }}.2.0/24
       name: {{ .Values.global.clusterName }}-subnet-public
       subregionName: {{ .Values.subregionName  }}
 {{- end }}
