@@ -1,33 +1,25 @@
-{{- /* Common initialization */ -}}
+{{/* Common initialization */}}
 
-{{- $values := .Values }}
-{{- $clusterName := $values.global.clusterName }}
-{{- $isMultiaz := $values.multiaz | default false }}
-{{- range $name, $pool := $values.workers }}
-  {{- $subregions := (include "outscale.subregionsLabels" $values | fromYamlArray) }}
-  {{- if not $isMultiaz }}
-    {{- $subregions = list "" }}
-  {{- end }}
+{{- $clusterName := $.Values.global.clusterName }}
+{{- $isMultiaz := $.Values.multiaz }}
 
+{{/* iterate over the workers */}}
+{{- range $name, $pool := $.Values.workers }}
+  {{- $subregions := (include "outscale.subregionsLabels" $.Values | fromYamlArray) }}
+
+  {{/* iterate over the subregions */}}
   {{- range $subregion := $subregions }}
-    {{- $poolName := $name }}
-    {{- if $isMultiaz }}
-      {{- $poolName = printf "%s-%s" $name $subregion }}
-    {{- end }}
+    {{/* generates name according to the activation of multiaz */}}
+    {{- $poolName := printf "%s%s" $name (ternary (printf "-%s" $subregion) "" $isMultiaz) }}
+    {{- $mdName := printf "%s-%s%s" $clusterName $name (ternary (printf "-%s" $subregion) "" $isMultiaz) }}
 
-    {{- $mdName := printf "%s-%s" $clusterName $name }}
-    {{- if $isMultiaz }}
-      {{- $mdName = printf "%s-%s" $mdName $subregion }}
-    {{- end }}
+    {{- $bootstrapName := printf "%s-%s" $clusterName $name }}
 
-    {{- $context := dict
+    {{- $computedReplicas := include "outscale.computeReplicas" (dict
       "subregion" $subregion
       "replicas" $pool.replicas
       "multiaz" $isMultiaz
-    }}
-    {{- $computedReplicas := include "outscale.computeReplicas" $context }}
-
-    {{- $bootstrapName := printf "%s-%s" $clusterName $name }}
+    ) }}
 
     {{- $generatedName := include "outscale.generatedName" (dict
       "clusterName" $clusterName
@@ -36,6 +28,8 @@
       "kubeVersion" $pool.version
       "imageId" $pool.image
     ) }}
+
+{{/* generates object  */}}
 
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
@@ -51,18 +45,18 @@ spec:
   selector:
     matchLabels: null
   strategy:
-    type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
+    type: RollingUpdate
   template:
     spec:
-      clusterName: {{ $clusterName }}
       bootstrap:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
           name: {{ $bootstrapName }}
+      clusterName: {{ $clusterName }}
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: OscMachineTemplate

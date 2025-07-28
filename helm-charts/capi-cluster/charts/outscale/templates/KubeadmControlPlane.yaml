@@ -1,4 +1,4 @@
-{{- /* Common initialization */ -}}
+{{/* Common initialization */}}
 {{- $generatedName := include "outscale.generatedName" (dict
         "clusterName" .Values.global.clusterName
         "nodeType" "cp"

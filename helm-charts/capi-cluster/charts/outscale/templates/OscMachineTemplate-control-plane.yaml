@@ -1,10 +1,16 @@
-{{- /* Common initialization */ -}}
+{{/* Common initialization */}}
 {{- $generatedName := include "outscale.generatedName" (dict
     "clusterName" .Values.global.clusterName
     "nodeType" "cp"
     "kubeVersion" .Values.controlplane.version
     "imageId" .Values.controlplane.image
   ) }}
+
+{{- $tagsDefault := include "outscale.kcpDefaultTags" . | fromYaml }}
+{{- $tags := merge (.Values.controlplane.tags | default dict ) $tagsDefault }}
+
+
+{{/* generates object */}}
 
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -39,8 +45,6 @@ spec:
           {{- if not .Values.multiaz }}
           subregionName: {{ .Values.controlplane.subregionName  }}
           {{- end }}
-          {{- $dict1 := .Values.controlplane.tags | default dict }}
-          {{- $tags := merge $dict1 (include "outscale.kcpDefaultTags" . | fromYaml ) }}
           tags:
           {{- $tags | toYaml | nindent 12 }}
           {{- if hasKey .Values.controlplane "rootDisk" }}
