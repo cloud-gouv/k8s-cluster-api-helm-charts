@@ -405,6 +405,7 @@ spec:
       loadbalancertype: internet-facing
     natService:
       clusterName: {{ .Values.global.clusterName }}
+      subnetName: {{ .Values.global.clusterName }}-subnet-public
     net:
       clusterName: {{ .Values.global.clusterName }}
       ipRange: 10.{{ .Values.networkId }}.0.0/16
