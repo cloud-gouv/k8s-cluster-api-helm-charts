@@ -244,7 +244,7 @@ spec:
         flow: Inbound
         fromPortRange: 1
         toPortRange: 65535
-        ipProtocol: "-1"
+        ipProtocol: tcp
         ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-calico-vxlan
         flow: Inbound
@@ -532,7 +532,7 @@ spec:
         flow: Inbound
         fromPortRange: 1
         toPortRange: 65535
-        ipProtocol: "-1"
+        ipProtocol: tcp
         ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-calico-vxlan
         flow: Inbound
