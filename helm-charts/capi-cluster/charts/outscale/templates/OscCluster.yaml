@@ -403,8 +403,10 @@ spec:
         loadbalancerprotocol: TCP
       loadbalancername: {{ template "outscale.defaultLoadbalancerName" $ }}
       loadbalancertype: internet-facing
+      subnetname: {{ .Values.global.clusterName }}-subnet-public
     natService:
       clusterName: {{ .Values.global.clusterName }}
+      subnetname: {{ .Values.global.clusterName }}-subnet-public
     net:
       clusterName: {{ .Values.global.clusterName }}
       ipRange: 10.{{ .Values.networkId }}.0.0/16
