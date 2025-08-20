@@ -414,6 +414,8 @@ spec:
     {{- if .Values.bastion.enable }}
     - description: Security Group bastion with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-bastion
+      roles:
+      - bastion
       {{- if hasKey .Values.bastion "allow_cidr" }}
       securityGroupRules:
       {{- range $i, $cidr := .Values.bastion.allow_cidr }}
@@ -428,6 +430,8 @@ spec:
     {{- end }}
     - description: Security Group Kw with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-kw
+      roles:
+      - worker
       securityGroupRules:
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kw-bgp
         flow: Inbound
@@ -461,6 +465,8 @@ spec:
         ipRange: 10.{{ .Values.networkId }}.3.0/24
     - description: Security Group Kcp with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-kcp
+      roles:
+      - controlplane
       securityGroupRules:
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kcp-bgp
         flow: Inbound
@@ -511,6 +517,8 @@ spec:
         ipProtocol: tcp
         ipRange: 10.{{ .Values.networkId }}.4.0/24
     - description: Security Group Lb with {{ .Values.global.clusterName }}
+      roles:
+      - loadbalancer
       name: {{ .Values.global.clusterName }}-securitygroup-lb
       securityGroupRules:
       - name: {{ .Values.global.clusterName }}-securitygrouprule-lb-out
@@ -529,6 +537,9 @@ spec:
       {{- end }}
     - description: Security Group Node with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-node
+      roles:
+      - controlplane
+      - worker
       securityGroupRules:
       - name: {{ .Values.global.clusterName }}-securitygroup-all-tcp
         flow: Inbound
