@@ -609,10 +609,17 @@ spec:
     - ipSubnetRange: 10.{{ .Values.networkId }}.4.0/24
       name: {{ .Values.global.clusterName }}-subnet-kcp
       subregionName: {{ .Values.subregionName  }}
+      roles:
+      - controlplane
     - ipSubnetRange: 10.{{ .Values.networkId }}.3.0/24
       name: {{ .Values.global.clusterName }}-subnet-kw
       subregionName: {{ .Values.subregionName  }}
+      roles:
+      - worker
     - ipSubnetRange: 10.{{ .Values.networkId }}.2.0/24
       name: {{ .Values.global.clusterName }}-subnet-public
       subregionName: {{ .Values.subregionName  }}
+      roles:
+      - nat
+      - loadbalancer
 {{- end }}
