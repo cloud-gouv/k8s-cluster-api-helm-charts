@@ -321,30 +321,51 @@ spec:
     - ipSubnetRange: 10.{{ .Values.networkId }}.4.0/24
       name: {{ .Values.global.clusterName }}-subnet-kw-a
       subregionName: {{ .Values.region }}a
+      roles:
+      - worker
     - ipSubnetRange: 10.{{ .Values.networkId }}.8.0/24
       name: {{ .Values.global.clusterName }}-subnet-kcp-a
       subregionName: {{ .Values.region }}a
+      roles:
+      - controlplane
     - ipSubnetRange: 10.{{ .Values.networkId }}.12.0/24
       name: {{ .Values.global.clusterName }}-subnet-public-a
       subregionName: {{ .Values.region }}a
+      roles:
+      - nat
+      - loadbalancer
     - ipSubnetRange: 10.{{ .Values.networkId }}.5.0/24
       name: {{ .Values.global.clusterName }}-subnet-kw-b
       subregionName: {{ .Values.region }}b
-    - ipSubnetRange: 10.{{ .Values.networkId }}.6.0/24
-      name: {{ .Values.global.clusterName }}-subnet-kw-c
-      subregionName: {{ .Values.region }}c
+      roles:
+      - worker
     - ipSubnetRange: 10.{{ .Values.networkId }}.9.0/24
       name: {{ .Values.global.clusterName }}-subnet-kcp-b
       subregionName: {{ .Values.region }}b
-    - ipSubnetRange: 10.{{ .Values.networkId }}.10.{{ .Values.networkId }}/24
-      name: {{ .Values.global.clusterName }}-subnet-kcp-c
-      subregionName: {{ .Values.region }}c
+      roles:
+      - controlplane
     - ipSubnetRange: 10.{{ .Values.networkId }}.13.0/24
       name: {{ .Values.global.clusterName }}-subnet-public-b
       subregionName: {{ .Values.region }}b
+      roles:
+      - nat
+      - loadbalancer
+    - ipSubnetRange: 10.{{ .Values.networkId }}.6.0/24
+      name: {{ .Values.global.clusterName }}-subnet-kw-c
+      subregionName: {{ .Values.region }}c
+      roles:
+      - worker
+    - ipSubnetRange: 10.{{ .Values.networkId }}.10.{{ .Values.networkId }}/24
+      name: {{ .Values.global.clusterName }}-subnet-kcp-c
+      subregionName: {{ .Values.region }}c
+      roles:
+      - controlplane
     - ipSubnetRange: 10.{{ .Values.networkId }}.14.0/24
       name: {{ .Values.global.clusterName }}-subnet-public-c
       subregionName: {{ .Values.region }}c
+      roles:
+      - nat
+      - loadbalancer
 {{- else }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
