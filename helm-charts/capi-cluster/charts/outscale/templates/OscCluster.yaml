@@ -336,7 +336,7 @@ spec:
     - ipSubnetRange: 10.{{ .Values.networkId }}.9.0/24
       name: {{ .Values.global.clusterName }}-subnet-kcp-b
       subregionName: {{ .Values.region }}b
-    - ipSubnetRange: 10.{{ .Values.networkId }}.10.{{ .Values.networkId }}/24
+    - ipSubnetRange: 10.{{ .Values.networkId }}.10.0/24
       name: {{ .Values.global.clusterName }}-subnet-kcp-c
       subregionName: {{ .Values.region }}c
     - ipSubnetRange: 10.{{ .Values.networkId }}.13.0/24
