@@ -244,7 +244,7 @@ spec:
         flow: Inbound
         fromPortRange: 1
         toPortRange: 65535
-        ipProtocol: "-1"
+        ipProtocol: tcp
         ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-calico-vxlan
         flow: Inbound
@@ -321,30 +321,51 @@ spec:
     - ipSubnetRange: 10.{{ .Values.networkId }}.4.0/24
       name: {{ .Values.global.clusterName }}-subnet-kw-a
       subregionName: {{ .Values.region }}a
+      roles:
+      - worker
     - ipSubnetRange: 10.{{ .Values.networkId }}.8.0/24
       name: {{ .Values.global.clusterName }}-subnet-kcp-a
       subregionName: {{ .Values.region }}a
+      roles:
+      - controlplane
     - ipSubnetRange: 10.{{ .Values.networkId }}.12.0/24
       name: {{ .Values.global.clusterName }}-subnet-public-a
       subregionName: {{ .Values.region }}a
+      roles:
+      - nat
+      - loadbalancer
     - ipSubnetRange: 10.{{ .Values.networkId }}.5.0/24
       name: {{ .Values.global.clusterName }}-subnet-kw-b
       subregionName: {{ .Values.region }}b
-    - ipSubnetRange: 10.{{ .Values.networkId }}.6.0/24
-      name: {{ .Values.global.clusterName }}-subnet-kw-c
-      subregionName: {{ .Values.region }}c
+      roles:
+      - worker
     - ipSubnetRange: 10.{{ .Values.networkId }}.9.0/24
       name: {{ .Values.global.clusterName }}-subnet-kcp-b
       subregionName: {{ .Values.region }}b
-    - ipSubnetRange: 10.{{ .Values.networkId }}.10.0/24
-      name: {{ .Values.global.clusterName }}-subnet-kcp-c
-      subregionName: {{ .Values.region }}c
+      roles:
+      - controlplane
     - ipSubnetRange: 10.{{ .Values.networkId }}.13.0/24
       name: {{ .Values.global.clusterName }}-subnet-public-b
       subregionName: {{ .Values.region }}b
+      roles:
+      - nat
+      - loadbalancer
+    - ipSubnetRange: 10.{{ .Values.networkId }}.6.0/24
+      name: {{ .Values.global.clusterName }}-subnet-kw-c
+      subregionName: {{ .Values.region }}c
+      roles:
+      - worker
+    - ipSubnetRange: 10.{{ .Values.networkId }}.10.0/24
+      name: {{ .Values.global.clusterName }}-subnet-kcp-c
+      subregionName: {{ .Values.region }}c
+      roles:
+      - controlplane
     - ipSubnetRange: 10.{{ .Values.networkId }}.14.0/24
       name: {{ .Values.global.clusterName }}-subnet-public-c
       subregionName: {{ .Values.region }}c
+      roles:
+      - nat
+      - loadbalancer
 {{- else }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -353,10 +374,8 @@ metadata:
   name: {{ .Values.global.clusterName }}
 spec:
   network:
-    clusterName: {{ .Values.global.clusterName }}
     bastion:
       enable: {{ .Values.bastion.enable | default "false" }}
-      clusterName: {{ .Values.global.clusterName }}
     {{- if .Values.bastion.enable }}
       name: {{ .Values.global.clusterName }}-vm-bastion
       keypairName: {{ .Values.sshkeyname }}
@@ -380,15 +399,12 @@ spec:
         - name: {{ .Values.global.clusterName }}-securitygroup-bastion
       publicIpName: {{ .Values.global.clusterName }}-publicip-bastion
     {{- end }}
-    internetService:
-      clusterName: {{ .Values.global.clusterName }}
     publicIps:
       - name: {{ .Values.global.clusterName }}-publicip-nat
     {{- if .Values.bastion.enable }}
       - name: {{ .Values.global.clusterName }}-publicip-bastion
     {{- end }}
     loadBalancer:
-      clusterName: {{ .Values.global.clusterName }}
       healthCheck:
         checkinterval: 30
         healthythreshold: 5
@@ -403,15 +419,19 @@ spec:
         loadbalancerprotocol: TCP
       loadbalancername: {{ template "outscale.defaultLoadbalancerName" $ }}
       loadbalancertype: internet-facing
+      subnetname: {{ .Values.global.clusterName }}-subnet-public
     natService:
-      clusterName: {{ .Values.global.clusterName }}
+      name: {{ .Values.global.clusterName }}-nat
+      subnetname: {{ .Values.global.clusterName }}-subnet-public
     net:
-      clusterName: {{ .Values.global.clusterName }}
+      name: {{ .Values.global.clusterName }}-net
       ipRange: 10.{{ .Values.networkId }}.0.0/16
     securityGroups:
     {{- if .Values.bastion.enable }}
     - description: Security Group bastion with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-bastion
+      roles:
+      - bastion
       {{- if hasKey .Values.bastion "allow_cidr" }}
       securityGroupRules:
       {{- range $i, $cidr := .Values.bastion.allow_cidr }}
@@ -426,6 +446,8 @@ spec:
     {{- end }}
     - description: Security Group Kw with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-kw
+      roles:
+      - worker
       securityGroupRules:
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kw-bgp
         flow: Inbound
@@ -459,6 +481,8 @@ spec:
         ipRange: 10.{{ .Values.networkId }}.3.0/24
     - description: Security Group Kcp with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-kcp
+      roles:
+      - controlplane
       securityGroupRules:
       - name: {{ .Values.global.clusterName }}-securitygrouprule-kcp-bgp
         flow: Inbound
@@ -509,6 +533,8 @@ spec:
         ipProtocol: tcp
         ipRange: 10.{{ .Values.networkId }}.4.0/24
     - description: Security Group Lb with {{ .Values.global.clusterName }}
+      roles:
+      - loadbalancer
       name: {{ .Values.global.clusterName }}-securitygroup-lb
       securityGroupRules:
       - name: {{ .Values.global.clusterName }}-securitygrouprule-lb-out
@@ -527,12 +553,15 @@ spec:
       {{- end }}
     - description: Security Group Node with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-node
+      roles:
+      - controlplane
+      - worker
       securityGroupRules:
       - name: {{ .Values.global.clusterName }}-securitygroup-all-tcp
         flow: Inbound
         fromPortRange: 1
         toPortRange: 65535
-        ipProtocol: "-1"
+        ipProtocol: tcp
         ipRange: 10.{{ .Values.networkId }}.0.0/16
       - name: {{ .Values.global.clusterName }}-securitygroup-calico-vxlan
         flow: Inbound
@@ -609,10 +638,17 @@ spec:
     - ipSubnetRange: 10.{{ .Values.networkId }}.4.0/24
       name: {{ .Values.global.clusterName }}-subnet-kcp
       subregionName: {{ .Values.subregionName  }}
+      roles:
+      - controlplane
     - ipSubnetRange: 10.{{ .Values.networkId }}.3.0/24
       name: {{ .Values.global.clusterName }}-subnet-kw
       subregionName: {{ .Values.subregionName  }}
+      roles:
+      - worker
     - ipSubnetRange: 10.{{ .Values.networkId }}.2.0/24
       name: {{ .Values.global.clusterName }}-subnet-public
       subregionName: {{ .Values.subregionName  }}
+      roles:
+      - nat
+      - loadbalancer
 {{- end }}
