@@ -355,7 +355,7 @@ spec:
       subregionName: {{ .Values.region }}c
       roles:
       - worker
-    - ipSubnetRange: 10.{{ .Values.networkId }}.10.{{ .Values.networkId }}/24
+    - ipSubnetRange: 10.{{ .Values.networkId }}.10.0/24
       name: {{ .Values.global.clusterName }}-subnet-kcp-c
       subregionName: {{ .Values.region }}c
       roles:
