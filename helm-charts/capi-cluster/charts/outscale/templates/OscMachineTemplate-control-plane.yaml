@@ -16,7 +16,6 @@ spec:
   template:
     spec:
       node:
-        clusterName: {{ .Values.global.clusterName }}
         {{- if hasKey .Values.controlplane "image" }}
         image:
           name: {{ .Values.controlplane.image }}
@@ -24,7 +23,6 @@ spec:
         keypair:
           name: {{ .Values.sshkeyname }}
         vm:
-          clusterName: {{ .Values.global.clusterName }}
           keypairName: {{ .Values.sshkeyname }}
           loadBalancerName: {{ template "outscale.defaultLoadbalancerName" $ }}
           role: controlplane

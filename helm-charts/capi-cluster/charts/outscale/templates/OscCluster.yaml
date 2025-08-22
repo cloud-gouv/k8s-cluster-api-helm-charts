@@ -353,10 +353,8 @@ metadata:
   name: {{ .Values.global.clusterName }}
 spec:
   network:
-    clusterName: {{ .Values.global.clusterName }}
     bastion:
       enable: {{ .Values.bastion.enable | default "false" }}
-      clusterName: {{ .Values.global.clusterName }}
     {{- if .Values.bastion.enable }}
       name: {{ .Values.global.clusterName }}-vm-bastion
       keypairName: {{ .Values.sshkeyname }}
@@ -381,14 +379,13 @@ spec:
       publicIpName: {{ .Values.global.clusterName }}-publicip-bastion
     {{- end }}
     internetService:
-      clusterName: {{ .Values.global.clusterName }}
+      name: {{ .Values.global.clusterName }}-igw
     publicIps:
       - name: {{ .Values.global.clusterName }}-publicip-nat
     {{- if .Values.bastion.enable }}
       - name: {{ .Values.global.clusterName }}-publicip-bastion
     {{- end }}
     loadBalancer:
-      clusterName: {{ .Values.global.clusterName }}
       healthCheck:
         checkinterval: 30
         healthythreshold: 5
@@ -403,11 +400,10 @@ spec:
         loadbalancerprotocol: TCP
       loadbalancername: {{ template "outscale.defaultLoadbalancerName" $ }}
       loadbalancertype: internet-facing
+      subnetName: {{ .Values.global.clusterName }}-subnet-public
     natService:
-      clusterName: {{ .Values.global.clusterName }}
       subnetName: {{ .Values.global.clusterName }}-subnet-public
     net:
-      clusterName: {{ .Values.global.clusterName }}
       ipRange: 10.{{ .Values.networkId }}.0.0/16
     securityGroups:
     {{- if .Values.bastion.enable }}
