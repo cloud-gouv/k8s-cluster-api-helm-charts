@@ -24,15 +24,11 @@ spec:
   template:
     spec:
       node:
-        clusterName: {{ $.Values.global.clusterName }}
         {{- if hasKey $pool "image" }}
         image:
           name: {{ $pool.image }}
         {{- end }}
-        keypair:
-          name: {{ $.Values.sshkeyname }}
         vm:
-          clusterName: {{ $.Values.global.clusterName }}
           keypairName: {{ $.Values.sshkeyname }}
           vmType: {{ $pool.vmType }}
           {{- if hasKey $pool "imageId" }}
@@ -78,7 +74,6 @@ spec:
   template:
     spec:
       node:
-        clusterName: {{ $.Values.global.clusterName }}
         {{- if hasKey $pool "image" }}
         image:
           name: {{ $pool.image }}
@@ -86,7 +81,6 @@ spec:
         keypair:
           name: {{ $.Values.sshkeyname }}
         vm:
-          clusterName: {{ $.Values.global.clusterName }}
           keypairName: {{ $.Values.sshkeyname }}
           vmType: {{ $pool.vmType }}
           {{- if hasKey $pool "imageId" }}
