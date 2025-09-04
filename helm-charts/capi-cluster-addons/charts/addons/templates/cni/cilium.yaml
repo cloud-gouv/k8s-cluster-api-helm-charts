@@ -51,5 +51,7 @@ spec:
       enabled: true
     externalIPs:
       enabled: true
-    #
+    {{- with .Values.global.addons.cni.extraChartArgs -}}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 {{ end -}}

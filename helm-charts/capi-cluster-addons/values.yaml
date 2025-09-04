@@ -10,6 +10,7 @@ global:
       #enabled: false
       type: calico
       version: v3.27.3
+      extraChartArgs: {}
     ccm:
       enabled: true
       #enabled: false
