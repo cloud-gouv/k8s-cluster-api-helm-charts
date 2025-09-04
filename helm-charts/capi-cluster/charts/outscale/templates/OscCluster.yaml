@@ -63,17 +63,19 @@ spec:
       roles:
         - bastion
       {{- if hasKey .Values.bastion "allow_cidr" }}
+      {{- if gt (len .Values.bastion.allow_cidr) 0 }}
       securityGroupRules:
-      {{- range $i, $cidr := .Values.bastion.allow_cidr }}
-      - name: {{ $.Values.global.clusterName }}-securitygrouprule-ssh-{{ $i }}
+      - name: {{ $.Values.global.clusterName }}-securitygrouprule-bastion-ssh
         flow: Inbound
         fromPortRange: 22
         toPortRange: 22
         ipProtocol: tcp
         ipRanges:
+        {{- range $cidr := .Values.bastion.allow_cidr }}
           - {{ $cidr }}
-    {{- end }}
-    {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- end }}
     {{- end }}
     - description: Security Group Kw with {{ .Values.global.clusterName }}
       name: {{ .Values.global.clusterName }}-securitygroup-kw
@@ -371,16 +373,18 @@ spec:
       roles:
         - bastion
       {{- if hasKey .Values.bastion "allow_cidr" }}
+      {{- if gt (len .Values.bastion.allow_cidr) 0 }}
       securityGroupRules:
-      {{- range $i, $cidr := .Values.bastion.allow_cidr }}
-      - name: {{ $.Values.global.clusterName }}-securitygrouprule-ssh-{{ $i }}
+      - name: {{ $.Values.global.clusterName }}-securitygrouprule-bastion-ssh
         flow: Inbound
         fromPortRange: 22
         toPortRange: 22
         ipProtocol: tcp
         ipRanges:
+        {{- range $cidr := .Values.bastion.allow_cidr }}
           - {{ $cidr }}
-    {{- end }}
+        {{- end }}
+        {{- end }}
     {{- end }}
     {{- end }}
     - description: Security Group Kw with {{ .Values.global.clusterName }}
