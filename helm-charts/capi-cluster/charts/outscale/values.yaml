@@ -36,6 +36,8 @@ networkId: 0
 #loadbalancername: my-lb
 apiAllowedCidr:
   - 0.0.0.0/0
+# To reuse NATPublic IP, use tag OscK8sIPPool on IP matching the name you need
+#natPublicIpPool: my-public-nat-pool
 #controlplane:
 #  version: v1.29.5
 #  replicas: 1

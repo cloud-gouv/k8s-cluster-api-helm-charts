@@ -42,6 +42,10 @@ spec:
         loadbalancerprotocol: TCP
       loadbalancername: {{ template "outscale.defaultLoadbalancerName" $ }}
       loadbalancertype: internet-facing
+    {{- if hasKey .Values "natPublicIpPool" }}
+    natPublicIpPool: {{ .Values.natPublicIpPool }}
+    {{- end }}
+
     natServices:
       - name: {{ .Values.global.clusterName }}-nat-a
         subregionName: {{ .Values.region }}a
