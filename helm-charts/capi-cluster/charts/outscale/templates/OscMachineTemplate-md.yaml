@@ -1,69 +1,36 @@
-{{- $values := .Values }}
-{{- range $name, $pool := .Values.workers }}
-{{ if $.Values.multiaz }}
-{{- range (include "outscale.subregionsLabels" $values | fromYamlArray) }}
-{{- $poolName := printf "%s-%s" $name . }}
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: OscMachineTemplate
-metadata:
-  name: {{ include "outscale.generatedName" (dict
-    "clusterName" $.Values.global.clusterName
-    "nodeType" "worker"
-    "poolName" $poolName
-    "kubeVersion" $pool.version
-    "imageId" $pool.image
-  ) }}
-  labels:
-    cluster-name: {{ $.Values.global.clusterName }}
-    node-type: "worker"
-    pool-name: {{ $poolName }}
-    kube-version: {{ $pool.version }}
-    image-name: {{ $pool.image }}
-spec:
-  template:
-    spec:
-      node:
-        {{- if hasKey $pool "image" }}
-        image:
-          name: {{ $pool.image }}
-        {{- end }}
-        vm:
-          keypairName: {{ $.Values.sshkeyname }}
-          vmType: {{ $pool.vmType }}
-          {{- if hasKey $pool "imageId" }}
-          imageId: {{ $pool.imageId }}
-          {{- end }}
-          subregionName: {{ $.Values.region  }}{{ . }}
-          subnetName: {{ $.Values.global.clusterName }}-subnet-kw-{{ . }}
-          {{- $dict1 := $pool.tags | default dict }}
-          {{- $tags := merge $dict1 (include "outscale.kwDefaultTags" (dict "ctx" $.Values "name" $name) | fromYaml ) }}
-          tags:
-          {{- $tags | toYaml | nindent 12 }}
-          {{- if hasKey $pool "rootDisk" }}
-          rootDisk:
-            rootDiskIops: {{ $pool.rootDisk.rootDiskIops | default 100 }}
-            rootDiskSize: {{ $pool.rootDisk.rootDiskSize | default 30 }}
-            rootDiskType: {{ $pool.rootDisk.rootDiskType | default "standard" }}
-          {{- end }}
-        {{- with $pool.volumes }}
-        volumes: {{- toYaml . | nindent 10 }}
-        {{- end }}
-{{- end }}
-{{- else }}
+{{/* Common initialization */}}
 
-{{- $poolName := $name }}
+{{/* iterate over the workers */}}
+{{- range $name, $pool := $.Values.workers }}
+  {{- $isMultiaz := $.Values.multiaz }}
+  {{- $subregions := (include "outscale.subregionsLabels" $.Values | fromYamlArray) }}
+
+  {{/* iterate over the subregions */}}
+  {{- range $subregion := $subregions }}
+
+    {{/* generates name according to the activation of multiaz */}}
+    {{- $poolName := printf "%s%s" $name (ternary (printf "-%s" $subregion) "" $isMultiaz) }}
+    {{- $subregionName := ternary (printf "%s%s" $.Values.region $subregion) $pool.subregionName $isMultiaz }}
+    {{- $subnetName := ternary (printf "%s-subnet-kw-%s" $.Values.global.clusterName $subregion) "" $isMultiaz }}
+
+    {{- $generatedName := include "outscale.generatedName" (dict
+      "clusterName" $.Values.global.clusterName
+      "nodeType" "worker"
+      "poolName" $poolName
+      "kubeVersion" $pool.version
+      "imageId" $pool.image
+    ) }}
+
+    {{- $tagsDefault := include "outscale.kwDefaultTags" (dict "ctx" $.Values "name" $name) | fromYaml }}
+    {{- $tags := merge ($pool.tags | default dict) $tagsDefault }}
+
+{{/* generates object */}}
+
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OscMachineTemplate
 metadata:
-  name: {{ include "outscale.generatedName" (dict
-    "clusterName" $.Values.global.clusterName
-    "nodeType" "worker"
-    "poolName" $name
-    "kubeVersion" $pool.version
-    "imageId" $pool.image
-  ) }}
+  name: {{ $generatedName }}
   labels:
     cluster-name: {{ $.Values.global.clusterName }}
     node-type: "worker"
@@ -78,17 +45,16 @@ spec:
         image:
           name: {{ $pool.image }}
         {{- end }}
-        keypair:
-          name: {{ $.Values.sshkeyname }}
         vm:
           keypairName: {{ $.Values.sshkeyname }}
           vmType: {{ $pool.vmType }}
           {{- if hasKey $pool "imageId" }}
           imageId: {{ $pool.imageId }}
           {{- end }}
-          subregionName: {{ $pool.subregionName  }}
-          {{- $dict1 := $pool.tags | default dict }}
-          {{- $tags := merge $dict1 (include "outscale.kwDefaultTags" (dict "ctx" $.Values "name" $name) | fromYaml ) }}
+          subregionName: {{ $subregionName }}
+          {{- if $subnetName }}
+          subnetName: {{ $subnetName }}
+          {{- end }}
           tags:
           {{- $tags | toYaml | nindent 12 }}
           {{- if hasKey $pool "rootDisk" }}
@@ -100,5 +66,5 @@ spec:
         {{- with $pool.volumes }}
         volumes: {{- toYaml . | nindent 10 }}
         {{- end }}
-{{- end }}
+  {{- end }}
 {{- end }}

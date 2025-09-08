@@ -1,3 +1,11 @@
+{{/* Common initialization */}}
+{{- $generatedName := include "outscale.generatedName" (dict
+        "clusterName" .Values.global.clusterName
+        "nodeType" "cp"
+        "kubeVersion" .Values.controlplane.version
+        "imageId" .Values.controlplane.image
+      ) }}
+
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -370,12 +378,7 @@ spec:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: OscMachineTemplate
-      name: {{ include "outscale.generatedName" (dict
-        "clusterName" .Values.global.clusterName
-        "nodeType" "cp"
-        "kubeVersion" .Values.controlplane.version
-        "imageId" .Values.controlplane.image
-      ) }}
+      name: {{ $generatedName }}
   replicas: {{ .Values.controlplane.replicas | default 1 }}
   version: {{ .Values.controlplane.version }}
   rolloutStrategy:
