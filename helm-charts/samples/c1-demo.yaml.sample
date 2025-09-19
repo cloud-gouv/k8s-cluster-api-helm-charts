@@ -201,3 +201,7 @@ openstack:
         application-credential-id: _OS_APPLICATION_CREDENTIAL_ID_
         application-credential-secret: _OS_APPLICATION_CREDENTIAL_SECRET_
         region: "__OS_REGION_NAME_"
+      LoadBalancer:
+        enabled: false
+      BlockStorage:
+        node-volume-attach-limit: 128
