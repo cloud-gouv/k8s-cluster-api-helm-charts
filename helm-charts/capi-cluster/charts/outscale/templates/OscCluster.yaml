@@ -205,15 +205,6 @@ spec:
       roles:
         - loadbalancer
       securityGroupRules:
-      - name: {{ .Values.global.clusterName }}-lb-in
-        flow: Inbound
-        fromPortRange: 6443
-        toPortRange: 6443
-        ipProtocol: tcp
-        ipRanges:
-        {{- range $cidr := .Values.apiAllowedCidr }}
-           - {{ $cidr }}
-        {{- end }}
       - name: {{ .Values.global.clusterName }}-lb-out
         flow: Outbound
         fromPortRange: 6443
