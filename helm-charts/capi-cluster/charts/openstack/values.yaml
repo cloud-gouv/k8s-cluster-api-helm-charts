@@ -25,6 +25,7 @@ addons:
 #  image: ubuntu-2204-kube-v1.29.4
 #  flavor: CO1.2
 #  apiServerFixedIP: 192.168.101.10
+#  apiServerVirtualIP: 192.168.200.10
 #  availabilityZones:
 #    - AZ1
 #    - AZ2
