@@ -1,618 +1,317 @@
 ---
 {{- include "outscale.validate" . }}
-{{- if .Values.multiaz }}
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: OscCluster
-metadata:
-  name: {{ .Values.global.clusterName }}
-spec:
-  network:
-    clusterName: {{ .Values.global.clusterName }}
-    bastion:
-      enable: {{ .Values.bastion.enable | default "false" }}
-      clusterName: {{ .Values.global.clusterName }}
-    {{- if .Values.bastion.enable }}
-      name: {{ .Values.global.clusterName }}-vm-bastion
-      keypairName: {{ .Values.sshkeyname }}
-      vmType: {{ .Values.bastion.vmType }}
-      {{ if hasKey .Values.bastion "image" -}}
-      imageName: {{ .Values.bastion.image }}
-      {{ end -}}
-      {{ if hasKey .Values.bastion "imageId" -}}
-      imageId: {{ .Values.bastion.imageId }}
-      {{ end -}}
-      deviceName: "/dev/sda1"
-      {{ if hasKey .Values.bastion "rootDisk" -}}
-      rootDisk:
-        rootDiskIops: {{ .Values.bastion.rootDisk.rootDiskIops | default 100 }}
-        rootDiskSize: {{ .Values.bastion.rootDisk.rootDiskSize | default 30 }}
-        rootDiskType: {{ .Values.bastion.rootDisk.rootDiskType | default "standard" }}
-      {{ end -}}
-      subnetName: {{ .Values.global.clusterName }}-subnet-public-a
-      subregionName: {{ .Values.region }}a
-      securityGroupNames:
-        - name: {{ .Values.global.clusterName }}-securitygroup-bastion
-      publicIpName: {{ .Values.global.clusterName }}-publicip-bastion
-    {{- end }}
-    internetService:
-      clusterName: {{ .Values.global.clusterName }}
-      name: {{ .Values.global.clusterName }}-igw
-    publicIps:
-      - name: {{ .Values.global.clusterName }}-publicip-nat-a
-      - name: {{ .Values.global.clusterName }}-publicip-nat-b
-      - name: {{ .Values.global.clusterName }}-publicip-nat-c
-    {{- if .Values.bastion.enable }}
-      - name: {{ .Values.global.clusterName }}-publicip-bastion
-    {{- end }}
-    loadBalancer:
-      clusterName: {{ .Values.global.clusterName }}
-      healthCheck:
-        checkinterval: 30
-        healthythreshold: 5
-        port: 6443
-        protocol: TCP
-        timeout: 30
-        unhealthythreshold: 5
-      listener:
-        backendport: 6443
-        backendprotocol: TCP
-        loadbalancerport: 6443
-        loadbalancerprotocol: TCP
-      loadbalancername: {{ template "outscale.defaultLoadbalancerName" $ }}
-      loadbalancertype: internet-facing
-      securitygroupname: {{ .Values.global.clusterName }}-securitygroup-lb
-      subnetname: {{ .Values.global.clusterName }}-subnet-kcp-a
-    natServices:
-      - name: {{ .Values.global.clusterName }}-nat-a
-        clusterName: {{ .Values.global.clusterName }}
-        publicipname: {{ .Values.global.clusterName }}-publicip-nat-a
-        subnetname: {{ .Values.global.clusterName }}-subnet-public-a
-      - clusterName: {{ .Values.global.clusterName }}
-        name: {{ .Values.global.clusterName }}-nat-b
-        publicipname: {{ .Values.global.clusterName }}-publicip-nat-b
-        subnetname: {{ .Values.global.clusterName }}-subnet-public-b
-      - clusterName: {{ .Values.global.clusterName }}
-        name: {{ .Values.global.clusterName }}-nat-c
-        publicipname: {{ .Values.global.clusterName }}-publicip-nat-c
-        subnetname: {{ .Values.global.clusterName }}-subnet-public-c
-    net:
-      clusterName: {{ .Values.global.clusterName }}
-      ipRange: 10.{{ .Values.networkId }}.0.0/16
-    controlPlaneSubnets:
-      - {{ .Values.global.clusterName }}-subnet-kcp-a
-      - {{ .Values.global.clusterName }}-subnet-kcp-b
-      - {{ .Values.global.clusterName }}-subnet-kcp-c
-    routeTables:
-    - name: {{ .Values.global.clusterName }}-rtb-2a-kw
-      subnets:
-      - {{ .Values.global.clusterName }}-subnet-kw-a
-      - {{ .Values.global.clusterName }}-subnet-kcp-a
-      routes:
-      - name: {{ .Values.global.clusterName }}-route-2a-nat
-        targetName: {{ .Values.global.clusterName }}-nat-a
-        targetType: nat
-        destination: "0.0.0.0/0"
-    - name: {{ .Values.global.clusterName }}-rtb-2b-private
-      subnets:
-      - {{ .Values.global.clusterName }}-subnet-kw-b
-      - {{ .Values.global.clusterName }}-subnet-kcp-b
-      routes:
-      - name: {{ .Values.global.clusterName }}-route-2b-nat
-        targetName: {{ .Values.global.clusterName }}-nat-b
-        targetType: nat
-        destination: "0.0.0.0/0"
-    - name: {{ .Values.global.clusterName }}-rtb-2c-private
-      subnets:
-      - {{ .Values.global.clusterName }}-subnet-kw-c
-      - {{ .Values.global.clusterName }}-subnet-kcp-c
-      routes:
-      - name: {{ .Values.global.clusterName }}-route-2c-nat
-        targetName: {{ .Values.global.clusterName }}-nat-c
-        targetType: nat
-        destination: "0.0.0.0/0"
-    - name: {{ .Values.global.clusterName }}-rtb-public
-      subnets:
-      - {{ .Values.global.clusterName }}-subnet-public-a
-      - {{ .Values.global.clusterName }}-subnet-public-b
-      - {{ .Values.global.clusterName }}-subnet-public-c
-      routes:
-      - name: {{ .Values.global.clusterName }}-igw
-        targetName: {{ .Values.global.clusterName }}-igw
-        targetType: gateway
-        destination: "0.0.0.0/0"
-    securityGroups:
-    {{- if .Values.bastion.enable }}
-    - description: Security Group bastion with {{ .Values.global.clusterName }}
-      name: {{ .Values.global.clusterName }}-securitygroup-bastion
-      {{- if hasKey .Values.bastion "allow_cidr" }}
-      securityGroupRules:
-      {{- range $i, $cidr := .Values.bastion.allow_cidr }}
-      - name: {{ $.Values.global.clusterName }}-securitygrouprule-ssh-{{ $i }}
-        flow: Inbound
-        fromPortRange: 22
-        toPortRange: 22
-        ipProtocol: tcp
-        ipRange: {{ $cidr }}
-    {{- end }}
-    {{- end }}
-    {{- end }}
-    - description: Security Group Kw with {{ .Values.global.clusterName }}
-      name: {{ .Values.global.clusterName }}-securitygroup-kw
-      securityGroupRules:
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-kw-bgp
-        flow: Inbound
-        fromPortRange: 179
-        toPortRange: 179
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kubelet-kw
-        flow: Inbound
-        fromPortRange: 10250
-        toPortRange: 10250
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.4.0/22
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-kw-nodeip-kcp
-        flow: Inbound
-        toPortRange: 32767
-        fromPortRange: 30000
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.8.0/22
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kubelet-kcp
-        flow: Inbound
-        fromPortRange: 10250
-        toPortRange: 10250
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.8.0/22
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-kw-nodeip-kw
-        flow: Inbound
-        fromPortRange: 30000
-        toPortRange: 32767
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.4.0/22
-    - description: Security Group Kcp with {{ .Values.global.clusterName }}
-      name: {{ .Values.global.clusterName }}-securitygroup-kcp
-      securityGroupRules:
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-kcp-bgp
-        flow: Inbound
-        fromPortRange: 179
-        toPortRange: 179
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-api-lb
-        flow: Inbound
-        fromPortRange: 6443
-        toPortRange: 6443
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.12.0/22
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kw
-        flow: Inbound
-        fromPortRange: 6443
-        toPortRange: 6443
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.4.0/22
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kcp
-        flow: Inbound
-        fromPortRange: 6443
-        toPortRange: 6443
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.8.0/22
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-kcp-nodeip-kw
-        flow: Inbound
-        fromPortRange: 30000
-        toPortRange: 32767
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.4.0/22
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-etcd
-        flow: Inbound
-        fromPortRange: 2378
-        toPortRange: 2380
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.8.0/22
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-kubelet-kcp
-        flow: Inbound
-        fromPortRange: 10250
-        toPortRange: 10252
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.8.0/22
-      - name: {{ .Values.global.clusterName }}-securitugrouprule-kcp-nodeip-kcp
-        flow: Inbound
-        fromPortRange: 30000
-        toPortRange: 32767
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.8.0/22
-    - description: Security Group Lb with {{ .Values.global.clusterName }}
-      name: {{ .Values.global.clusterName }}-securitygroup-lb
-      securityGroupRules:
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-lb-out
-        flow: Outbound
-        fromPortRange: 6443
-        toPortRange: 6443
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.8.0/22
-      {{- range $cidr := .Values.apiAllowedCidr }}
-      - name: {{ $.Values.global.clusterName }}-securitygrouprule-lb-{{ include "outscale.IpSlugify" $cidr }}
-        flow: Inbound
-        fromPortRange: 6443
-        toPortRange: 6443
-        ipProtocol: tcp
-        ipRange: {{ $cidr }}
-      {{- end }}
-    - description: Security Group Node with {{ .Values.global.clusterName }}
-      name: {{ .Values.global.clusterName }}-securitygroup-node
-      securityGroupRules:
-      - name: {{ .Values.global.clusterName }}-securitygroup-all-tcp
-        flow: Inbound
-        fromPortRange: 1
-        toPortRange: 65535
-        ipProtocol: "-1"
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-calico-vxlan
-        flow: Inbound
-        fromPortRange: 4789
-        toPortRange: 4789
-        ipProtocol: udp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-typha
-        flow: Inbound
-        fromPortRange: 5473
-        toPortRange: 5473
-        ipProtocol: udp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-wireguard
-        flow: Inbound
-        fromPortRange: 51820
-        toPortRange: 51820
-        ipProtocol: udp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-wireguard-ipv6
-        flow: Inbound
-        fromPortRange: 51821
-        toPortRange: 51821
-        ipProtocol: udp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-flannel
-        flow: Inbound
-        fromPortRange: 4789
-        toPortRange: 4789
-        ipProtocol: udp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-flannel-udp
-        flow: Inbound
-        fromPortRange: 8285
-        toPortRange: 8285
-        ipProtocol: udp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      # icmp
-      - name: {{ .Values.global.clusterName }}-securitygroup-icmp
-        flow: Inbound
-        fromPortRange: 8
-        toPortRange: 8
-        ipProtocol: icmp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      # cilium
-      - name: {{ .Values.global.clusterName }}-securitygroup-cilium-vxlan
-        flow: Inbound
-        fromPortRange: 8472
-        toPortRange: 8472
-        ipProtocol: udp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-cilium-health
-        flow: Inbound
-        fromPortRange: 4240
-        toPortRange: 4240
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-cilium-hubble
-        flow: Inbound
-        fromPortRange: 4244
-        toPortRange: 4244
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      {{ if .Values.bastion.enable -}}
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-ssh
-        flow: Inbound
-        fromPortRange: 22
-        toPortRange: 22
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.12.0/22
-      {{ end -}}
-      tag: OscK8sMainSG
-    subnets:
-    - ipSubnetRange: 10.{{ .Values.networkId }}.4.0/24
-      name: {{ .Values.global.clusterName }}-subnet-kw-a
-      subregionName: {{ .Values.region }}a
-    - ipSubnetRange: 10.{{ .Values.networkId }}.8.0/24
-      name: {{ .Values.global.clusterName }}-subnet-kcp-a
-      subregionName: {{ .Values.region }}a
-    - ipSubnetRange: 10.{{ .Values.networkId }}.12.0/24
-      name: {{ .Values.global.clusterName }}-subnet-public-a
-      subregionName: {{ .Values.region }}a
-    - ipSubnetRange: 10.{{ .Values.networkId }}.5.0/24
-      name: {{ .Values.global.clusterName }}-subnet-kw-b
-      subregionName: {{ .Values.region }}b
-    - ipSubnetRange: 10.{{ .Values.networkId }}.6.0/24
-      name: {{ .Values.global.clusterName }}-subnet-kw-c
-      subregionName: {{ .Values.region }}c
-    - ipSubnetRange: 10.{{ .Values.networkId }}.9.0/24
-      name: {{ .Values.global.clusterName }}-subnet-kcp-b
-      subregionName: {{ .Values.region }}b
-    - ipSubnetRange: 10.{{ .Values.networkId }}.10.0/24
-      name: {{ .Values.global.clusterName }}-subnet-kcp-c
-      subregionName: {{ .Values.region }}c
-    - ipSubnetRange: 10.{{ .Values.networkId }}.13.0/24
-      name: {{ .Values.global.clusterName }}-subnet-public-b
-      subregionName: {{ .Values.region }}b
-    - ipSubnetRange: 10.{{ .Values.networkId }}.14.0/24
-      name: {{ .Values.global.clusterName }}-subnet-public-c
-      subregionName: {{ .Values.region }}c
-{{- else }}
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: OscCluster
-metadata:
-  name: {{ .Values.global.clusterName }}
-spec:
-  network:
-    clusterName: {{ .Values.global.clusterName }}
-    bastion:
-      enable: {{ .Values.bastion.enable | default "false" }}
-      clusterName: {{ .Values.global.clusterName }}
-    {{- if .Values.bastion.enable }}
-      name: {{ .Values.global.clusterName }}-vm-bastion
-      keypairName: {{ .Values.sshkeyname }}
-      vmType: {{ .Values.bastion.vmType }}
-      {{ if hasKey .Values.bastion "image" -}}
-      imageName: {{ .Values.bastion.image }}
-      {{ end -}}
-      {{ if hasKey .Values.bastion "imageId" -}}
-      imageId: {{ .Values.bastion.imageId }}
-      {{ end -}}
-      deviceName: "/dev/sda1"
-      {{ if hasKey .Values.bastion "rootDisk" -}}
-      rootDisk:
-        rootDiskIops: {{ .Values.bastion.rootDisk.rootDiskIops | default 100 }}
-        rootDiskSize: {{ .Values.bastion.rootDisk.rootDiskSize | default 30 }}
-        rootDiskType: {{ .Values.bastion.rootDisk.rootDiskType | default "standard" }}
-      {{ end -}}
-      subnetName: {{ .Values.global.clusterName }}-subnet-public
-      subregionName: {{ .Values.bastion.subregionName  }}
-      securityGroupNames:
-        - name: {{ .Values.global.clusterName }}-securitygroup-bastion
-      publicIpName: {{ .Values.global.clusterName }}-publicip-bastion
-    {{- end }}
-    internetService:
-      clusterName: {{ .Values.global.clusterName }}
-    publicIps:
-      - name: {{ .Values.global.clusterName }}-publicip-nat
-    {{- if .Values.bastion.enable }}
-      - name: {{ .Values.global.clusterName }}-publicip-bastion
-    {{- end }}
-    loadBalancer:
-      clusterName: {{ .Values.global.clusterName }}
-      healthCheck:
-        checkinterval: 30
-        healthythreshold: 5
-        port: 6443
-        protocol: TCP
-        timeout: 30
-        unhealthythreshold: 5
-      listener:
-        backendport: 6443
-        backendprotocol: TCP
-        loadbalancerport: 6443
-        loadbalancerprotocol: TCP
-      loadbalancername: {{ template "outscale.defaultLoadbalancerName" $ }}
-      loadbalancertype: internet-facing
-    natService:
-      clusterName: {{ .Values.global.clusterName }}
-    net:
-      clusterName: {{ .Values.global.clusterName }}
-      ipRange: 10.{{ .Values.networkId }}.0.0/16
-    securityGroups:
-    {{- if .Values.bastion.enable }}
-    - description: Security Group bastion with {{ .Values.global.clusterName }}
-      name: {{ .Values.global.clusterName }}-securitygroup-bastion
-      {{- if hasKey .Values.bastion "allow_cidr" }}
-      securityGroupRules:
-      {{- range $i, $cidr := .Values.bastion.allow_cidr }}
-      - name: {{ $.Values.global.clusterName }}-securitygrouprule-ssh-{{ $i }}
-        flow: Inbound
-        fromPortRange: 22
-        toPortRange: 22
-        ipProtocol: tcp
-        ipRange: {{ $cidr }}
-    {{- end }}
-    {{- end }}
-    {{- end }}
-    - description: Security Group Kw with {{ .Values.global.clusterName }}
-      name: {{ .Values.global.clusterName }}-securitygroup-kw
-      securityGroupRules:
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-kw-bgp
-        flow: Inbound
-        fromPortRange: 179
-        toPortRange: 179
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kubelet-kw
-        flow: Inbound
-        fromPortRange: 10250
-        toPortRange: 10250
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.3.0/24
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-kw-nodeip-kcp
-        flow: Inbound
-        toPortRange: 32767
-        fromPortRange: 30000
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.4.0/24
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kubelet-kcp
-        flow: Inbound
-        fromPortRange: 10250
-        toPortRange: 10250
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.4.0/24
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-kw-nodeip-kw
-        flow: Inbound
-        fromPortRange: 30000
-        toPortRange: 32767
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.3.0/24
-    - description: Security Group Kcp with {{ .Values.global.clusterName }}
-      name: {{ .Values.global.clusterName }}-securitygroup-kcp
-      securityGroupRules:
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-kcp-bgp
-        flow: Inbound
-        fromPortRange: 179
-        toPortRange: 179
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-api-lb
-        flow: Inbound
-        fromPortRange: 6443
-        toPortRange: 6443
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.2.0/24
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kw
-        flow: Inbound
-        fromPortRange: 6443
-        toPortRange: 6443
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.3.0/24
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-api-kcp
-        flow: Inbound
-        fromPortRange: 6443
-        toPortRange: 6443
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.4.0/24
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-kcp-nodeip-kw
-        flow: Inbound
-        fromPortRange: 30000
-        toPortRange: 32767
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.3.0/24
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-etcd
-        flow: Inbound
-        fromPortRange: 2378
-        toPortRange: 2380
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.4.0/24
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-kubelet-kcp
-        flow: Inbound
-        fromPortRange: 10250
-        toPortRange: 10252
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.4.0/24
-      - name: {{ .Values.global.clusterName }}-securitugrouprule-kcp-nodeip-kcp
-        flow: Inbound
-        fromPortRange: 30000
-        toPortRange: 32767
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.4.0/24
-    - description: Security Group Lb with {{ .Values.global.clusterName }}
-      name: {{ .Values.global.clusterName }}-securitygroup-lb
-      securityGroupRules:
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-lb-out
-        flow: Outbound
-        fromPortRange: 6443
-        toPortRange: 6443
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.4.0/24
-      {{- range $cidr := .Values.apiAllowedCidr }}
-      - name: {{ $.Values.global.clusterName }}-securitygrouprule-lb-{{ include "outscale.IpSlugify" $cidr }}
-        flow: Inbound
-        fromPortRange: 6443
-        toPortRange: 6443
-        ipProtocol: tcp
-        ipRange: {{ $cidr }}
-      {{- end }}
-    - description: Security Group Node with {{ .Values.global.clusterName }}
-      name: {{ .Values.global.clusterName }}-securitygroup-node
-      securityGroupRules:
-      - name: {{ .Values.global.clusterName }}-securitygroup-all-tcp
-        flow: Inbound
-        fromPortRange: 1
-        toPortRange: 65535
-        ipProtocol: "-1"
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-calico-vxlan
-        flow: Inbound
-        fromPortRange: 4789
-        toPortRange: 4789
-        ipProtocol: udp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-typha
-        flow: Inbound
-        fromPortRange: 5473
-        toPortRange: 5473
-        ipProtocol: udp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-wireguard
-        flow: Inbound
-        fromPortRange: 51820
-        toPortRange: 51820
-        ipProtocol: udp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-wireguard-ipv6
-        flow: Inbound
-        fromPortRange: 51821
-        toPortRange: 51821
-        ipProtocol: udp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-flannel
-        flow: Inbound
-        fromPortRange: 4789
-        toPortRange: 4789
-        ipProtocol: udp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-flannel-udp
-        flow: Inbound
-        fromPortRange: 8285
-        toPortRange: 8285
-        ipProtocol: udp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      # icmp
-      - name: {{ .Values.global.clusterName }}-securitygroup-icmp
-        flow: Inbound
-        fromPortRange: 8
-        toPortRange: 8
-        ipProtocol: icmp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      # cilium
-      - name: {{ .Values.global.clusterName }}-securitygroup-cilium-vxlan
-        flow: Inbound
-        fromPortRange: 8472
-        toPortRange: 8472
-        ipProtocol: udp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-cilium-health
-        flow: Inbound
-        fromPortRange: 4240
-        toPortRange: 4240
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      - name: {{ .Values.global.clusterName }}-securitygroup-cilium-hubble
-        flow: Inbound
-        fromPortRange: 4244
-        toPortRange: 4244
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.0.0/16
-      {{ if .Values.bastion.enable -}}
-      - name: {{ .Values.global.clusterName }}-securitygrouprule-ssh
-        flow: Inbound
-        fromPortRange: 22
-        toPortRange: 22
-        ipProtocol: tcp
-        ipRange: 10.{{ .Values.networkId }}.2.0/24
-      {{ end -}}
-      tag: OscK8sMainSG
-    subnets:
-    - ipSubnetRange: 10.{{ .Values.networkId }}.4.0/24
-      name: {{ .Values.global.clusterName }}-subnet-kcp
-      subregionName: {{ .Values.subregionName  }}
-    - ipSubnetRange: 10.{{ .Values.networkId }}.3.0/24
-      name: {{ .Values.global.clusterName }}-subnet-kw
-      subregionName: {{ .Values.subregionName  }}
-    - ipSubnetRange: 10.{{ .Values.networkId }}.2.0/24
-      name: {{ .Values.global.clusterName }}-subnet-public
-      subregionName: {{ .Values.subregionName  }}
+{{- /* define net and subnet ranges */ -}}
+{{- /* net range */ -}}
+{{- $net_range := printf "10.%s.0.0/16" ( toString .Values.networkId ) }}
+{{- /* loadbalancer ranges */ -}}
+{{- $loadbalancer_ranges := list (printf "10.%s.2.0/24" (toString .Values.networkId)) -}}
+{{- if .Values.multiAZ }}
+  {{- $loadbalancer_ranges = append $loadbalancer_ranges (printf "10.%s.5.0/24" (toString .Values.networkId)) -}}
+  {{- $loadbalancer_ranges = append $loadbalancer_ranges (printf "10.%s.8.0/24" (toString .Values.networkId)) -}}
 {{- end }}
+{{- /* worker ranges */ -}}
+{{- $worker_ranges := list (printf "10.%s.3.0/24" (toString .Values.networkId)) -}}
+{{- if .Values.multiAZ }}
+  {{- $worker_ranges = append $worker_ranges (printf "10.%s.6.0/24" (toString .Values.networkId)) -}}
+  {{- $worker_ranges = append $worker_ranges (printf "10.%s.9.0/24" (toString .Values.networkId)) -}}
+{{- end }}
+{{- /* controlplane ranges */ -}}
+{{- $controlplane_ranges := list (printf "10.%s.4.0/24" (toString .Values.networkId)) -}}
+{{- if .Values.multiAZ }}
+  {{- $controlplane_ranges = append $controlplane_ranges (printf "10.%s.7.0/24" (toString .Values.networkId)) -}}
+  {{- $controlplane_ranges = append $controlplane_ranges (printf "10.%s.10.0/24" (toString .Values.networkId)) -}}
+{{- end }}
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: OscCluster
+metadata:
+  name: {{ .Values.global.clusterName }}
+spec:
+  network:
+    bastion:
+      enable: {{ .Values.bastion.enable | default "false" }}
+    {{- if .Values.bastion.enable }}
+      name: {{ .Values.global.clusterName }}-vm-bastion
+      keypairName: {{ .Values.sshkeyname }}
+      vmType: {{ .Values.bastion.vmType }}
+      {{ if hasKey .Values.bastion "image" -}}
+      imageName: {{ .Values.bastion.image }}
+      {{ end -}}
+      {{ if hasKey .Values.bastion "imageId" -}}
+      imageId: {{ .Values.bastion.imageId }}
+      {{ end -}}
+      deviceName: "/dev/sda1"
+      {{ if hasKey .Values.bastion "rootDisk" -}}
+      rootDisk:
+        rootDiskIops: {{ .Values.bastion.rootDisk.rootDiskIops | default 100 }}
+        rootDiskSize: {{ .Values.bastion.rootDisk.rootDiskSize | default 30 }}
+        rootDiskType: {{ .Values.bastion.rootDisk.rootDiskType | default "standard" }}
+      {{ end -}}
+    {{- end }}
+    loadBalancer:
+      healthCheck:
+        checkinterval: 30
+        healthythreshold: 5
+        port: 6443
+        protocol: TCP
+        timeout: 30
+        unhealthythreshold: 5
+      listener:
+        backendport: 6443
+        backendprotocol: TCP
+        loadbalancerport: 6443
+        loadbalancerprotocol: TCP
+      loadbalancername: {{ template "outscale.defaultLoadbalancerName" $ }}
+      loadbalancertype: internet-facing
+    {{- if hasKey .Values "natPublicIpPool" }}
+    natPublicIpPool: {{ .Values.natPublicIpPool }}
+    {{- end }}
+    natServices:
+    {{- if .Values.multiaz }}
+      - name: {{ .Values.global.clusterName }}-nat-a
+        subregionName: {{ .Values.region }}a
+      - name: {{ .Values.global.clusterName }}-nat-b
+        subregionName: {{ .Values.region }}b
+      - name: {{ .Values.global.clusterName }}-nat-c
+        subregionName: {{ .Values.region }}c
+    {{- else }}
+      - name: {{ .Values.global.clusterName }}-nat-a
+        subregionName: {{ .Values.subregionName  }}
+    {{- end }}
+    net:
+      name: {{ .Values.global.clusterName }}-net
+      ipRange: {{ $net_range }}
+    subregions:
+    {{- if .Values.multiaz }}
+      - {{ .Values.region }}a
+      - {{ .Values.region }}b
+      - {{ .Values.region }}c
+    {{- else }}
+      - {{ .Values.subregionName  }}
+    {{- end }}
+    {{- if hasKey .Values "apiAllowedCidr" }}
+    {{- if gt (len .Values.apiAllowedCidr) 0 }}
+    # Restricting access to kube api cluster
+    allowFromIPRanges:
+    {{- range $cidr := .Values.apiAllowedCidr }}
+      - {{ $cidr }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
+    securityGroups:
+    {{- if .Values.bastion.enable }}
+    - description: Bastion securityGroup for {{ .Values.global.clusterName }}
+      name: {{ .Values.global.clusterName }}-bastion
+      authoritative: true
+      roles:
+        - bastion
+      securityGroupRules:
+      - name: {{ .Values.global.clusterName }}-bastion-all-out
+        flow: Outbound # default outbound rule
+        ipProtocol: "-1"
+        fromPortRange: 1
+        toPortRange: 65535
+        ipRanges:
+        - "0.0.0.0/0"
+      {{- if hasKey .Values.bastion "allow_cidr" }}
+      {{- if gt (len .Values.bastion.allow_cidr) 0 }}
+      - name: {{ $.Values.global.clusterName }}-bastion-ssh
+        flow: Inbound
+        fromPortRange: 22
+        toPortRange: 22
+        ipProtocol: tcp
+        ipRanges:
+        {{- range $cidr := .Values.bastion.allow_cidr }}
+          - {{ $cidr }}
+        {{- end }}
+      {{- end }}
+      {{- end }}
+    {{- end }}
+    - description: Worker securityGroup for {{ .Values.global.clusterName }}
+      name: {{ .Values.global.clusterName }}-worker
+      authoritative: true
+      roles:
+        - worker
+      securityGroupRules:
+      - name: {{ .Values.global.clusterName }}-worker-bgp
+        flow: Inbound
+        fromPortRange: 179
+        toPortRange: 179
+        ipProtocol: tcp
+        ipRanges:
+          - {{ $net_range }}
+      - name: {{ .Values.global.clusterName }}-worker-kubelet
+        flow: Inbound
+        fromPortRange: 10250
+        toPortRange: 10250
+        ipProtocol: tcp
+        ipRanges:
+{{ toYaml $controlplane_ranges | indent 10 }}
+{{ toYaml $worker_ranges | indent 10 }}
+      - name: {{ .Values.global.clusterName }}-worker-nodeip
+        flow: Inbound
+        fromPortRange: 30000
+        toPortRange: 32767
+        ipProtocol: tcp
+        ipRanges:
+{{ toYaml $controlplane_ranges | indent 10 }}
+{{ toYaml $worker_ranges | indent 10 }}
+    - description: Controlplane securityGroup for {{ .Values.global.clusterName }}
+      name: {{ .Values.global.clusterName }}-controlplane
+      authoritative: true
+      roles:
+        - controlplane
+      securityGroupRules:
+      - name: {{ .Values.global.clusterName }}-controlplane-bgp
+        flow: Inbound
+        fromPortRange: 179
+        toPortRange: 179
+        ipProtocol: tcp
+        ipRanges:
+          - {{ $net_range }}
+      - name: {{ .Values.global.clusterName }}-controlplane-api
+        flow: Inbound
+        fromPortRange: 6443
+        toPortRange: 6443
+        ipProtocol: tcp
+        ipRanges:
+{{ toYaml $loadbalancer_ranges | indent 10 }}
+{{ toYaml $controlplane_ranges | indent 10 }}
+{{ toYaml $worker_ranges | indent 10 }}
+      - name: {{ .Values.global.clusterName }}-controlplane-nodeip
+        flow: Inbound
+        fromPortRange: 30000
+        toPortRange: 32767
+        ipProtocol: tcp
+        ipRanges:
+{{ toYaml $controlplane_ranges | indent 10 }}
+{{ toYaml $worker_ranges | indent 10 }}
+      - name: {{ .Values.global.clusterName }}-controlplane-etcd
+        flow: Inbound
+        fromPortRange: 2378
+        toPortRange: 2380
+        ipProtocol: tcp
+        ipRanges:
+{{ toYaml $controlplane_ranges | indent 10 }}
+      - name: {{ .Values.global.clusterName }}-controlplane-kubelet
+        flow: Inbound
+        fromPortRange: 10250
+        toPortRange: 10252
+        ipProtocol: tcp
+        ipRanges:
+{{ toYaml $controlplane_ranges | indent 10 }}
+    - description: LB securityGroup for {{ .Values.global.clusterName }}
+      name: {{ .Values.global.clusterName }}-lb
+      authoritative: true
+      roles:
+        - loadbalancer
+      securityGroupRules:
+      - name: {{ .Values.global.clusterName }}-lb-out
+        flow: Outbound
+        fromPortRange: 6443
+        toPortRange: 6443
+        ipProtocol: tcp
+        ipRanges:
+{{ toYaml $controlplane_ranges | indent 10 }}
+    - description: Node securityGroup for {{ .Values.global.clusterName }}
+      name: {{ .Values.global.clusterName }}-node
+      authoritative: true
+      roles:
+        - worker
+        - controlplane
+      securityGroupRules:
+      - name: {{ .Values.global.clusterName }}-node-all-out
+        flow: Outbound # default outbound rule
+        ipProtocol: "-1"
+        fromPortRange: 1
+        toPortRange: 65535
+        ipRanges:
+        - "0.0.0.0/0"
+      - name: {{ .Values.global.clusterName }}-node-all-tcp
+        flow: Inbound
+        fromPortRange: 1
+        toPortRange: 65535
+        ipProtocol: tcp
+        ipRanges:
+          - {{ $net_range }}
+      - name: {{ .Values.global.clusterName }}-node-calico-vxlan
+        flow: Inbound
+        fromPortRange: 4789
+        toPortRange: 4789
+        ipProtocol: udp
+        ipRanges:
+          - {{ $net_range }}
+      - name: {{ .Values.global.clusterName }}-node-typha
+        flow: Inbound
+        fromPortRange: 5473
+        toPortRange: 5473
+        ipProtocol: udp
+        ipRanges:
+          - {{ $net_range }}
+      - name: {{ .Values.global.clusterName }}-node-wireguard
+        flow: Inbound
+        fromPortRange: 51820
+        toPortRange: 51820
+        ipProtocol: udp
+        ipRanges:
+          - {{ $net_range }}
+      - name: {{ .Values.global.clusterName }}-node-wireguard-ipv6
+        flow: Inbound
+        fromPortRange: 51821
+        toPortRange: 51821
+        ipProtocol: udp
+        ipRanges:
+          - {{ $net_range }}
+      - name: {{ .Values.global.clusterName }}-node-flannel
+        flow: Inbound
+        fromPortRange: 4789
+        toPortRange: 4789
+        ipProtocol: udp
+        ipRanges:
+          - {{ $net_range }}
+      - name: {{ .Values.global.clusterName }}-node-flannel-udp
+        flow: Inbound
+        fromPortRange: 8285
+        toPortRange: 8285
+        ipProtocol: udp
+        ipRanges:
+          - {{ $net_range }}
+      # icmp
+      - name: {{ .Values.global.clusterName }}-node-icmp
+        flow: Inbound
+        fromPortRange: 8
+        toPortRange: 8
+        ipProtocol: icmp
+        ipRanges:
+          - {{ $net_range }}
+      # cilium
+      - name: {{ .Values.global.clusterName }}-node-cilium-vxlan
+        flow: Inbound
+        fromPortRange: 8472
+        toPortRange: 8472
+        ipProtocol: udp
+        ipRanges:
+          - {{ $net_range }}
+      - name: {{ .Values.global.clusterName }}-node-cilium-health
+        flow: Inbound
+        fromPortRange: 4240
+        toPortRange: 4240
+        ipProtocol: tcp
+        ipRanges:
+          - {{ $net_range }}
+      - name: {{ .Values.global.clusterName }}-node-cilium-hubble
+        flow: Inbound
+        fromPortRange: 4244
+        toPortRange: 4244
+        ipProtocol: tcp
+        ipRanges:
+          - {{ $net_range }}
+      {{ if .Values.bastion.enable -}}
+      - name: {{ .Values.global.clusterName }}-node-ssh
+        flow: Inbound
+        fromPortRange: 22
+        toPortRange: 22
+        ipProtocol: tcp
+        ipRanges:
+{{ toYaml $loadbalancer_ranges | indent 10 }}
+      {{ end -}}
+      tag: OscK8sMainSG

@@ -118,26 +118,23 @@ Usage :
   {{ include "outscale.generatedName" (dict "clusterName" .Values.global.clusterName "nodeType" "worker" "poolName" $pool.name "kubeVersion" $pool.version "imageId" $pool.image) }}
 */}}
 {{- define "outscale.generatedName" -}}
+
+{{- /* Common initialization */ -}}
 {{- $type := .nodeType | default "worker" -}}
 {{- $imageId := .imageId | default "img" -}}
 {{- $kubeVersion := .kubeVersion | default "v1" -}}
 {{- $imageKubeHash := sha256sum (printf "%s-%s" $imageId $kubeVersion) | trunc 8 -}}
 {{- $clusterHash := sha256sum .clusterName | trunc 8 -}}
 
+{{- $poolId := "cp" -}}
 {{- if eq $type "worker" -}}
   {{- $pool := .poolName | default "pool" -}}
-  {{- $poolHash := sha256sum $pool | trunc 8 -}}
-  {{- $maxClusterLen := sub 63 (add (int (len $clusterHash)) (int (len $poolHash)) (int (len $imageKubeHash)) 3) -}}
-  {{- $cluster := .clusterName | trunc (int $maxClusterLen) | trimSuffix "-" -}}
-  {{- printf "%s-%s-%s-%s" $cluster $clusterHash $poolHash $imageKubeHash | toYaml -}}
-
-{{- else if eq $type "cp" -}}
-  {{- $cpTag := "cp" -}}
-  {{- $maxClusterLen := sub 63 (add (int (len $clusterHash)) (int (len $cpTag)) (int (len $imageKubeHash)) 3) -}}
-  {{- $cluster := .clusterName | trunc (int $maxClusterLen) | trimSuffix "-" -}}
-  {{- printf "%s-%s-%s-%s" $cluster $clusterHash $cpTag $imageKubeHash | toYaml -}}
-
-{{- else -}}
-  {{- fail (printf "Invalid nodeType: '%s'. Must be 'worker' or 'cp'" $type) -}}
+  {{- $poolId = sha256sum $pool | trunc 8 -}}
 {{- end -}}
+
+{{- /* last: Generation of the final name */ -}}
+{{- $maxClusterLen := sub 63 (add (int (len $clusterHash)) (int (len $poolId)) (int (len $imageKubeHash)) 3) -}}
+{{- $cluster := .clusterName | trunc (int $maxClusterLen) | trimSuffix "-" -}}
+
+{{- printf "%s-%s-%s-%s" $cluster $clusterHash $poolId $imageKubeHash | toYaml -}}
 {{- end }}
