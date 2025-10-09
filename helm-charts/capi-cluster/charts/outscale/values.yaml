@@ -87,3 +87,13 @@ osc_csi_credentials: {}
 #osc_csi_credentials:
 #  access_key: ""
 #  secret_key: ""
+
+# Instead of creating the secret create an external-secret resource
+# to provision the secret.
+externalSecret:
+  enabled: false
+  tenant: opicloud-dev-osc-euw2
+  secretStoreType: ClusterSecretStore
+  secretStoreName: openbao-ppr
+  refreshInterval: 1h
+  mgmtClusterName: opicloud-dev-osc-euw2-mgmt-01
