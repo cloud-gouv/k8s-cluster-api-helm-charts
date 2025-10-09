@@ -36,7 +36,7 @@ spec:
 #            - filter:
 #                name: allow-ssh
           allowedAddressPairs:
-            - ipAddress: {{ .Values.controlplane.apiServerFixedIP }}
+            - ipAddress: {{ .Values.controlplane.apiServerVirtualIP | default .Values.controlplane.apiServerFixedIP }}
 #          disablePortSecurity: true
 #
       {{- if .Values.controlplane.rootVolume }}

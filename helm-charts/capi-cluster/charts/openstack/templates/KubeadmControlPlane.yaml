@@ -167,7 +167,8 @@ spec:
               - name: vip_retryperiod
                 value: "2"
               - name: address
-                value: {{ .Values.controlplane.apiServerFixedIP }}
+                value: {{ .Values.controlplane.apiServerVirtualIP | default .Values.controlplane.apiServerFixedIP }}
+
               - name: prometheus_server
                 value: :2112
               image: ghcr.io/kube-vip/kube-vip:{{ .Values.global.addons.kubevip.version }}

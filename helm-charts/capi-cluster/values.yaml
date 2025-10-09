@@ -256,6 +256,8 @@ openstack: {}
 #      - AZ2
 #    # reserved ip/port outside cluster-api
 #    apiServerFixedIP: 192.168.101.10
+#    # if controlplane VirtualIP is different from apiServerFixedIP
+#    apiServerVirtualIP: 192.168.200.10
 #    #rootVolume: {}
 #  workers:
 #    md-0:
