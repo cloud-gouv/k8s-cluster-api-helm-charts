@@ -20,16 +20,9 @@ global:
   addons:
     cni:
       enabled: true
-      #type: calico
-      #version: v3.27.3
       type: cilium
       version: 1.15.8
       config: {}
-#        ipaddresspool:
-#          layer: "l2"
-#          name: "first-pool"
-#          addresses:
-#            - 192.168.101.11/32
     ccm:
       enabled: true
       type: outscale    # or openstack
@@ -46,12 +39,6 @@ global:
       enabled: false
       type: metallb
       version: 0.14.5
-      #config:
-      #  ipaddresspool:
-      #    layer: "l2"
-      #    name: "first-pool"
-      #    addresses:
-      #      - 192.168.101.11/32
     ingress:
       enabled: false
       type: ingress-nginx
@@ -239,25 +226,30 @@ openstack: {}
 #  machinehealthcheck:
 #    enabled: false
 #  sshkeyname: REPLACE_SSH_KEY_NAME_
-#  router: router_services
-#  network: network_kube
-#  subnet: subnet_kube
 #  bastion:
 #    enabled: false
 #    image: ubuntu22.04
 #    flavor: CO1.2
+#    network: tooling
+#    subnet: tooling # optional, defaults to "tooling"
+#    fixedIP: 192.168.101.9
 #  controlplane:
 #    version: v1.29.4
 #    replicas: 1
 #    image: ubuntu-2204-kube-v1.29.4
 #    flavor: CO1.2
-#    availabilityZones:
-#      - AZ1
-#      - AZ2
+#    network: controlplane
+#    subnet: controlplane # optional, defaults to "controlplane"
 #    # reserved ip/port outside cluster-api
 #    apiServerFixedIP: 192.168.101.10
 #    # if controlplane VirtualIP is different from apiServerFixedIP
 #    apiServerVirtualIP: 192.168.200.10
+#    availabilityZones:
+#      - AZ1
+#      - AZ2
+#    serverGroup:
+#      filter:
+#        name: worker-node
 #    #rootVolume: {}
 #  workers:
 #    md-0:
@@ -265,9 +257,21 @@ openstack: {}
 #      replicas: 0
 #      image: ubuntu-2204-kube-v1.29.4
 #      flavor: CO1.2
+#      network: workers
+#      subnet: workers # optional, defaults to "workers"
 #      # reserved ip/port outside cluster-api
 #      ingressServerFixedIP: 192.168.101.11
+#      failureDomain: AZ1
+#      serverGroup:
+#        filter:
+#          name: worker-node
+#      serverMetadata:
+#        - key: ingress-ready
+#          value: "true"
+#      nodeLabels:
+#        ingress-ready: true
 #      #rootVolume: {}
+#      #additionalBlockDevices: {}
 #  #
 #  # openstack cloud config
 #  #

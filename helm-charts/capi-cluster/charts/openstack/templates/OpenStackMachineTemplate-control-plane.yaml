@@ -22,9 +22,9 @@ spec:
   template:
     spec:
       configDrive: true
-    {{- with $.Values.controlplane.serverGroup }}
+      {{- with $.Values.controlplane.serverGroup }}
       serverGroup: {{- toYaml . | nindent 8 }}
-    {{- end }}
+      {{- end }}
       flavor: {{ .Values.controlplane.flavor }}
       image:
         filter:
@@ -33,15 +33,11 @@ spec:
       ports:
         - network:
             filter:
-              {{- if .Values.network }}
-              name: {{ .Values.network }}
-              {{- end }}
+              name: {{ .Values.controlplane.network }}
           fixedIPs:
             - subnet:
                 filter:
-                  {{- if .Values.subnet }}
-                  name: {{ .Values.subnet }}
-                  {{- end }}
+                  name: {{ .Values.controlplane.subnet | default "controlplane" }}
           allowedAddressPairs:
             - ipAddress: {{ .Values.controlplane.apiServerVirtualIP | default .Values.controlplane.apiServerFixedIP }}
       {{- if .Values.controlplane.rootVolume }}
