@@ -316,7 +316,7 @@ outscale:
 #    tags:
 #      tags.osc.fcu.repulse_server: vm-worker-md-0
 #  workers:
-#    - name: md-0
+#    md-0:
 #      version: v1.29.5
 #      replicas: 0
 #      vmType: tinav5.c2r4p3
