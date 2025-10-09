@@ -9,22 +9,25 @@ addons:
   certmanager: {}
   csi: {}
   kubevip: {}
-# sshkeyname: REPLACE_MY_KEY
 
-#router: router_services
-#network: network_kube
-#subnet: subnet_kube
+#sshkeyname: REPLACE_MY_KEY
+
+#network: kubernetes
 
 #bastion:
 #  enabled: false
 #  image: ubuntu22.04
 #  flavor: CO1.2
+#  subnet: tooling
 #controlplane:
 #  version: v1.29.4
 #  replicas: 1
 #  image: ubuntu-2204-kube-v1.29.4
 #  flavor: CO1.2
+#  subnet: control-plane
+#  # reserved ip/port outside cluster-api
 #  apiServerFixedIP: 192.168.101.10
+#  # if controlplane VirtualIP is different from apiServerFixedIP
 #  apiServerVirtualIP: 192.168.200.10
 #  availabilityZones:
 #    - AZ1
@@ -32,21 +35,27 @@ addons:
 #  serverGroup:
 #    filter:
 #      name: worker-node
-#  serverMetadata:
-#    - key: ingress-ready
-#      value: "true"
-#
+#  #rootVolume: {}
 #workers:
 #  md-0:
 #    version: v1.29.4
 #    replicas: 0
 #    image: ubuntu-2204-kube-v1.29.4
 #    flavor: CO1.2
+#    subnet: workers
+#    # reserved ip/port outside cluster-api
 #    ingressServerFixedIP: 192.168.101.11
 #    failureDomain: AZ1
 #    serverGroup:
 #      filter:
 #        name: worker-node
+#    serverMetadata:
+#      - key: ingress-ready
+#        value: "true"
+#    nodeLabels:
+#      ingress-ready: true
+#    #rootVolume: {}
+#    #additionalBlockDevices: {}
 
 certmanager: {}
 csi: {}
