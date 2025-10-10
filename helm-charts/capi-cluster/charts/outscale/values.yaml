@@ -92,8 +92,11 @@ osc_csi_credentials: {}
 # to provision the secret.
 externalSecret:
   enabled: false
-  tenant: opicloud-dev-osc-euw2
   secretStoreType: ClusterSecretStore
   secretStoreName: openbao-ppr
   refreshInterval: 1h0m0s
-  mgmtClusterName: opicloud-dev-osc-euw2-mgmt-01
+  secretsPath:
+    csi: k8s/tenant/opicloud-dev-osc-euw2/osc_csi_credentials
+    ccm: k8s/tenant/opicloud-dev-osc-euw2/osc_ccm_credentials
+    dockerconfig: k8s/ppr/dockerconfig
+    eso: k8s/cluster/opicloud-dev-osc-euw2-mgmt-01/opicloud-dev-osc-euw2-wapp-01
