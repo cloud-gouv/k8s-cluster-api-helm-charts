@@ -95,5 +95,5 @@ externalSecret:
   tenant: opicloud-dev-osc-euw2
   secretStoreType: ClusterSecretStore
   secretStoreName: openbao-ppr
-  refreshInterval: 1h
+  refreshInterval: 1h0m0s
   mgmtClusterName: opicloud-dev-osc-euw2-mgmt-01
