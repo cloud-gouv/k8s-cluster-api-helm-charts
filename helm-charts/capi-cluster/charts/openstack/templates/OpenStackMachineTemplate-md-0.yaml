@@ -9,12 +9,12 @@ spec:
   template:
     spec:
       configDrive: true
-    {{- with $pool.serverMetadata }}
+      {{- with $pool.serverMetadata }}
       serverMetadata: {{- toYaml . | nindent 8 }}
-    {{- end }}
-    {{- with $pool.serverGroup }}
+      {{- end }}
+      {{- with $pool.serverGroup }}
       serverGroup: {{- toYaml . | nindent 8 }}
-    {{- end }}
+      {{- end }}
       flavor: {{ $pool.flavor }}
       image:
         filter:
@@ -23,24 +23,16 @@ spec:
       ports:
         - network:
             filter:
-              {{- if $.Values.network }}
               name: {{ $.Values.network }}
-              {{- end }}
+          {{- $subnet := $pool.subnet | default $.Values.subnet }}
+          {{- if $subnet }}
           fixedIPs:
             - subnet:
                 filter:
-                  {{- if $.Values.subnet }}
-                  name: {{ $.Values.subnet }}
-                  {{- end }}
-#          securityGroups:
-#            - filter:
-#                name: k8s-cluster-default-{{ $.Values.global.clusterName }}-secgroup-worker
-#            - filter:
-#                name: allow-http
-#            - filter:
-#                name: allow-ssh
+                  name: {{ $subnet }}
           allowedAddressPairs:
             - ipAddress: {{ $pool.ingressServerFixedIP }}
+          {{- end }}
       {{- if $pool.rootVolume }}
       rootVolume:
         sizeGiB: {{ $pool.rootVolume.sizeGiB }}

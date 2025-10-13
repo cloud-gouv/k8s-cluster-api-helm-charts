@@ -8,9 +8,9 @@ spec:
   template:
     spec:
       configDrive: true
-    {{- with $.Values.controlplane.serverGroup }}
+      {{- with $.Values.controlplane.serverGroup }}
       serverGroup: {{- toYaml . | nindent 8 }}
-    {{- end }}
+      {{- end }}
       flavor: {{ .Values.controlplane.flavor }}
       image:
         filter:
@@ -19,36 +19,18 @@ spec:
       ports:
         - network:
             filter:
-              {{- if .Values.network }}
               name: {{ .Values.network }}
-              {{- end }}
+          {{- $subnet := .Values.controlplane.subnet | default .Values.subnet }}
+          {{- if $subnet }}
           fixedIPs:
             - subnet:
                 filter:
-                  {{- if .Values.subnet }}
-                  name: {{ .Values.subnet }}
-                  {{- end }}
-#          securityGroups:
-#            - filter:
-#                name: k8s-cluster-default-{{ .Values.global.clusterName }}-secgroup-controlplane
-#            - filter:
-#                name: allow-http
-#            - filter:
-#                name: allow-ssh
+                  name: {{ $subnet }}
+          {{- end }}
           allowedAddressPairs:
             - ipAddress: {{ .Values.controlplane.apiServerVirtualIP | default .Values.controlplane.apiServerFixedIP }}
-#          disablePortSecurity: true
-#
       {{- if .Values.controlplane.rootVolume }}
       rootVolume:
         sizeGiB: {{ .Values.controlplane.rootVolume.sizeGiB }}
         type: {{ .Values.controlplane.rootVolume.type }}
       {{- end }}
-#      additionalBlockDevices:
-#        - name: etcd     ## Add etcd external volume
-#          sizeGiB: 10
-#          storage:
-#            type: Volume
-#            volume:
-#              type: __DEFAULT__
-

@@ -13,15 +13,17 @@ spec:
         filter:
           name: {{ .Values.bastion.image }}
       sshKeyName: {{ .Values.sshkeyname }}
-  ## api with floating IP
-  ## or externalnet enable is needed by bastion
-  #disableExternalNetwork: false
-  #externalNetwork:
-  #  filter:
-  #    name: FIP_EXT
-  #apiServerFloatingIP: 100.67.66.91
-  #
-  ## api with internal IP
+      ports:
+        - network:
+            filter:
+              name: {{ .Values.network }}
+          {{- $subnet := .Values.bastion.subnet | default .Values.subnet }}
+          {{- if $subnet }}
+          fixedIPs:
+            - subnet:
+                filter:
+                  name: {{ $subnet }}
+          {{- end }}
   disableExternalNetwork: true
   disableAPIServerFloatingIP: true
   apiServerFixedIP: {{ .Values.controlplane.apiServerFixedIP }}
@@ -29,26 +31,9 @@ spec:
   {{- range .Values.controlplane.availabilityZones }}
   - {{ . }}
   {{- end }}
-  router:
-    filter:
-      name: {{ .Values.router }}
   network:
     filter:
-      {{- if .Values.network }}
       name: {{ .Values.network }}
-      {{- end }}
-  subnets:
-    - filter:
-        {{- if .Values.subnet }}
-        name: {{ .Values.subnet }}
-        {{- end }}
-#  managedSubnets:
-#  - cidr: 192.168.102.0/24
-#    dnsNameservers:
-#    - 192.168.2.10
-#    allocationPools:
-#      - start: 192.168.102.100
-#        end: 192.168.102.252
   identityRef:
     cloudName: openstack
     name: {{ .Values.global.clusterName }}-cloud-config
@@ -86,7 +71,6 @@ spec:
         remoteManagedGroups:
           - controlplane
           - worker
-
       - description: Created by cluster-api-provider-openstack - http to worker node (http)
         remoteIPPrefix: 0.0.0.0/0
         direction: ingress
