@@ -1,3 +1,12 @@
+{{/* Common initialization */}}
+{{- $generatedName := include "openstack.generatedName" (dict
+        "clusterName" .Values.global.clusterName
+        "nodeType" "cp"
+        "kubeVersion" .Values.controlplane.version
+        "imageId" .Values.controlplane.image
+      ) }}
+
+{{/* generates object */}}
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -168,7 +177,6 @@ spec:
                 value: "2"
               - name: address
                 value: {{ .Values.controlplane.apiServerVirtualIP | default .Values.controlplane.apiServerFixedIP }}
-
               - name: prometheus_server
                 value: :2112
               image: ghcr.io/kube-vip/kube-vip:{{ .Values.global.addons.kubevip.version }}
@@ -482,6 +490,10 @@ spec:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: OpenStackMachineTemplate
-      name: {{ .Values.global.clusterName }}-control-plane-{{ .Values.controlplane.version }}
+      name: {{ $generatedName }}
   replicas: {{ .Values.controlplane.replicas | default 1 }}
   version: {{ .Values.controlplane.version }}
+  rolloutStrategy:
+    rollingUpdate:
+      maxSurge: 1
+    type: RollingUpdate
