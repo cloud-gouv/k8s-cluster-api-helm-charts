@@ -37,7 +37,7 @@ addons:
 #      value: "true"
 #
 #workers:
-#  - name: md-0
+#  md-0:
 #    version: v1.29.4
 #    replicas: 0
 #    image: ubuntu-2204-kube-v1.29.4

@@ -1,10 +1,25 @@
-{{- $values := .Values }}
+{{/* iterate over the workers */}}
 {{- range $name, $pool := .Values.workers }}
+  {{- $generatedName := include "openstack.generatedName" (dict
+    "clusterName" $.Values.global.clusterName
+    "nodeType" "worker"
+    "poolName" $name
+    "kubeVersion" $pool.version
+    "imageId" $pool.image
+  ) }}
+
+{{/* generates object */}}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OpenStackMachineTemplate
 metadata:
-  name: {{ $.Values.global.clusterName }}-{{ $name }}-{{ $pool.version }}
+  name: {{ $generatedName }}
+  labels:
+    cluster-name: {{ $.Values.global.clusterName }}
+    node-type: "worker"
+    pool-name: {{ $name }}
+    kube-version: {{ $pool.version }}
+    image-name: {{ $pool.image }}
 spec:
   template:
     spec:
@@ -32,13 +47,6 @@ spec:
                   {{- if $.Values.subnet }}
                   name: {{ $.Values.subnet }}
                   {{- end }}
-#          securityGroups:
-#            - filter:
-#                name: k8s-cluster-default-{{ $.Values.global.clusterName }}-secgroup-worker
-#            - filter:
-#                name: allow-http
-#            - filter:
-#                name: allow-ssh
           allowedAddressPairs:
             - ipAddress: {{ $pool.ingressServerFixedIP }}
       {{- if $pool.rootVolume }}

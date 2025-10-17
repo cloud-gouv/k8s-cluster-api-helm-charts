@@ -1,9 +1,23 @@
+{{/* Common initialization */}}
+{{- $generatedName := include "openstack.generatedName" (dict
+    "clusterName" .Values.global.clusterName
+    "nodeType" "cp"
+    "kubeVersion" .Values.controlplane.version
+    "imageId" .Values.controlplane.image
+  ) }}
+
+{{/* generates object */}}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OpenStackMachineTemplate
 metadata:
-  name: {{ .Values.global.clusterName }}-control-plane-{{ .Values.controlplane.version }}
+  name: {{ $generatedName }}
   namespace: default
+  labels:
+    cluster-name: {{ .Values.global.clusterName }}
+    node-type: "control-plane"
+    kube-version:  {{ .Values.controlplane.version }}
+    image-name:  {{ .Values.controlplane.image }}
 spec:
   template:
     spec:
@@ -28,27 +42,10 @@ spec:
                   {{- if .Values.subnet }}
                   name: {{ .Values.subnet }}
                   {{- end }}
-#          securityGroups:
-#            - filter:
-#                name: k8s-cluster-default-{{ .Values.global.clusterName }}-secgroup-controlplane
-#            - filter:
-#                name: allow-http
-#            - filter:
-#                name: allow-ssh
           allowedAddressPairs:
             - ipAddress: {{ .Values.controlplane.apiServerVirtualIP | default .Values.controlplane.apiServerFixedIP }}
-#          disablePortSecurity: true
-#
       {{- if .Values.controlplane.rootVolume }}
       rootVolume:
         sizeGiB: {{ .Values.controlplane.rootVolume.sizeGiB }}
         type: {{ .Values.controlplane.rootVolume.type }}
       {{- end }}
-#      additionalBlockDevices:
-#        - name: etcd     ## Add etcd external volume
-#          sizeGiB: 10
-#          storage:
-#            type: Volume
-#            volume:
-#              type: __DEFAULT__
-
