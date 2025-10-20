@@ -160,7 +160,7 @@ global:
       audit-log-maxage: "20"    # number of days to retain audit log
       event-ttl: "4h"
       enable-bootstrap-token-auth: "true"
-      enable-admission-plugins: "NodeRestriction,AlwaysPullImages"
+      enable-admission-plugins: "NodeRestriction"
       feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
       profiling: "false"
       requestheader-allowed-names: "front-proxy-client"
