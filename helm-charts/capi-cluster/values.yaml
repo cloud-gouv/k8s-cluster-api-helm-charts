@@ -291,8 +291,17 @@ openstack: {}
 # reference to outscale helm values
 #
 outscale:
-#  sshkeyname: REPLACE_SSH_KEY_NAME_
+#  externalSecret:
+#    enabled: true
+#    secretStoreName: openbao-prod
+#    refreshInterval: 10m0s
+#    secretsPath:
+#      csi: where/is/osc_csi_credentials
+#      ccm: where/is/osc_ccm_credentials
+#      dockerconfig: where/is/dockerconfig
+#      eso: where/is/my_cluster_name/eso_secret
   multiaz: false
+#  sshkeyname: REPLACE_SSH_KEY_NAME_
 #  region: eu-west-2            # Mandatory if multiaz: true
 #  subregionName: "eu-west-2a"  # Ignored if multiaz: true
 #  bastion:
@@ -316,7 +325,7 @@ outscale:
 #    tags:
 #      tags.osc.fcu.repulse_server: vm-worker-md-0
 #  workers:
-#    - name: md-0
+#    md-0:
 #      version: v1.29.5
 #      replicas: 0
 #      vmType: tinav5.c2r4p3

@@ -87,3 +87,17 @@ osc_csi_credentials: {}
 #osc_csi_credentials:
 #  access_key: ""
 #  secret_key: ""
+
+# Instead of creating the secret create an external-secret resource
+# to provision the secret.
+externalSecret:
+  enabled: false
+  secretStoreType: ClusterSecretStore
+  secretStoreName: openbao-ppr
+  refreshInterval: 1h0m0s
+# This has to be provided for your cluster
+#  secretsPath:
+#    csi: where/is/osc_csi_credentials
+#    ccm: where/is/osc_ccm_credentials
+#    dockerconfig: where/is/dockerconfig
+#    eso: where/is/my_cluster_name/eso_secret
