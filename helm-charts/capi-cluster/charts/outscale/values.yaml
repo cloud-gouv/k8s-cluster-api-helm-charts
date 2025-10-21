@@ -95,8 +95,9 @@ externalSecret:
   secretStoreType: ClusterSecretStore
   secretStoreName: openbao-ppr
   refreshInterval: 1h0m0s
-  secretsPath:
-    csi: k8s/tenant/opicloud-dev-osc-euw2/osc_csi_credentials
-    ccm: k8s/tenant/opicloud-dev-osc-euw2/osc_ccm_credentials
-    dockerconfig: k8s/ppr/dockerconfig
-    eso: k8s/cluster/opicloud-dev-osc-euw2-mgmt-01/opicloud-dev-osc-euw2-wapp-01
+# This has to be provided for your cluster
+#  secretsPath:
+#    csi: where/is/osc_csi_credentials
+#    ccm: where/is/osc_ccm_credentials
+#    dockerconfig: where/is/dockerconfig
+#    eso: where/is/my_cluster_name/eso_secret
