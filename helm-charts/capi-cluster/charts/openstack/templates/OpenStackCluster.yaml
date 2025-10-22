@@ -34,6 +34,9 @@ spec:
   network:
     filter:
       name: {{ .Values.network }}
+  subnets:
+    - filter:
+        name: {{ .Values.controlplane.subnet }}
   identityRef:
     cloudName: openstack
     name: {{ .Values.global.clusterName }}-cloud-config
