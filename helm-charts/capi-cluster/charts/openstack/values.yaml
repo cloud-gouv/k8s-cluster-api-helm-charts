@@ -19,6 +19,7 @@ addons:
 #  image: ubuntu22.04
 #  flavor: CO1.2
 #  subnet: tooling
+#  fixedIP: 192.168.101.9
 #controlplane:
 #  version: v1.29.4
 #  replicas: 1

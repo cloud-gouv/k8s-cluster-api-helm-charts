@@ -23,6 +23,9 @@ spec:
             - subnet:
                 filter:
                   name: {{ $subnet }}
+              {{- if .Values.bastion.fixedIP }}
+              ipAddress: {{ .Values.bastion.fixedIP }}
+              {{- end }}
           {{- end }}
   disableExternalNetwork: true
   disableAPIServerFloatingIP: true
