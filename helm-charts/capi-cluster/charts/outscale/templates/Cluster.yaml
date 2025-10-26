@@ -42,6 +42,11 @@ metadata:
     csi.type: {{ .Values.global.addons.csi.type }}
     csi.version: {{ .Values.global.addons.csi.version }}
     {{ end -}}
+    {{ if .Values.global.addons.spegel.enabled -}}
+    spegel.enabled: {{ printf "%t" .Values.global.addons.spegel.enabled | quote }}
+    spegel.type: {{ .Values.global.addons.spegel.type }}
+    spegel.version: {{ .Values.global.addons.spegel.version }}
+    {{ end -}}
     #
 spec:
   clusterNetwork:

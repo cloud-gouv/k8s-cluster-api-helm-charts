@@ -62,6 +62,9 @@ global:
       version: v1.14.5
     storagelocal:
       enabled: false
+    spegel:
+      enabled: false
+      type: spegel
 
   #
   # KubeadmConfigSpec configuration
@@ -231,6 +234,7 @@ global:
         - cluster-api-provider-outscale-system
         - loki
         - whoami
+        - spegel
 
 #
 # reference to openstack helm values

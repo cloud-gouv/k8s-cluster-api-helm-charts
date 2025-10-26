@@ -82,6 +82,14 @@ spec:
             # wait external access is up
             external_url="github.com"
             [[ -n "$external_url" ]] && wait_and_retry 360 10 "host $external_url"
+        {{ if $values.global.addons.spegel.enabled -}}
+        - path: /etc/containerd/config.d/spegel.toml
+          owner: root:root
+          permissions: "0644"
+          content: |
+            [plugins."io.containerd.grpc.v1.cri".containerd]
+              discard_unpacked_layers = false
+        {{ end -}}
         - path: /etc/pre-kubeadm-commands/10-containerd-restart.sh
           owner: root:root
           permissions: "0700"

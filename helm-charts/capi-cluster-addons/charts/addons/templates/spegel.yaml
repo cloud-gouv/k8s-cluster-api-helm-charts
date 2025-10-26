@@ -1,0 +1,31 @@
+{{ if .Values.global.addons.spegel.enabled -}}
+apiVersion: addons.cluster.x-k8s.io/v1alpha1
+kind: HelmChartProxy
+metadata:
+  name: spegel
+spec:
+  options:
+    waitForJobs: true
+    wait: true
+    timeout: 30m0s
+    install:
+      createNamespace: true
+  clusterSelector:
+    matchLabels:
+      spegel.enabled: "true"
+      spegel.type: {{ .Values.global.addons.spegel.type }}
+      spegel.version: {{ .Values.global.addons.spegel.version }}
+  repoURL: oci://ghcr.io/spegel-org/helm-charts
+  chartName: spegel
+  version: {{ .Values.global.addons.spegel.version }}
+  releaseName: spegel
+  namespace: spegel
+  valuesTemplate: |
+    ## spegel configuration
+    ## Ref: github.com/spegel-org/spegel/blob/main/charts/spegel/values.yaml
+    {{- with .Values.global.addons.spegel.extraChartArgs -}}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+
+  #
+{{ end -}}

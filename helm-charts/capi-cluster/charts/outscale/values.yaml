@@ -8,6 +8,7 @@ addons:
   ingress: {}
   certmanager: {}
   csi: {}
+  spegel: {}
 
 certmanager: {}
 csi: {}

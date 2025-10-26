@@ -5,6 +5,7 @@ dockerConfig:
 #  ccm: {}
 #  metallb: {}
 #  ingress: {}
+#  spegel: {}
 
 #addons:
 #  cloudConfig:

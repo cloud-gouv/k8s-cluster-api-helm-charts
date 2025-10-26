@@ -1,0 +1,37 @@
+{{ if and .Values.global.addons.spegel.enabled ( eq .Values.global.addons.spegel.type "spegel" ) -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    note: generated
+  labels:
+    type: generated
+  name: {{ .Values.global.clusterName }}-spegel-config
+  namespace: default
+data:
+  SpegelConfig: |
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: spegel
+      labels:
+        access-to-all: "true"
+        pod-security.kubernetes.io/enforce: privileged
+---
+apiVersion: addons.cluster.x-k8s.io/v1beta1
+kind: ClusterResourceSet
+metadata:
+  name: {{ .Values.global.clusterName }}-spegel-config
+  namespace: default
+spec:
+  clusterSelector:
+    matchLabels:
+      spegel.enabled: {{  printf "%t" .Values.global.addons.spegel.enabled | quote }}
+      spegel.type: {{  .Values.global.addons.spegel.type }}
+      cluster.x-k8s.io/name: {{ .Values.global.clusterName }}
+  resources:
+  - kind: ConfigMap
+    name: {{ .Values.global.clusterName }}-spegel-config
+  strategy: Reconcile
+{{- end }}

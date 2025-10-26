@@ -172,6 +172,7 @@ global:
         - cluster-api-provider-outscale-system
         - loki
         - whoami
+        - spegel
 
 # values that are specific to the provider 'outscale'
 outscale: {}

@@ -233,6 +233,16 @@ spec:
         ipProtocol: tcp
         ipRanges:
           - {{ $net_range }}
+      {{ if .Values.global.addons.spegel.enabled -}}
+      # spegel
+      - name: {{ .Values.global.clusterName }}-node-spegel
+        flow: Inbound
+        fromPortRange: 5001
+        toPortRange: 5001
+        ipProtocol: tcp
+        ipRanges:
+          - {{ $net_range }}
+      {{ end -}}
       - name: {{ .Values.global.clusterName }}-node-calico-vxlan
         flow: Inbound
         fromPortRange: 4789
