@@ -24,12 +24,12 @@ spec:
   template:
     spec:
       configDrive: true
-    {{- with $pool.serverMetadata }}
+      {{- with $pool.serverMetadata }}
       serverMetadata: {{- toYaml . | nindent 8 }}
-    {{- end }}
-    {{- with $pool.serverGroup }}
+      {{- end }}
+      {{- with $pool.serverGroup }}
       serverGroup: {{- toYaml . | nindent 8 }}
-    {{- end }}
+      {{- end }}
       flavor: {{ $pool.flavor }}
       image:
         filter:
@@ -38,15 +38,11 @@ spec:
       ports:
         - network:
             filter:
-              {{- if $.Values.network }}
-              name: {{ $.Values.network }}
-              {{- end }}
+              name: {{ $pool.network }}
           fixedIPs:
             - subnet:
                 filter:
-                  {{- if $.Values.subnet }}
-                  name: {{ $.Values.subnet }}
-                  {{- end }}
+                  name: {{ $pool.subnet | default "workers" }}
           allowedAddressPairs:
             - ipAddress: {{ $pool.ingressServerFixedIP }}
       {{- if $pool.rootVolume }}
