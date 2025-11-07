@@ -20,7 +20,6 @@ spec:
       apiServer:
         timeoutForControlPlane: 20m0s
         extraArgs:
-          cloud-provider: "external"
           audit-policy-file: "/etc/kubernetes/audit-policy.yaml"
           admission-control-config-file: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
           # encryption-provider-config: "xxxx"
@@ -43,7 +42,6 @@ spec:
             readOnly: true
       controllerManager:
         extraArgs:
-          cloud-provider: "external"
           cluster-name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
           {{- with .Values.global.controllerManager.extraArgs }}
           {{- tpl (. | toYaml) $ | nindent 10 }}
@@ -67,7 +65,6 @@ spec:
       nodeRegistration:
         name: {{`"{{ ds.meta_data.local_hostname }}"`}}
         kubeletExtraArgs:
-          cloud-provider: "external"
           provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
       # Here we specify the directory that contains the patch files
       # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
@@ -79,7 +76,6 @@ spec:
       nodeRegistration:
         name: {{`"{{ ds.meta_data.local_hostname }}"`}}
         kubeletExtraArgs:
-          cloud-provider: "external"
           provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
       # Here we specify the directory that contains the patch files
       # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
