@@ -37,7 +37,7 @@ kind: MachineDeployment
 metadata:
   name: {{ $mdName }}
   annotations:
-    {{- range $key, $value := .Values.machineDeployment.annotations }}
+    {{- range $key, $value := $pool.annotations }}
     {{ $key }}: {{ $value | quote }}
     {{- end }}
 spec:
