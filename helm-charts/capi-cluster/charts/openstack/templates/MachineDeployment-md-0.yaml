@@ -14,6 +14,10 @@ apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
   name: {{ $.Values.global.clusterName }}-{{ $name }}
+  annotations:
+    {{- range $key, $value := .Values.machineDeployment.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
 spec:
   clusterName: {{ $.Values.global.clusterName }}
   replicas: {{ $pool.replicas | default 0 }}

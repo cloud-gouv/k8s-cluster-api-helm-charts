@@ -222,7 +222,24 @@ global:
 #
 # reference to openstack helm values
 #
-openstack: {}
+openstack:
+  machineDeployment:
+    annotations:
+      # Taille maximale autorisée que le Cluster Autoscaler peut atteindre
+      cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "5"
+      # Taille minimale que le Cluster Autoscaler peut atteindre pour ce MachineDeployment
+      cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "2"
+      # Taux d’utilisation (CPU/mémoire) en dessous duquel un nœud est considéré sous-utilisé
+      cluster.x-k8s.io/autoscaling-options-scaledownutilizationthreshold: "0.5"
+      # Temps minimum durant lequel un nœud doit être sous-utilisé avant d’être considéré éligible à la suppression
+      cluster.x-k8s.io/autoscaling-options-scaledownunneededtime: "10m0s"
+      # Temps durant lequel un nœud doit rester NotReady avant d’être considéré supprimable (laisser CAPI gérer ce cas)
+      cluster.x-k8s.io/autoscaling-options-scaledownunreadytime: "60m0s"
+      # Durée maximale autorisée pour la création d’un nœud (provisioning)
+      cluster.x-k8s.io/autoscaling-options-maxnodeprovisiontime: "20m0s"
+      # Durée maximale autorisée pour le démarrage complet d’un nœud
+      cluster.x-k8s.io/autoscaling-options-maxnodestartuptime: "20m0s"
+
 #  machinehealthcheck:
 #    enabled: false
 #  sshkeyname: REPLACE_SSH_KEY_NAME_
@@ -295,6 +312,24 @@ openstack: {}
 # reference to outscale helm values
 #
 outscale:
+  machineDeployment:
+    annotations:
+      # Taille maximale autorisée que le Cluster Autoscaler peut atteindre
+      cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "5"
+      # Taille minimale que le Cluster Autoscaler peut atteindre pour ce MachineDeployment
+      cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "2"
+      # Taux d’utilisation (CPU/mémoire) en dessous duquel un nœud est considéré sous-utilisé
+      cluster.x-k8s.io/autoscaling-options-scaledownutilizationthreshold: "0.5"
+      # Temps minimum durant lequel un nœud doit être sous-utilisé avant d’être considéré éligible à la suppression
+      cluster.x-k8s.io/autoscaling-options-scaledownunneededtime: "10m0s"
+      # Temps durant lequel un nœud doit rester NotReady avant d’être considéré supprimable (laisser CAPI gérer ce cas)
+      cluster.x-k8s.io/autoscaling-options-scaledownunreadytime: "60m0s"
+      # Durée maximale autorisée pour la création d’un nœud (provisioning)
+      cluster.x-k8s.io/autoscaling-options-maxnodeprovisiontime: "20m0s"
+      # Durée maximale autorisée pour le démarrage complet d’un nœud
+      cluster.x-k8s.io/autoscaling-options-maxnodestartuptime: "20m0s"
+
+
 #  externalSecret:
 #    enabled: true
 #    secretStoreName: openbao-prod
