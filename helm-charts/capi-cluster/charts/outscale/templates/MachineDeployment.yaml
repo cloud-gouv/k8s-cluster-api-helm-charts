@@ -37,8 +37,10 @@ kind: MachineDeployment
 metadata:
   name: {{ $mdName }}
   annotations:
-    {{- range $key, $value := $pool.annotations }}
-    {{ $key }}: {{ $value | quote }}
+    {{- with $pool.annotations }}
+      {{- range $key, $value := . }}
+      {{ $key }}: {{ $value | quote }}
+      {{- end }}
     {{- end }}
 spec:
   clusterName: {{ $clusterName }}
