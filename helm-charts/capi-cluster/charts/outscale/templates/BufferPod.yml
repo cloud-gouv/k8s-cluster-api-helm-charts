@@ -39,7 +39,9 @@ metadata:
   name: low-priority
 value: -1
 globalDefault: false
+{{- end }}
 ---
+{{- if $pool.bufferPod.enabled }}
 apiVersion: v1
 kind: Pod
 metadata:
