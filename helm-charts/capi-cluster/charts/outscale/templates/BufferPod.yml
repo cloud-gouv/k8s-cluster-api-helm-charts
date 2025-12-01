@@ -32,7 +32,7 @@
 {{/* generates object  */}}
 ---
 # This is a low-priority pod used to bufferize resources to avoid delays during node upscaling.
-{{- if .$pool.bufferPod.enabled }}
+{{- if $pool.bufferPod.enabled }}
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
