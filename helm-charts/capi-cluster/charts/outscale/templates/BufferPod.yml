@@ -61,9 +61,9 @@ spec:
     command: ["sh", "-c", "while true; do :; done"]
     resources:
       requests:
-        cpu: {{ $pool.bufferPod.cpu }}
-        memory: {{ $pool.bufferPod.memory }}
+        cpu: "200m"
+        memory: "200Mi"
       limits:
-        cpu: {{ $pool.bufferPod.cpu }}
-        memory: {{ $pool.bufferPod.memory }}
+        cpu: "200m"
+        memory: "200Mi"
 {{- end }}
