@@ -1,0 +1,36 @@
+# This is a low-priority pod used to bufferize resources to avoid delays during node upscaling.
+{{- if .Values.bufferPod.enabled }}
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: low-priority
+value: -1
+globalDefault: false
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: temp-pod
+spec:
+  priorityClassName: low-priority
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: stress
+    image: alpine:3.20
+    securityContext:
+      runAsUser: 65534
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: ["ALL"]
+    command: ["sh", "-c", "while true; do :; done"]
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "800Mi"
+      limits:
+        cpu: "200m"
+        memory: "800Mi"
+{{- end }}

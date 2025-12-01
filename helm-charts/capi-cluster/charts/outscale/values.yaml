@@ -1,3 +1,6 @@
+bufferPod:
+  enabled: false
+
 machinehealthcheck:
   enabled: false
 
