@@ -37,11 +37,8 @@ kind: MachineDeployment
 metadata:
   name: {{ $mdName }}
   annotations:
-   {{- $worker := (index $.Values.workers $name) }}
-    {{- with $worker.annotations }}
-      {{- range $key, $value := . }}
-      {{ $key }}: {{ $value | quote }}
-      {{- end }}
+    {{- with $pool.annotations }}
+      {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   clusterName: {{ $clusterName }}
