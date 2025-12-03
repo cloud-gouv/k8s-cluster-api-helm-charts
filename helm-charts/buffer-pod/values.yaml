@@ -36,4 +36,4 @@ command: {}
 resources:
   requests:
     cpu: 0.5
-    memory: 100Mi
+    memory: 500Mi
