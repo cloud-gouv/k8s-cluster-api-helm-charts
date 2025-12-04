@@ -1,7 +1,3 @@
-machineDeployment:
-# Manage annotations for machineDeployment
-  annotations: {}
-
 addons:
   cni: {}
   ccm: {}
