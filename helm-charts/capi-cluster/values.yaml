@@ -222,7 +222,7 @@ global:
 #
 # reference to openstack helm values
 #
-openstack:
+openstack: {}
 #  machinehealthcheck:
 #    enabled: false
 #  sshkeyname: REPLACE_SSH_KEY_NAME_
