@@ -11,6 +11,8 @@ global:
       type: calico
       version: v3.27.3
       extraChartArgs: {}
+      extraVersions: []
+
     ccm:
       enabled: true
       #enabled: false
