@@ -11,8 +11,11 @@ global:
       type: calico
       version: v3.27.3
       extraChartArgs: {}
-      extraVersions: []
-
+      #extraVersions: []
+      #  - enabled: true
+      #    type: cilium
+      #    version: 1.15.19
+      #    extraChartArgs: {}
     ccm:
       enabled: true
       #enabled: false
