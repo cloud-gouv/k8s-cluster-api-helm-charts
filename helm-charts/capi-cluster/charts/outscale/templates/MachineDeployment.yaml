@@ -36,6 +36,10 @@ apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
   name: {{ $mdName }}
+  {{- with $pool.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   clusterName: {{ $clusterName }}
   replicas: {{ $computedReplicas }}
