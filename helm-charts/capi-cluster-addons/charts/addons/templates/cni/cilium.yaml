@@ -34,18 +34,12 @@ spec:
     hubble:
       relay:
         enabled: true
-      ui:
-        enabled: false
     ipam:
-      mode: "cluster-pool"
       operator:
         clusterPoolIPv4PodCIDRList:{{`{{range $i, $cidr := .Cluster.spec.clusterNetwork.pods.cidrBlocks }}
           - "{{ $cidr }}"{{end}}`}}
-        clusterPoolIPv4MaskSize: 24
     extraArgs:
       - "--mtu=1350"
-    gatewayAPI:
-      enabled: false
     # lb
     l2announcements:
       enabled: true
@@ -90,22 +84,14 @@ spec:
     hubble:
       relay:
         enabled: true
-      ui:
-        enabled: false
     ipam:
-      mode: "cluster-pool"
       operator:
         clusterPoolIPv4PodCIDRList:{{`{{range $i, $cidr := .Cluster.spec.clusterNetwork.pods.cidrBlocks }}
           - "{{ $cidr }}"{{end}}`}}
-        clusterPoolIPv4MaskSize: 24
     extraArgs:
       - "--mtu=1350"
-    gatewayAPI:
-      enabled: false
     # lb
     l2announcements:
-      enabled: true
-    externalIPs:
       enabled: true
     {{- with .extraChartArgs -}}
     {{- toYaml . | nindent 4 }}
