@@ -15,7 +15,9 @@ spec:
     matchLabels:
       cni.enabled: "true"
       cni.type: {{ .Values.global.addons.cni.type }}
-      cni.version: {{ .Values.global.addons.cni.version }}
+    matchExpressions:
+    - key: cni.version
+      operator: Exists
   # Target all workload clusters.
   #  matchLabels: {}
   releaseName: cilium
