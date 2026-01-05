@@ -6,10 +6,9 @@ global:
   # helm addons
   addons:
     cni:
-      enabled: true
-      #enabled: false
-      type: calico
-      version: v3.27.3
+      enabled: false
+      #type: calico
+      #version: v3.27.3
       extraChartArgs: {}
       #extraVersions: []
       #  - enabled: true
@@ -17,10 +16,9 @@ global:
       #    version: 1.15.19
       #    extraChartArgs: {}
     ccm:
-      enabled: true
-      #enabled: false
-      type: openstack
-      version: 2.30.1
+      enabled: false
+      #type: openstack
+      #version: 2.30.1
 #      type: outscale
 #      version: 0.3.0
     csi:
