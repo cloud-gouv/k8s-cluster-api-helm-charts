@@ -21,15 +21,19 @@ global:
       #enabled: false
       type: openstack
       version: 2.30.1
-#      type: outscale
-#      version: 0.3.0
+      #type: outscale
+      #version: 0.3.0
     csi:
-      #enabled: true
-      enabled: false
+      enabled: true
+      #enabled: false
       type: cinder-csi
       version: 2.30.0
-#      type: osc-bsu-csi
-#      version: 1.5.0
+      #type: osc-bsu-csi
+      #version: 1.5.0
+      #extraVersions: []
+      #  - enabled: true
+      #    type: osc-bsu-csi
+      #    version: 2.0.0
     metallb:
       #enabled: true
       enabled: false
