@@ -23,7 +23,7 @@ spec:
       csi.type: {{ .Values.global.addons.csi.type }}
       csi.version: {{ .Values.global.addons.csi.version }}
   releaseName: outscale-csi
-  repoURL: https://raw.githubusercontent.com/cloud-gouv/k8s-cluster-api-helm-charts/feat/bump-osc-bsu-csi-2.0.0/helm-charts/repo/
+  repoURL: https://raw.githubusercontent.com/cloud-gouv/k8s-cluster-api-helm-charts/main/helm-charts/repo/
   chartName: osc-bsu-csi-driver
   version: {{ .Values.global.addons.csi.version }}
   namespace: kube-system
@@ -94,7 +94,7 @@ spec:
       csi.type: {{ .type }}
       csi.version: {{ .version }}
   releaseName: outscale-csi
-  repoURL: https://raw.githubusercontent.com/cloud-gouv/k8s-cluster-api-helm-charts/feat/bump-osc-bsu-csi-2.0.0/helm-charts/repo/
+  repoURL: https://raw.githubusercontent.com/cloud-gouv/k8s-cluster-api-helm-charts/main/helm-charts/repo/
   chartName: osc-bsu-csi-driver
   version: {{ .version }}
   namespace: kube-system
