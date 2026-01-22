@@ -49,12 +49,12 @@ spec:
     {{- end }}
     loadBalancer:
       healthCheck:
-        checkinterval: 30
-        healthythreshold: 5
+        checkinterval: 5
+        healthythreshold: 2
         port: 6443
         protocol: TCP
-        timeout: 30
-        unhealthythreshold: 5
+        timeout: 5
+        unhealthythreshold: 3
       listener:
         backendport: 6443
         backendprotocol: TCP
