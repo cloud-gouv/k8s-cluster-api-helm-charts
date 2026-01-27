@@ -109,5 +109,18 @@ spec:
             {{- if $.Values.global.no_proxy }}
             Environment="NO_PROXY=.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,192.168.0.0/16,{{ $.Values.global.pods.cidrBlocks }},{{ $.Values.global.services.cidrBlocks }}"
             {{- end }}
+        - path: /etc/pre-kubeadm-commands/10-chrony-configure.sh
+          owner: root:root
+          permissions: "0700"
+          content: |
+            #!/bin/bash
+            #
+            # pre-kubadm-scripts : 10-chrony-configure.sh
+            #
+            # TODO:
+            # - enable / disable ntp
+            # - check if /dev/ptp0 is present
+            echo "refclock PHC /dev/ptp0 poll 2" > /etc/chrony/chrony.conf
+            systemctl restart chrony
 ---
 {{- end }}

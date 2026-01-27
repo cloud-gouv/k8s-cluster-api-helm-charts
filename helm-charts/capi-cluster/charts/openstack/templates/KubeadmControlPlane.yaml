@@ -124,6 +124,16 @@ spec:
           # apply containerd config before kubeadm
           systemctl daemon-reload
           systemctl restart containerd
+      - path: /etc/pre-kubeadm-commands/10-chrony-configure.sh
+        owner: root:root
+        permissions: "0700"
+        content: |
+          #!/bin/bash
+          #
+          # pre-kubadm-scripts : 10-chrony-configure.sh
+          #
+          echo "refclock PHC /dev/ptp0 poll 2" > /etc/chrony/chrony.conf
+          systemctl restart chrony
       {{ if and .Values.global.addons.kubevip.enabled ( eq .Values.global.addons.kubevip.type "kube-vip" ) -}}
       - path: /etc/kubernetes/manifests/kube-vip.yaml
         owner: "root:root"
