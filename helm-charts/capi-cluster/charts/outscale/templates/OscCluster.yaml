@@ -5,19 +5,19 @@
 {{- $net_range := printf "10.%s.0.0/16" ( toString .Values.networkId ) }}
 {{- /* loadbalancer ranges */ -}}
 {{- $loadbalancer_ranges := list (printf "10.%s.2.0/24" (toString .Values.networkId)) -}}
-{{- if .Values.multiAZ }}
+{{- if .Values.multiaz }}
   {{- $loadbalancer_ranges = append $loadbalancer_ranges (printf "10.%s.5.0/24" (toString .Values.networkId)) -}}
   {{- $loadbalancer_ranges = append $loadbalancer_ranges (printf "10.%s.8.0/24" (toString .Values.networkId)) -}}
 {{- end }}
 {{- /* worker ranges */ -}}
 {{- $worker_ranges := list (printf "10.%s.3.0/24" (toString .Values.networkId)) -}}
-{{- if .Values.multiAZ }}
+{{- if .Values.multiaz }}
   {{- $worker_ranges = append $worker_ranges (printf "10.%s.6.0/24" (toString .Values.networkId)) -}}
   {{- $worker_ranges = append $worker_ranges (printf "10.%s.9.0/24" (toString .Values.networkId)) -}}
 {{- end }}
 {{- /* controlplane ranges */ -}}
 {{- $controlplane_ranges := list (printf "10.%s.4.0/24" (toString .Values.networkId)) -}}
-{{- if .Values.multiAZ }}
+{{- if .Values.multiaz }}
   {{- $controlplane_ranges = append $controlplane_ranges (printf "10.%s.7.0/24" (toString .Values.networkId)) -}}
   {{- $controlplane_ranges = append $controlplane_ranges (printf "10.%s.10.0/24" (toString .Values.networkId)) -}}
 {{- end }}
