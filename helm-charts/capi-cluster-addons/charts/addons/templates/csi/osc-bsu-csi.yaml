@@ -127,7 +127,7 @@ spec:
 
     driver:
       enableVolumeSnapshot: true
-      enableVolumeSnapshotExports: true
+      enableVolumeSnapshotExports: false
 
     cloud:
       credentials:
