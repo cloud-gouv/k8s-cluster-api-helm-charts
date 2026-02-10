@@ -1,8 +1,10 @@
 {{ if and .Values.global.addons.csi.enabled  ( eq .Values.global.addons.csi.type "cinder-csi" ) -}}
+{{- range $version := .Values.global.addons.csi.versions }}
+---
 apiVersion: addons.cluster.x-k8s.io/v1alpha1
 kind: HelmChartProxy
 metadata:
-  name: openstack-cinder-csi
+  name: openstack-cinder-csi-{{ $version }}
 spec:
   options:
     waitForJobs: true
@@ -14,14 +16,14 @@ spec:
   # Target workload clusters with specific labels.
     matchLabels:
       csi.enabled: "true"
-      csi.type: {{ .Values.global.addons.csi.type }}
-      csi.version: {{ .Values.global.addons.csi.version }}
+      csi.type: {{ $.Values.global.addons.csi.type }}
+      csi.version: {{ $version }}
   # Target all workload clusters.
   #  matchLabels: {}
   releaseName: cinder-csi
   repoURL: https://kubernetes.github.io/cloud-provider-openstack
   chartName: openstack-cinder-csi
-  version: {{ .Values.global.addons.csi.version }}
+  version: {{ $version }}
   namespace: kube-system
   valuesTemplate: |
     secret:
@@ -33,111 +35,112 @@ spec:
       provisioner:
         topology: "false"
         extraEnv:
-          {{- if .Values.global.http_proxy }}
+          {{- if $.Values.global.http_proxy }}
           - name: http_proxy
-            value: {{ .Values.global.http_proxy | quote }}
+            value: {{ $.Values.global.http_proxy | quote }}
           {{- end }}
-          {{- if .Values.global.https_proxy }}
+          {{- if $.Values.global.https_proxy }}
           - name: https_proxy
-            value: {{ .Values.global.https_proxy | quote }}
+            value: {{ $.Values.global.https_proxy | quote }}
           {{- end }}
-          {{- if .Values.global.no_proxy }}
+          {{- if $.Values.global.no_proxy }}
           # exclude from proxy pods.cidrBlocks, services.cidrBlocks
           - name: no_proxy
-            value: "{{ .Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
+            value: "{{ $.Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
           {{- end }}
       attacher:
         extraEnv:
-          {{- if .Values.global.http_proxy }}
+          {{- if $.Values.global.http_proxy }}
           - name: http_proxy
-            value: {{ .Values.global.http_proxy | quote }}
+            value: {{ $.Values.global.http_proxy | quote }}
           {{- end }}
-          {{- if .Values.global.https_proxy }}
+          {{- if $.Values.global.https_proxy }}
           - name: https_proxy
-            value: {{ .Values.global.https_proxy | quote }}
+            value: {{ $.Values.global.https_proxy | quote }}
           {{- end }}
-          {{- if .Values.global.no_proxy }}
+          {{- if $.Values.global.no_proxy }}
           # exclude from proxy pods.cidrBlocks, services.cidrBlocks
           - name: no_proxy
-            value: "{{ .Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
+            value: "{{ $.Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
           {{- end }}
       snapshotter:
         extraEnv:
-          {{- if .Values.global.http_proxy }}
+          {{- if $.Values.global.http_proxy }}
           - name: http_proxy
-            value: {{ .Values.global.http_proxy | quote }}
+            value: {{ $.Values.global.http_proxy | quote }}
           {{- end }}
-          {{- if .Values.global.https_proxy }}
+          {{- if $.Values.global.https_proxy }}
           - name: https_proxy
-            value: {{ .Values.global.https_proxy | quote }}
+            value: {{ $.Values.global.https_proxy | quote }}
           {{- end }}
-          {{- if .Values.global.no_proxy }}
+          {{- if $.Values.global.no_proxy }}
           # exclude from proxy pods.cidrBlocks, services.cidrBlocks
           - name: no_proxy
-            value: "{{ .Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
+            value: "{{ $.Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
           {{- end }}
       resizer:
         extraEnv:
-          {{- if .Values.global.http_proxy }}
+          {{- if $.Values.global.http_proxy }}
           - name: http_proxy
-            value: {{ .Values.global.http_proxy | quote }}
+            value: {{ $.Values.global.http_proxy | quote }}
           {{- end }}
-          {{- if .Values.global.https_proxy }}
+          {{- if $.Values.global.https_proxy }}
           - name: https_proxy
-            value: {{ .Values.global.https_proxy | quote }}
+            value: {{ $.Values.global.https_proxy | quote }}
           {{- end }}
-          {{- if .Values.global.no_proxy }}
+          {{- if $.Values.global.no_proxy }}
           # exclude from proxy pods.cidrBlocks, services.cidrBlocks
           - name: no_proxy
-            value: "{{ .Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
+            value: "{{ $.Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
           {{- end }}
       livenessprobe:
         extraEnv:
-          {{- if .Values.global.http_proxy }}
+          {{- if $.Values.global.http_proxy }}
           - name: http_proxy
-            value: {{ .Values.global.http_proxy | quote }}
+            value: {{ $.Values.global.http_proxy | quote }}
           {{- end }}
-          {{- if .Values.global.https_proxy }}
+          {{- if $.Values.global.https_proxy }}
           - name: https_proxy
-            value: {{ .Values.global.https_proxy | quote }}
+            value: {{ $.Values.global.https_proxy | quote }}
           {{- end }}
-          {{- if .Values.global.no_proxy }}
+          {{- if $.Values.global.no_proxy }}
           # exclude from proxy pods.cidrBlocks, services.cidrBlocks
           - name: no_proxy
-            value: "{{ .Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
+            value: "{{ $.Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
           {{- end }}
       nodeDriverRegistrar:
         extraEnv:
-          {{- if .Values.global.http_proxy }}
+          {{- if $.Values.global.http_proxy }}
           - name: http_proxy
-            value: {{ .Values.global.http_proxy | quote }}
+            value: {{ $.Values.global.http_proxy | quote }}
           {{- end }}
-          {{- if .Values.global.https_proxy }}
+          {{- if $.Values.global.https_proxy }}
           - name: https_proxy
-            value: {{ .Values.global.https_proxy | quote }}
+            value: {{ $.Values.global.https_proxy | quote }}
           {{- end }}
-          {{- if .Values.global.no_proxy }}
+          {{- if $.Values.global.no_proxy }}
           # exclude from proxy pods.cidrBlocks, services.cidrBlocks
           - name: no_proxy
-            value: "{{ .Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
+            value: "{{ $.Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
           {{- end }}
       plugin:
         extraEnv:
-          {{- if .Values.global.http_proxy }}
+          {{- if $.Values.global.http_proxy }}
           - name: http_proxy
-            value: {{ .Values.global.http_proxy | quote }}
+            value: {{ $.Values.global.http_proxy | quote }}
           {{- end }}
-          {{- if .Values.global.https_proxy }}
+          {{- if $.Values.global.https_proxy }}
           - name: https_proxy
-            value: {{ .Values.global.https_proxy | quote }}
+            value: {{ $.Values.global.https_proxy | quote }}
           {{- end }}
-          {{- if .Values.global.no_proxy }}
+          {{- if $.Values.global.no_proxy }}
           # exclude from proxy pods.cidrBlocks, services.cidrBlocks
           - name: no_proxy
-            value: "{{ .Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
+            value: "{{ $.Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
           {{- end }}
 
     storageClass:
       enabled: true
   # TODO: pay attention to newlines at the end that get inserted by templates
+{{- end }}
 {{ end -}}
