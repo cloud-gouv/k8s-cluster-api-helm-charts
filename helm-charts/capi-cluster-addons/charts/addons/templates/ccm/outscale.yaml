@@ -1,8 +1,9 @@
 {{ if and .Values.global.addons.ccm.enabled  ( eq .Values.global.addons.ccm.type "outscale" ) -}}
+{{- range $version := .Values.global.addons.ccm.versions }}
 apiVersion: addons.cluster.x-k8s.io/v1alpha1
 kind: HelmChartProxy
 metadata:
-  name: cloud-provider-outscale-chart
+  name: cloud-provider-outscale-chart-{{ $version }}
 spec:
   options:
     waitForJobs: true
@@ -14,8 +15,8 @@ spec:
   # Target workload clusters with specific labels.
     matchLabels:
       ccm.enabled: "true"
-      ccm.type: {{ .Values.global.addons.ccm.type }}
-      ccm.version: {{ .Values.global.addons.ccm.version }}
+      ccm.type: {{ $.Values.global.addons.ccm.type }}
+      ccm.version: {{ $version }}
   # Target all workload clusters.
   #  matchLabels: {}
   releaseName: outscale-ccm
@@ -23,7 +24,7 @@ spec:
   repoURL: https://raw.githubusercontent.com/cloud-gouv/k8s-cluster-api-helm-charts/main/helm-charts/repo/
   # repoURL: oci://registry-1.docker.io/outscalehelm/
   chartName: osc-cloud-controller-manager
-  version: {{ .Values.global.addons.ccm.version }}
+  version: {{ $version }}
   namespace: kube-system
   # TODO: helm registry login
   #  credentials:
@@ -33,19 +34,20 @@ spec:
   #      namespace: caaph-system
   valuesTemplate: |
     # https://hub.docker.com/r/outscale/cloud-provider-osc/tags
-    {{- with .Values.global.addons.ccm.image }}
+    {{- with $.Values.global.addons.ccm.image }}
     image: {{- toYaml . | nindent 6 }}
     {{- end }}
-    {{ if .Values.dockerConfig.enabled -}}
+    {{ if $.Values.dockerConfig.enabled -}}
     imagePullSecrets:
       - name: regcred
     {{ end -}}
     oscSecretName: osc-secret
-    {{- if .Values.global.https_proxy }}
-    httpsProxy: {{ .Values.global.https_proxy | quote }}
+    {{- if $.Values.global.https_proxy }}
+    httpsProxy: {{ $.Values.global.https_proxy | quote }}
     {{- end }}
-    {{- if .Values.global.no_proxy }}
-    noProxy: "{{ .Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
+    {{- if $.Values.global.no_proxy }}
+    noProxy: "{{ $.Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
     {{- end }}
   # TODO: pay attention to newlines at the end that get inserted by templates
+{{- end }}
 {{ end -}}
