@@ -129,6 +129,39 @@ spec:
           {{- tpl (. | toYaml) $ | nindent 10 }}
           {{- end }}
 
+      - path: /etc/kubernetes/patches/coredns-anti-affinity.yaml
+        owner: root:root
+        permissions: "0644"
+        content: |
+          spec:
+            template:
+              spec:
+                affinity:
+                  podAntiAffinity:
+                    $patch: replace
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                    - topologyKey: kubernetes.io/hostname
+                      labelSelector:
+                        matchExpressions:
+                        - key: k8s-app
+                          operator: In
+                          values:
+                          - kube-dns
+
+      - path: /etc/post-kubeadm-commands/20-coredns-anti-affinity.sh
+        owner: root:root
+        permissions: "0755"
+        content: |
+          #!/bin/bash
+          set -euo pipefail
+
+          /usr/bin/kubectl --kubeconfig /etc/kubernetes/admin.conf \
+            -n kube-system wait deploy/coredns --for=condition=available --timeout=5m
+
+          /usr/bin/kubectl --kubeconfig /etc/kubernetes/admin.conf \
+            -n kube-system patch deploy coredns --type=strategic \
+            --patch-file /etc/kubernetes/patches/coredns-anti-affinity.yaml
+
       - path: /etc/pre-kubeadm-commands/00-wait_endpoint.sh
         owner: root:root
         permissions: "0755"
