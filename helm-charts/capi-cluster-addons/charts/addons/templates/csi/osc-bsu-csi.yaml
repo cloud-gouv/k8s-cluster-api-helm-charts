@@ -1,15 +1,10 @@
 {{ if and .Values.global.addons.csi.enabled (eq .Values.global.addons.csi.type "osc-bsu-csi") -}}
-{{/*
-  Creation of the 'default' HelmChartProxy 
-  TODO: at some point we will want to erradicate this 'default' chart and only use
-        'extraVersions' (that will be renamed to 'versions') to document which
-        versions are to be made available on a management cluster.
-*/}}
+{{- range $version := .Values.global.addons.csi.versions }}
 ---
 apiVersion: addons.cluster.x-k8s.io/v1alpha1
 kind: HelmChartProxy
 metadata:
-  name: osc-bsu-csi-chart
+  name: osc-bsu-csi-chart-{{ $version }}
 spec:
   options:
     waitForJobs: true
@@ -20,15 +15,15 @@ spec:
   clusterSelector:
     matchLabels:
       csi.enabled: "true"
-      csi.type: {{ .Values.global.addons.csi.type }}
-      csi.version: {{ .Values.global.addons.csi.version }}
+      csi.type: {{ $.Values.global.addons.csi.type }}
+      csi.version: {{ $version }}
   releaseName: outscale-csi
   repoURL: https://raw.githubusercontent.com/cloud-gouv/k8s-cluster-api-helm-charts/main/helm-charts/repo/
   chartName: osc-bsu-csi-driver
-  version: {{ .Values.global.addons.csi.version }}
+  version: {{ $version }}
   namespace: kube-system
   {{/* the format of the Values changes with version 2.0.0 of the chart */}}
-  {{- if semverCompare "<2.0.0" .Values.global.addons.csi.version }}
+  {{- if semverCompare "<2.0.0" $version }}
   valuesTemplate: |
     {{ if $.Values.dockerConfig.enabled -}}
     imagePullSecrets:
@@ -69,77 +64,5 @@ spec:
     noProxy: "{{ $.Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
     {{- end }}
   {{- end }}
-
-{{- range .Values.global.addons.csi.extraVersions }}
-{{- if and .enabled (eq .type "osc-bsu-csi")}}
-{{/* 
-  Creation of additional HelmChartProxies for each extra version
-  to be made available on the management cluster.
-*/}}
----
-apiVersion: addons.cluster.x-k8s.io/v1alpha1
-kind: HelmChartProxy
-metadata:
-  name: osc-bsu-csi-chart-{{ .version }}
-spec:
-  options:
-    waitForJobs: true
-    wait: true
-    timeout: 30m0s
-    install:
-      createNamespace: true
-  clusterSelector:
-    matchLabels:
-      csi.enabled: "true"
-      csi.type: {{ .type }}
-      csi.version: {{ .version }}
-  releaseName: outscale-csi
-  repoURL: https://raw.githubusercontent.com/cloud-gouv/k8s-cluster-api-helm-charts/main/helm-charts/repo/
-  chartName: osc-bsu-csi-driver
-  version: {{ .version }}
-  namespace: kube-system
-  {{/* the format of the Values changes with version 2.0.0 of the chart */}}
-  {{- if semverCompare "<2.0.0" .version }}
-  valuesTemplate: |
-    {{ if $.Values.dockerConfig.enabled -}}
-    imagePullSecrets:
-      - name: regcred
-    {{ end -}}
-
-    enableVolumeResizing: true
-    enableVolumeSnapshot: true
-
-    credentials:
-      secretName: osc-bsu-csi
-
-    {{- if $.Values.global.https_proxy }}
-    httpsProxy: {{ $.Values.global.https_proxy | quote }}
-    {{- end }}
-    {{- if $.Values.global.no_proxy }}
-    noProxy: "{{ $.Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
-    {{- end }}
-  {{- else }} {{/* format for versions >=2.0.0 */}}
-  valuesTemplate: |
-    {{ if $.Values.dockerConfig.enabled -}}
-    imagePullSecrets:
-      - name: regcred
-    {{ end -}}
-
-    driver:
-      enableVolumeSnapshot: true
-      enableVolumeSnapshotExports: false
-
-    cloud:
-      credentials:
-        secretName: osc-bsu-csi
-
-    {{- if $.Values.global.https_proxy }}
-    httpsProxy: {{ $.Values.global.https_proxy | quote }}
-    {{- end }}
-    {{- if $.Values.global.no_proxy }}
-    noProxy: "{{ $.Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
-    {{- end }}
-  {{- end }}
-{{- end }}
 {{- end }}
 {{ end -}}
