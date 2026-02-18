@@ -26,6 +26,10 @@ kind: OscCluster
 metadata:
   name: {{ .Values.global.clusterName }}
 spec:
+  {{- with .Values.credsFromSecret }}
+  credentials:
+    fromSecret: {{ . }}
+  {{- end }}
   network:
     bastion:
       enable: {{ .Values.bastion.enable | default "false" }}

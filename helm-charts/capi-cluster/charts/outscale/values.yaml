@@ -101,3 +101,12 @@ externalSecret:
 #    ccm: where/is/osc_ccm_credentials
 #    dockerconfig: where/is/dockerconfig
 #    eso: where/is/my_cluster_name/eso_secret
+
+# If you provide a secret, the cluster will be deployed in the corresponding Outscale account(tenant)
+# Secret format should be:
+# data:
+#   access_key: <your-access-key>
+#   secret_key: <your-secret-access-key>
+#   region: <your-region>
+# credsFromSecret: name-of-secret-in-same-namespace-as-OscCluster
+
