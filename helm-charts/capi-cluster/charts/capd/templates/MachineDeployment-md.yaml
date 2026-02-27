@@ -1,0 +1,30 @@
+{{- $values := .Values }}
+{{- range $name, $pool := .Values.workers }}
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: {{ $.Values.global.clusterName }}-{{ $name }}
+spec:
+  clusterName: {{ $.Values.global.clusterName }}
+  replicas: {{ $pool.replicas | default 0 }}
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: {{ $.Values.global.clusterName }}
+  template:
+    spec:
+      version: {{ $pool.version }}
+      clusterName: {{ $.Values.global.clusterName }}
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: {{ $.Values.global.clusterName }}-{{ $name }}
+          namespace: default
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: DockerMachineTemplate
+        name: {{ $.Values.global.clusterName }}-{{ $name }}-{{ $pool.version }}
+        namespace: default
+---
+{{- end }}
