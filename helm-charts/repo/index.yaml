@@ -3,7 +3,7 @@ entries:
   capi-cluster:
   - apiVersion: v2
     appVersion: "1.0"
-    created: "2026-01-20T15:13:31.897320448+01:00"
+    created: "2026-02-10T20:47:12.041024472+01:00"
     dependencies:
     - condition: provider.openstack
       name: openstack
@@ -26,7 +26,7 @@ entries:
     version: 1.3.0
   - apiVersion: v2
     appVersion: "1.0"
-    created: "2026-01-20T15:13:31.89603581+01:00"
+    created: "2026-02-10T20:47:12.03940113+01:00"
     dependencies:
     - condition: provider.openstack
       name: openstack
@@ -49,7 +49,7 @@ entries:
     version: 1.1.0
   - apiVersion: v2
     appVersion: "1.0"
-    created: "2026-01-20T15:13:31.895075726+01:00"
+    created: "2026-02-10T20:47:12.038275447+01:00"
     dependencies:
     - condition: provider.openstack
       name: openstack
@@ -68,7 +68,20 @@ entries:
     version: 1.0.0
   capi-cluster-addons:
   - apiVersion: v2
-    created: "2026-01-20T15:13:31.897599956+01:00"
+    created: "2026-02-10T20:47:12.041686221+01:00"
+    dependencies:
+    - condition: addons.enabled
+      name: addons
+      repository: file://charts/addons
+      version: 1.1.0
+    description: 'cluster api helm addons. '
+    digest: f1f6bfe30455011c80fc5ea6315a047b2d83637f0d0f13fcd01ebdfaf5ee8c91
+    name: capi-cluster-addons
+    urls:
+    - capi-cluster-addons-1.1.0.tgz
+    version: 1.1.0
+  - apiVersion: v2
+    created: "2026-02-10T20:47:12.041422599+01:00"
     dependencies:
     - condition: addons.enabled
       name: addons
@@ -83,7 +96,7 @@ entries:
   capi-clusterclasses:
   - apiVersion: v2
     appVersion: "1.0"
-    created: "2026-01-20T15:13:31.898279347+01:00"
+    created: "2026-02-10T20:47:12.042857944+01:00"
     dependencies:
     - condition: provider.outscale
       name: outscale
@@ -96,43 +109,10 @@ entries:
     urls:
     - capi-clusterclasses-1.0.0.tgz
     version: 1.0.0
-  local-path-provisioner:
-  - apiVersion: v1
-    appVersion: v0.0.31
-    created: "2026-01-20T15:13:31.899020629+01:00"
-    description: Use HostPath for persistent local storage with Kubernetes
-    digest: 58068fb056177e6505e7a72a9e86d080fa489a71d1b428000f4b214575c3e8d2
-    home: https://github.com/rancher/local-path-provisioner
-    keywords:
-    - storage
-    - hostpath
-    kubeVersion: '>=1.12.0-r0'
-    name: local-path-provisioner
-    sources:
-    - https://github.com/rancher/local-path-provisioner.git
-    urls:
-    - local-path-provisioner-0.0.31.tgz
-    version: 0.0.31
-  - apiVersion: v1
-    appVersion: v0.0.30
-    created: "2026-01-20T15:13:31.898650446+01:00"
-    description: Use HostPath for persistent local storage with Kubernetes
-    digest: 9593ee137899c5138e91d41a26f8e9ce04e6212e1c620f31733ab84cf9a9bcbf
-    home: https://github.com/rancher/local-path-provisioner
-    keywords:
-    - storage
-    - hostpath
-    kubeVersion: '>=1.12.0-r0'
-    name: local-path-provisioner
-    sources:
-    - https://github.com/rancher/local-path-provisioner.git
-    urls:
-    - local-path-provisioner-0.0.30.tgz
-    version: 0.0.30
   osc-bsu-csi-driver:
   - apiVersion: v1
     appVersion: v1.9.0
-    created: "2026-01-20T15:13:31.903303395+01:00"
+    created: "2026-02-10T20:47:12.049220883+01:00"
     description: A Helm chart for the Outscale BSU CSI Driver
     digest: c3c6a3b5b7275785b2f57d130c24187bf6579460d1ec006b77a0c2cbaba66aab
     home: https://github.com/outscale/osc-bsu-csi-driver
@@ -152,7 +132,7 @@ entries:
     version: 2.0.0
   - apiVersion: v1
     appVersion: v1.8.0
-    created: "2026-01-20T15:13:31.900375142+01:00"
+    created: "2026-02-10T20:47:12.044019135+01:00"
     description: A Helm chart for the Outscale BSU CSI Driver
     digest: fa205bd66f0ffd91141b3224a3678e174dabcdb2336482b2f4d418545852a921
     home: https://github.com/outscale/osc-bsu-csi-driver
@@ -172,7 +152,7 @@ entries:
     version: 1.10.0
   - apiVersion: v1
     appVersion: v1.7.0
-    created: "2026-01-20T15:13:31.90271889+01:00"
+    created: "2026-02-10T20:47:12.047887688+01:00"
     description: A Helm chart for the Outscale BSU CSI Driver
     digest: 45ba7bd777b18b39a9635da3dfc87cdbf46e557fff7bac8b59c80562ce1ee063
     home: https://github.com/outscale/osc-bsu-csi-driver
@@ -192,7 +172,7 @@ entries:
     version: 1.9.0
   - apiVersion: v1
     appVersion: v1.6.0
-    created: "2026-01-20T15:13:31.902076867+01:00"
+    created: "2026-02-10T20:47:12.046338281+01:00"
     description: A Helm chart for Outscale BSU CSI Driver
     digest: bb8142c16eb6ce5de3ccc6e3a5cb3840d3df5d649f380f4846ca80b2c8f56689
     home: https://github.com/outscale/osc-bsu-csi-driver
@@ -212,7 +192,7 @@ entries:
     version: 1.8.0
   - apiVersion: v1
     appVersion: v1.5.0
-    created: "2026-01-20T15:13:31.901492663+01:00"
+    created: "2026-02-10T20:47:12.045440339+01:00"
     description: A Helm chart for Outscale BSU CSI Driver
     digest: 10a2ecb582a4235619d16109080a5644ffe12ea557c998aa911e83c38ed4f52a
     home: https://github.com/outscale/osc-bsu-csi-driver
@@ -232,7 +212,7 @@ entries:
     version: 1.7.0
   - apiVersion: v1
     appVersion: v1.2.4
-    created: "2026-01-20T15:13:31.900958203+01:00"
+    created: "2026-02-10T20:47:12.044564867+01:00"
     description: A Helm chart for Outscale BSU CSI Driver
     digest: c6d820f1c82b370c946a5078fec234265151b9a7811e62b76ed3c35add326e62
     home: https://github.com/outscale/osc-bsu-csi-driver
@@ -253,7 +233,7 @@ entries:
   osc-cloud-controller-manager:
   - apiVersion: v1
     appVersion: 1.31.0/1.32.0/1.33.0
-    created: "2026-01-20T15:13:31.906287647+01:00"
+    created: "2026-02-10T20:47:12.055663458+01:00"
     description: A Helm chart for OSC CCM cloud provider
     digest: b74c456a58cd0405e70c1fefaa2c354871c086b0ca0365b694e3f1e76775337e
     home: https://github.com/outscale/cloud-provider-osc/
@@ -274,7 +254,7 @@ entries:
     version: 0.7.0
   - apiVersion: v1
     appVersion: 1.0.1
-    created: "2026-01-20T15:13:31.905951608+01:00"
+    created: "2026-02-10T20:47:12.054706911+01:00"
     description: A Helm chart for OSC CCM cloud provider
     digest: ff0e12b03825e201b6898304b0bc8653ed8260b8ffedc4dcdb23f28a66c071da
     home: https://github.com/outscale/cloud-provider-osc/
@@ -295,7 +275,7 @@ entries:
     version: 0.6.1
   - apiVersion: v1
     appVersion: 1.0.0
-    created: "2026-01-20T15:13:31.905572937+01:00"
+    created: "2026-02-10T20:47:12.053828176+01:00"
     description: A Helm chart for OSC CCM cloud provider
     digest: d98e8a4557a2964a890ea8d7fcfdd258ca7b6525e0fde3fea9ba1d10fa3b2bfe
     home: https://github.com/outscale/cloud-provider-osc/
@@ -316,7 +296,7 @@ entries:
     version: 0.6.0
   - apiVersion: v1
     appVersion: 0.2.8
-    created: "2026-01-20T15:13:31.905163532+01:00"
+    created: "2026-02-10T20:47:12.053055157+01:00"
     description: A Helm chart for OSC CCM cloud provider
     digest: 0df086ac9e5be60d3980a90c793437236aaae2044f4ee787e939f435233b3daf
     home: https://github.com/outscale/cloud-provider-osc/
@@ -337,7 +317,7 @@ entries:
     version: 0.5.0
   - apiVersion: v1
     appVersion: 0.2.8
-    created: "2026-01-20T15:13:31.90437421+01:00"
+    created: "2026-02-10T20:47:12.052332484+01:00"
     description: A Helm chart for OSC CCM cloud provider
     digest: ef7c802906f1b893b8f95fe33a5c74b8c4d9aad1c8cfb23966fee20e8c95c3ec
     home: https://github.com/outscale/cloud-provider-osc/
@@ -358,7 +338,7 @@ entries:
     version: 0.4.0
   - apiVersion: v1
     appVersion: 0.2.7
-    created: "2026-01-20T15:13:31.904031399+01:00"
+    created: "2026-02-10T20:47:12.051630881+01:00"
     description: A Helm chart for OSC CCM cloud provider
     digest: d55eca31d0eea523fe740b9845a40ac802c56407f3fe08ca51d9edb02d8e0f9c
     home: https://github.com/outscale/cloud-provider-osc/
@@ -379,7 +359,7 @@ entries:
     version: 0.3.2
   - apiVersion: v1
     appVersion: 0.2.6
-    created: "2026-01-20T15:13:31.903786886+01:00"
+    created: "2026-02-10T20:47:12.050914885+01:00"
     description: A Helm chart for OSC CCM cloud provider
     digest: 3ad8220b265e943203e293664ead9e129440c0a2e1bfa89eb35541487916bee9
     home: https://github.com/outscale-dev/cloud-provider-osc/
@@ -400,7 +380,7 @@ entries:
     version: 0.3.1
   - apiVersion: v1
     appVersion: 0.2.4
-    created: "2026-01-20T15:13:31.903543729+01:00"
+    created: "2026-02-10T20:47:12.050125585+01:00"
     description: A Helm chart for OSC CCM cloud provider
     digest: cde737013d2de37c074a803341a23b793eeeef052d1d88143b93930ace2ffda2
     home: https://github.com/outscale-dev/cloud-provider-osc/
@@ -419,4 +399,4 @@ entries:
     urls:
     - osc-cloud-controller-manager-0.3.0.tgz
     version: 0.3.0
-generated: "2026-01-20T15:13:31.894188191+01:00"
+generated: "2026-02-10T20:47:12.036095931+01:00"

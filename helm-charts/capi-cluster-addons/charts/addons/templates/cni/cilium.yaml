@@ -1,8 +1,9 @@
 {{ if and .Values.global.addons.cni.enabled ( eq .Values.global.addons.cni.type "cilium" ) -}}
+{{- range $version := .Values.global.addons.cni.versions }}
 apiVersion: addons.cluster.x-k8s.io/v1alpha1
 kind: HelmChartProxy
 metadata:
-  name: cni-cilium
+  name: cni-cilium-{{ $version }}
 spec:
   options:
     waitForJobs: true
@@ -14,72 +15,14 @@ spec:
   # Target workload clusters with specific labels.
     matchLabels:
       cni.enabled: "true"
-      cni.type: {{ .Values.global.addons.cni.type }}
-      cni.version: {{ .Values.global.addons.cni.version }}
+      cni.type: {{ $.Values.global.addons.cni.type }}
+      cni.version: {{ $version }}
   # Target all workload clusters.
   #  matchLabels: {}
   releaseName: cilium
   repoURL: https://helm.cilium.io/
   chartName: cilium
-  version: {{ .Values.global.addons.cni.version }}
-  namespace: kube-system
-  valuesTemplate: |
-    {{- if .Values.dockerConfig.enabled }}
-    imagePullSecrets:
-     - name: regcred
-    {{- end }}
-    kubeProxyReplacement: true
-    k8sServiceHost: {{`{{ .Cluster.spec.controlPlaneEndpoint.host }}`}}
-    k8sServicePort: {{`{{ .Cluster.spec.controlPlaneEndpoint.port }}`}}
-    hubble:
-      relay:
-        enabled: true
-      ui:
-        enabled: false
-    ipam:
-      mode: "cluster-pool"
-      operator:
-        clusterPoolIPv4PodCIDRList:{{`{{range $i, $cidr := .Cluster.spec.clusterNetwork.pods.cidrBlocks }}
-          - "{{ $cidr }}"{{end}}`}}
-        clusterPoolIPv4MaskSize: 24
-    extraArgs:
-      - "--mtu=1350"
-    gatewayAPI:
-      enabled: false
-    # lb
-    l2announcements:
-      enabled: true
-    externalIPs:
-      enabled: true
-    {{- with .Values.global.addons.cni.extraChartArgs -}}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-{{- range .Values.global.addons.cni.extraVersions }}
-{{- if and .enabled (eq .type "cilium")}}
----
-apiVersion: addons.cluster.x-k8s.io/v1alpha1
-kind: HelmChartProxy
-metadata:
-  name: cni-cilium-{{ .version }}
-spec:
-  options:
-    waitForJobs: true
-    wait: true
-    timeout: 30m0s
-    install:
-      createNamespace: true
-  clusterSelector:
-  # Target workload clusters with specific labels.
-    matchLabels:
-      cni.enabled: "true"
-      cni.type: {{ .type }}
-      cni.version: {{ .version }}
-  # Target all workload clusters.
-  #  matchLabels: {}
-  releaseName: cilium-{{ .version }}
-  repoURL: https://helm.cilium.io/
-  chartName: cilium
-  version: {{ .version }}
+  version: {{ $version }}
   namespace: kube-system
   valuesTemplate: |
     {{- if $.Values.dockerConfig.enabled }}
@@ -109,9 +52,8 @@ spec:
       enabled: true
     externalIPs:
       enabled: true
-    {{- with .extraChartArgs -}}
+    {{- with $.Values.global.addons.cni.extraChartArgs -}}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-{{- end }}
 {{- end }}
 {{ end -}}
