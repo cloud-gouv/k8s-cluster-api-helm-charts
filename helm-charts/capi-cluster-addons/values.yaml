@@ -1,8 +1,8 @@
 global:
   # custom proxy
-  http_proxy: http://192.168.2.10:8888
-  https_proxy: http://192.168.2.10:8888
-  no_proxy: localhost,192.168.0.0/16
+  http_proxy: ""
+  https_proxy: ""
+  no_proxy: ""
 
   # helm addons
   addons:
