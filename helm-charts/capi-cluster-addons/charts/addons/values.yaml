@@ -3,8 +3,7 @@ dockerConfig:
 #addons: {}
 #  cni: {}
 #  ccm: {}
-#  metallb: {}
-#  ingress: {}
+#  csi: {}
 
 #addons:
 #  cloudConfig:

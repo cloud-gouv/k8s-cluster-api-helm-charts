@@ -1,8 +1,9 @@
 {{ if and .Values.global.addons.cni.enabled  ( eq .Values.global.addons.cni.type "calico" ) -}}
+{{- range $version := .Values.global.addons.cni.versions }}
 apiVersion: addons.cluster.x-k8s.io/v1alpha1
 kind: HelmChartProxy
 metadata:
-  name: cni-calico
+  name: cni-calico-{{ $version }}
 spec:
   options:
     waitForJobs: true
@@ -14,18 +15,18 @@ spec:
   # Target workload clusters with specific labels.
     matchLabels:
       cni.enabled: "true"
-      cni.type: {{ .Values.global.addons.cni.type }}
-      cni.version: {{ .Values.global.addons.cni.version }}
+      cni.type: {{ $.Values.global.addons.cni.type }}
+      cni.version: {{ $version }}
   # Target all workload clusters.
   #  matchLabels: {}
   releaseName: calico
   repoURL: https://docs.tigera.io/calico/charts
   chartName: tigera-operator
-  version: {{ .Values.global.addons.cni.version }}
+  version: {{ $version }}
   namespace: kube-system
   valuesTemplate: |
     installation:
-      {{ if .Values.dockerConfig.enabled -}}
+      {{ if $.Values.dockerConfig.enabled -}}
       imagePullSecrets:
         - name: regcred
       {{ end -}}
@@ -41,4 +42,5 @@ spec:
           natOutgoing: Enabled
           nodeSelector: all(){{end}}`}}
   # TODO: pay attention to newlines at the end that get inserted by templates
+{{- end }}
 {{ end -}}
