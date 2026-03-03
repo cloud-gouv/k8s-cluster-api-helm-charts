@@ -1,5 +1,6 @@
 {{ if and .Values.global.addons.ccm.enabled  ( eq .Values.global.addons.ccm.type "outscale" ) -}}
 {{- range $version := .Values.global.addons.ccm.versions }}
+---
 apiVersion: addons.cluster.x-k8s.io/v1alpha1
 kind: HelmChartProxy
 metadata:
