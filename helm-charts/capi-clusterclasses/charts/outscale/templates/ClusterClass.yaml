@@ -744,4 +744,3 @@ spec:
                       ipProtocol: tcp
                       ipRange: {{ $cidr }}
                     {{- end }}`}}
-
