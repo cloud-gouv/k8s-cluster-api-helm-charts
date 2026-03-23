@@ -5,6 +5,7 @@
 
 {{/* iterate over the workers */}}
 {{- range $name, $pool := $.Values.workers }}
+  {{ if $pool }}
   {{- $subregions := (include "outscale.subregionsLabels" $.Values | fromYamlArray) }}
 
   {{/* iterate over the subregions */}}
@@ -66,5 +67,6 @@ spec:
         kind: OscMachineTemplate
         name: {{ $generatedName }}
       version: {{ $pool.version }}
+  {{- end }}
   {{- end }}
 {{- end }}
