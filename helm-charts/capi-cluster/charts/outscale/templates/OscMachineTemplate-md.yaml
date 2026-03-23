@@ -2,6 +2,7 @@
 
 {{/* iterate over the workers */}}
 {{- range $name, $pool := $.Values.workers }}
+  {{ if $pool }}
   {{- $isMultiaz := $.Values.multiaz }}
   {{- $subregions := (include "outscale.subregionsLabels" $.Values | fromYamlArray) }}
 
@@ -66,5 +67,6 @@ spec:
         {{- with $pool.volumes }}
         volumes: {{- toYaml . | nindent 10 }}
         {{- end }}
+  {{- end }}
   {{- end }}
 {{- end }}

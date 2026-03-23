@@ -1,5 +1,6 @@
 {{/* iterate over the workers */}}
 {{- range $name, $pool := .Values.workers }}
+{{- if $pool }}
   {{- $generatedName := include "openstack.generatedName" (dict
     "clusterName" $.Values.global.clusterName
     "nodeType" "worker"
@@ -36,4 +37,5 @@ spec:
         name: {{ $generatedName }}
       version: {{ $pool.version }}
 ---
+{{- end }}
 {{- end }}

@@ -1,5 +1,6 @@
 {{- $values := .Values }}
 {{- range $name, $pool := .Values.workers }}
+{{- if $pool }}
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
@@ -110,4 +111,5 @@ spec:
             Environment="NO_PROXY=.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,192.168.0.0/16,{{ $.Values.global.pods.cidrBlocks }},{{ $.Values.global.services.cidrBlocks }}"
             {{- end }}
 ---
+{{- end }}
 {{- end }}
