@@ -2,6 +2,65 @@
 Define Loadbalancer name : outscale limitation is max length 32
  default: if no loadbalancername is specified, generate 32 max length loadbalancername from trunc(28, sha256(cluster name))"-k8s"
 */}}
+{{/*
+  helm.subnet-list
+  Returns a JSON array of 9 subnet CIDRs carved from a given network CIDR.
+
+  Usage:
+    {{ include "helm.subnet-list" "10.0.0.0/16" }}
+
+  Constraints:
+    - Base prefix must be between /16 and /24 (subnets will be /prefix+4)
+    - 9 × blockSize must fit within the parent network
+*/}}
+{{- define "helm.subnet-list" -}}
+  {{- $parts  := splitList "/" . -}}
+  {{- $ip     := index $parts 0 -}}
+  {{- $prefix := index $parts 1 | int -}}
+
+  {{- $octets := splitList "." $ip -}}
+  {{- $o1     := index $octets 0 | int -}}
+  {{- $o2     := index $octets 1 | int -}}
+  {{- $o3     := index $octets 2 | int -}}
+  {{- $o4     := index $octets 3 | int -}}
+
+  {{- $subPrefix := add $prefix 4 -}}
+
+  {{/* Block sizes keyed by subnet prefix: 2^(32-subPrefix) */}}
+  {{- $blockSizes := dict
+      "16" 65536
+      "17" 32768
+      "18" 16384
+      "19" 8192
+      "20" 4096
+      "21" 2048
+      "22" 1024
+      "23" 512
+      "24" 256
+      "25" 128
+      "26" 64
+      "27" 32
+      "28" 16
+  -}}
+
+  {{- $blockSize := index $blockSizes (toString $subPrefix) -}}
+  {{- if not $blockSize -}}
+    {{- fail (printf "helm.subnet-list: unsupported prefix /%d (subnet prefix /%d). Base prefix must be between /16 and /24." $prefix $subPrefix) -}}
+  {{- end -}}
+  {{- $blockSize = int $blockSize -}}
+
+  {{- $subnets := list -}}
+  {{- range $i := until 9 -}}
+    {{- $offset := mul $blockSize $i -}}
+    {{- $newO2  := add $o2 (mod (div $offset 65536) 256) -}}
+    {{- $newO3  := add $o3 (mod (div $offset 256) 256) -}}
+    {{- $newO4  := add $o4 (mod $offset 256) -}}
+    {{- $subnet := printf "%d.%d.%d.%d/%d" $o1 $newO2 $newO3 $newO4 $subPrefix -}}
+    {{- $subnets = append $subnets $subnet -}}
+  {{- end -}}
+
+  {{- toJson $subnets -}}
+{{- end -}}
 
 {{- define "outscale.defaultLoadbalancerName" -}}
 {{- $loadbalancername := printf "%s-%s" (lower .Values.global.clusterName | sha256sum | trunc 28 ) "k8s" }}
