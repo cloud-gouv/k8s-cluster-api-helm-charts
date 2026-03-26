@@ -23,6 +23,7 @@
 {{- end }}
 
 {{- if not .Values.useDeprecatedNetworkId }}
+{{- $net_range = .Values.vpc_cidr }}
   {{- $subnets := include "helm.subnet-list" .Values.vpc_cidr | fromJsonArray -}}
     {{- if .Values.multiaz }}
       {{- $controlplane_ranges = slice $subnets 0 3 -}}
