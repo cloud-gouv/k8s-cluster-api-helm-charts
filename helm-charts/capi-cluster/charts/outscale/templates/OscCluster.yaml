@@ -22,14 +22,17 @@
   {{- $controlplane_ranges = append $controlplane_ranges (printf "10.%s.10.0/24" (toString .Values.networkId)) -}}
 {{- end }}
 
+{{- $subregionNames := list "" }}
 {{- if not .Values.useDeprecatedNetworkId }}
 {{- $net_range = .Values.vpc_cidr }}
   {{- $subnets := include "helm.subnet-list" .Values.vpc_cidr | fromJsonArray -}}
     {{- if .Values.multiaz }}
+      {{- $subregionNames = list (print .Values.region "a") (print .Values.region "b") (print .Values.region "c") }}
       {{- $controlplane_ranges = slice $subnets 0 3 -}}
       {{- $worker_ranges = slice $subnets 3 6 -}}
       {{- $loadbalancer_ranges = slice $subnets 6 9 -}}
     {{- else }}
+      {{- $subregionNames = list .Values.subregionName }}
       {{- $controlplane_ranges = index $subnets 0 -}}
       {{- $worker_ranges = index $subnets 1 -}}  
       {{- $loadbalancer_ranges = index $subnets 2 -}}  
@@ -98,6 +101,32 @@ spec:
     net:
       name: {{ .Values.global.clusterName }}-net
       ipRange: {{ $net_range }}
+{{- if not .Values.useDeprecatedNetworkId }}
+    subnets:
+    {{- range $i, $cidr := $controlplane_ranges }}
+      - name: subnet-cp-{{$i}}
+        ipSubnetRange: {{ $cidr }}
+        subregionName: {{ index $subregionNames $i }}
+        roles:
+          - controlplane
+    {{- end }}
+    {{- range $i, $cidr := $loadbalancer_ranges }}
+      - name: subnet-pub-{{$i}}
+        ipSubnetRange: {{ $cidr }}
+        subregionName: {{ index $subregionNames $i }}
+        roles:
+          - loadbalancer
+          - nat
+          - bastion
+    {{- end }}
+    {{- range $i, $cidr := $worker_ranges }}
+      - name: subnet-wk-{{$i}}
+        ipSubnetRange: {{ $cidr }}
+        subregionName: {{ index $subregionNames $i }}
+        roles:
+          - worker
+    {{- end }}
+{{- end }}
     subregions:
     {{- if .Values.multiaz }}
       - {{ .Values.region }}a
