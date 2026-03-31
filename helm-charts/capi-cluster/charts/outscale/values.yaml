@@ -19,7 +19,7 @@ csi: {}
 # for CIDR 10.123.0.0/16.
 # WARNING: Please remember "10.96.0.0/12" and "10.42.0.0/16" are reserved by default.
 networkId: 0
-useDeprecatedNetworkId: false
+useDeprecatedNetworkId: true
 
 # CIDR for the VPC, subnets will be automatically calculated
 vpc_cidr: 10.0.0.0/16
