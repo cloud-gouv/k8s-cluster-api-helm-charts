@@ -58,6 +58,15 @@ machinehealthcheck:
 #      ingress-ready: true
 #    #rootVolume: {}
 #    #additionalBlockDevices: {}
+#workersExtraSecurityGroups:
+#  - description: Created by cluster-api-provider-openstack - rabbitmq to work nodes
+#    remoteIPPrefix: 0.0.0.0/0
+#    direction: ingress
+#    etherType: IPv4
+#    name: rabbitmq secured port
+#    portRangeMin: 5671
+#    portRangeMax: 5671
+#    protocol: tcp
 
 certmanager: {}
 csi: {}

@@ -87,3 +87,7 @@ spec:
         portRangeMin: 443
         portRangeMax: 443
         protocol: tcp
+    {{- $extraSecurityGroupRules := .Values.workersExtraSecurityGroupRules | default (list) }}
+    {{- range $extraSecurityGroupRules }}
+      {{- toYaml (list .) | nindent 6 }}
+    {{- end }}
