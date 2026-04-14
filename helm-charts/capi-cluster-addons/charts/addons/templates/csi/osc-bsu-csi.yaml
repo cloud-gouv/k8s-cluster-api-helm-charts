@@ -31,7 +31,7 @@ spec:
     {{ end -}}
 
     enableVolumeResizing: true
-    enableVolumeSnapshot: true
+    enableVolumeSnapshot: {{ $.Values.enableVolumeSnapshot }}
 
     credentials:
       secretName: osc-bsu-csi
@@ -50,8 +50,8 @@ spec:
     {{ end -}}
 
     driver:
-      enableVolumeSnapshot: true
-      enableVolumeSnapshotExports: false
+      enableVolumeSnapshot: {{ $.Values.enableVolumeSnapshot }}
+      enableVolumeSnapshotExports: {{ $.Values.enableVolumeSnapshotExports }}
 
     cloud:
       credentials:

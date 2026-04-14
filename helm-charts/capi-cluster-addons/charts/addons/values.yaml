@@ -1,5 +1,8 @@
 dockerConfig:
   enabled: false
+enableVolumeSnapshot: false
+enableVolumeSnapshotExports: false
+
 #addons: {}
 #  cni: {}
 #  ccm: {}
