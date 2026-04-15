@@ -3,6 +3,8 @@
 {{- /* define net and subnet ranges */ -}}
 {{- /* net range */ -}}
 {{- $net_range := printf "10.%s.0.0/16" ( toString .Values.networkId ) }}
+{{- $subregions := include "outscale.subregionsLabels" $.Values | fromYamlArray }}
+{{- $region := include "outscale.region" $.Values | trim }}
 {{- /* loadbalancer ranges */ -}}
 {{- $loadbalancer_ranges := list (printf "10.%s.2.0/24" (toString .Values.networkId)) -}}
 {{- if .Values.multiaz }}
@@ -84,27 +86,39 @@ spec:
     natPublicIpPool: {{ .Values.natPublicIpPool }}
     {{- end }}
     natServices:
-    {{- if .Values.multiaz }}
-      - name: {{ .Values.global.clusterName }}-nat-a
-        subregionName: {{ .Values.region }}a
-      - name: {{ .Values.global.clusterName }}-nat-b
-        subregionName: {{ .Values.region }}b
-      - name: {{ .Values.global.clusterName }}-nat-c
-        subregionName: {{ .Values.region }}c
-    {{- else }}
-      - name: {{ .Values.global.clusterName }}-nat-a
-        subregionName: {{ .Values.subregionName  }}
+    {{- range $s := $subregions }}
+      - name: {{ $.Values.global.clusterName }}-nat-{{ $s }}
+        subregionName: {{ $region }}{{ $s }} 
     {{- end }}
     net:
       name: {{ .Values.global.clusterName }}-net
       ipRange: {{ $net_range }}
+    {{- if not .Values.useDeprecatedNetworkId }}
+    subnets:
+    {{- range $i, $cidr := $controlplane_ranges }}
+      - ipSubnetRange: {{ $cidr }}
+        subregionName: {{ $region }}{{ index $subregions $i }}
+        roles:
+          - controlplane
+    {{- end }}
+    {{- range $i,$cidr := $worker_ranges }}
+      - ipSubnetRange: {{ $cidr }}
+        subregionName: {{ $region }}{{ index $subregions $i }}
+        roles:
+          - worker
+    {{- end }}
+    {{- range $i, $cidr := $loadbalancer_ranges }}
+      - ipSubnetRange: {{ $cidr }}
+        subregionName: {{ $region }}{{ index $subregions $i }}
+        roles:
+          - bastion
+          - loadbalancer
+          - nat
+    {{- end }}
+    {{- end }}
     subregions:
-    {{- if .Values.multiaz }}
-      - {{ .Values.region }}a
-      - {{ .Values.region }}b
-      - {{ .Values.region }}c
-    {{- else }}
-      - {{ .Values.subregionName  }}
+    {{- range $s := $subregions }}
+      - {{ $region }}{{ $s }}  
     {{- end }}
     {{- if hasKey .Values "apiAllowedCidr" }}
     {{- if gt (len .Values.apiAllowedCidr) 0 }}
