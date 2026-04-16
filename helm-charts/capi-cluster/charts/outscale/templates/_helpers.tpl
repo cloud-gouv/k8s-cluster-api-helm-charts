@@ -86,10 +86,20 @@ Define Loadbalancer name : outscale limitation is max length 32
 {{- end }}
 
 {{- define "outscale.subregionsLabels" }}
-- a
 {{- if .multiaz }}
+- a
 - b
 - c
+{{- else }}
+{{- printf "- %s" (.subregionName | splitList "" | last)}}
+{{- end }}
+{{- end }}
+
+{{- define "outscale.region" }}
+{{- if .multiaz }}
+{{ .region }}
+{{- else }}
+{{- substr 0 (sub (len .subregionName) 1 | int) .subregionName}}
 {{- end }}
 {{- end }}
 
