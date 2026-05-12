@@ -1,7 +1,7 @@
 {{- $values := .Values }}
 {{- range $name, $pool := .Values.workers }}
 {{- if $pool }}
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
   name: {{ $.Values.global.clusterName }}-{{ $name }}
