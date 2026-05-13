@@ -18,11 +18,11 @@ spec:
     {{- end }}
     clusterConfiguration:
       apiServer:
-        timeoutForControlPlane: 20m0s
         extraArgs:
-          audit-policy-file: "/etc/kubernetes/audit-policy.yaml"
-          admission-control-config-file: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
-          # encryption-provider-config: "xxxx"
+          - name: audit-policy-file
+            value: "/etc/kubernetes/audit-policy.yaml"
+          - name: admission-control-config-file
+            value: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
           {{- with .Values.global.apiServer.extraArgs }}
           {{- tpl (. | toYaml) $ | nindent 10 }}
           {{- end }}
@@ -42,8 +42,10 @@ spec:
             readOnly: true
       controllerManager:
         extraArgs:
-          cloud-provider: "external"
-          cluster-name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
+          - name: cloud-provider
+            value: "external"
+          - name: cluster-name
+            value: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
           {{- with .Values.global.controllerManager.extraArgs }}
           {{- tpl (. | toYaml) $ | nindent 10 }}
           {{- end }}
@@ -58,6 +60,8 @@ spec:
           {{- tpl (. | toYaml) $ | nindent 10 }}
           {{- end }}
     initConfiguration:
+      timeouts:
+        controlPlaneComponentHealthCheckSeconds: 1200
       {{ if and .Values.global.addons.cni.enabled ( eq .Values.global.addons.cni.type "cilium" ) -}}
       # cilium replace kube-proxy
       skipPhases:
@@ -66,8 +70,10 @@ spec:
       nodeRegistration:
         name: {{`"{{ ds.meta_data.local_hostname }}"`}}
         kubeletExtraArgs:
-          cloud-provider: "external"
-          provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
+          - name: cloud-provider
+            value: "external"
+          - name: provider-id
+            value: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
       # Here we specify the directory that contains the patch files
       # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
       # See: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
@@ -75,11 +81,15 @@ spec:
       patches:
         directory: /etc/kubernetes/patches
     joinConfiguration:
+      timeouts:
+        controlPlaneComponentHealthCheckSeconds: 1200
       nodeRegistration:
         name: {{`"{{ ds.meta_data.local_hostname }}"`}}
         kubeletExtraArgs:
-          cloud-provider: "external"
-          provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
+          - name: cloud-provider
+            value: "external"
+          - name: provider-id
+            value: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
       # Here we specify the directory that contains the patch files
       # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
       # See: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
@@ -407,13 +417,15 @@ spec:
               {{- end }}
 
   machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: OscMachineTemplate
-      name: {{ $generatedName }}
+    spec:
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: OscMachineTemplate
+        name: {{ $generatedName }}
   replicas: {{ .Values.controlplane.replicas | default 1 }}
   version: {{ .Values.controlplane.version }}
-  rolloutStrategy:
-    rollingUpdate:
-      maxSurge: 1
-    type: RollingUpdate
+  rollout:
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+      type: RollingUpdate

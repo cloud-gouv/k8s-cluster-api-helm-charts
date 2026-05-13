@@ -1,5 +1,5 @@
 ---
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
   name: {{ include "outscale.name" . }}
@@ -22,8 +22,10 @@ spec:
           imagePullPolicy: IfNotPresent
           name: {{`"{{ ds.meta_data.local_hostname }}"`}}
           kubeletExtraArgs:
-            cloud-provider: "external"
-            provider-id: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
+            - name: cloud-provider
+              value: "external"
+            - name: provider-id
+              value: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
         #
         # Here we specify the directory that contains the patch files
         # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target

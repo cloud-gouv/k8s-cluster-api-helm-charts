@@ -138,46 +138,74 @@ global:
          hostPath: "/var/log/kubernetes/audit/"
          pathType: "DirectoryOrCreate"
     extraArgs:
-      # specify audit-logs under dedicated audit dir
-      audit-log-path: "/var/log/kubernetes/audit/audit.log"
-      allow-privileged: "true"
-      authorization-mode: "RBAC,Node"
-      audit-log-maxsize: "100"  # audit log size in MegaBytes before rotation
-      audit-log-maxbackup: "10" # number of audit log to retain
-      audit-log-maxage: "20"    # number of days to retain audit log
-      event-ttl: "4h"
-      enable-bootstrap-token-auth: "true"
-      enable-admission-plugins: "NodeRestriction"
-      feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
-      profiling: "false"
-      requestheader-allowed-names: "front-proxy-client"
-      requestheader-client-ca-file: "/etc/kubernetes/pki/front-proxy-ca.crt"
-      requestheader-extra-headers-prefix: "X-Remote-Extra-"
-      requestheader-group-headers: "X-Remote-Group"
-      requestheader-username-headers: "X-Remote-User"
-      tls-min-version: "VersionTLS12"
-      tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+      - name: audit-log-path
+        value: "/var/log/kubernetes/audit/audit.log"
+      - name: allow-privileged
+        value: "true"
+      - name: authorization-mode
+        value: "RBAC,Node"
+      - name: audit-log-maxsize
+        value: "100"
+      - name: audit-log-maxbackup
+        value: "10"
+      - name: audit-log-maxage
+        value: "20"
+      - name: event-ttl
+        value: "4h"
+      - name: enable-aggregator-routing
+        value: "true"
+      - name: enable-bootstrap-token-auth
+        value: "true"
+      - name: enable-admission-plugins
+        value: "NodeRestriction"
+      - name: feature-gates
+        value: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+      - name: profiling
+        value: "false"
+      - name: requestheader-allowed-names
+        value: "front-proxy-client"
+      - name: requestheader-client-ca-file
+        value: "/etc/kubernetes/pki/front-proxy-ca.crt"
+      - name: requestheader-extra-headers-prefix
+        value: "X-Remote-Extra-"
+      - name: requestheader-group-headers
+        value: "X-Remote-Group"
+      - name: requestheader-username-headers
+        value: "X-Remote-User"
+      - name: tls-min-version
+        value: "VersionTLS12"
+      - name: tls-cipher-suites
+        value: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
   #
   # controllerManager configuration
   # See: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/
   #
   controllerManager:
     extraArgs:
-      allocate-node-cidrs: "false"
-      profiling: "false"
-      feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
-      tls-min-version: "VersionTLS12"
-      tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+      - name: allocate-node-cidrs
+        value: "false"
+      - name: profiling
+        value: "false"
+      - name: feature-gates
+        value: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+      - name: tls-min-version
+        value: "VersionTLS12"
+      - name: tls-cipher-suites
+        value: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
   #
   # scheduler configuration
   # See: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/
   #
   scheduler:
     extraArgs:
-      profiling: "false"
-      feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
-      tls-min-version: "VersionTLS12"
-      tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+      - name: profiling
+        value: "false"
+      - name: feature-gates
+        value: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+      - name: tls-min-version
+        value: "VersionTLS12"
+      - name: tls-cipher-suites
+        value: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
   #
   # etcd configuration
   #
@@ -185,13 +213,20 @@ global:
     local:
       dataDir: "/var/lib/etcd"
       extraArgs:
-        auto-compaction-retention: "1"
-        quota-backend-bytes: "8589934592"
-        experimental-initial-corrupt-check: "true"
-        experimental-warning-apply-duration: "200ms"
-        experimental-bootstrap-defrag-threshold-megabytes: "512"
-        tls-min-version: "TLS1.2"
-        v2-deprecation: "gone"
+        - name: auto-compaction-retention
+          value: "1"
+        - name: quota-backend-bytes
+          value: "8589934592"
+        - name: experimental-initial-corrupt-check
+          value: "true"
+        - name: experimental-warning-apply-duration
+          value: "200ms"
+        - name: experimental-bootstrap-defrag-threshold-megabytes
+          value: "512"
+        - name: tls-min-version
+          value: "TLS1.2"
+        - name: v2-deprecation
+          value: "gone"
 
   #
   # configure Pod Security Standards
