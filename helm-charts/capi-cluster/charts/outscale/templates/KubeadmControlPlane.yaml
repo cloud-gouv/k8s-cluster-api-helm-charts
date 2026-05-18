@@ -19,9 +19,9 @@ spec:
     clusterConfiguration:
       apiServer:
         extraArgs:
-          {{- range k,v := .Values.global.apiServer.extraArgs }}
-          - name: {{ k }}
-            value: {{ tpl v . }}
+          {{- range $k,$v := .Values.global.apiServer.extraArgs }}
+          - name: {{ $k }}
+            value: {{ tpl $v $ | quote }}
           {{- end }}
         extraVolumes:
           - name: "audit-policy"
@@ -39,18 +39,23 @@ spec:
             readOnly: true
       controllerManager:
         extraArgs:
-          {{- with .Values.global.controllerManager.extraArgs }}
-          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- range $k,$v := .Values.global.controllerManager.extraArgs }}
+          - name: {{ $k }}
+            value: {{ tpl $v $ | quote }}
           {{- end }}
       etcd:
         local:
-          {{- with .Values.global.etcd.local }}
-          {{- tpl (. | toYaml) $ | nindent 10 }}
-          {{- end }}
+          dataDir: "/var/lib/etcd"
+          extraArgs:
+            {{- range $k,$v := .Values.global.etcd.local.extraArgs }}
+            - name: {{ $k }}
+              value: {{ tpl $v $ | quote }}
+            {{- end }}
       scheduler:
         extraArgs:
-          {{- with .Values.global.scheduler.extraArgs }}
-          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- range $k,$v := .Values.global.scheduler.extraArgs }}
+          - name: {{ $k }}
+            value: {{ tpl $v $ | quote }}
           {{- end }}
     initConfiguration:
       timeouts:

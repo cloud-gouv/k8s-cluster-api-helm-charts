@@ -165,29 +165,28 @@ global:
   #
   controllerManager:
     extraArgs:
-      - allocate-node-cidrs: "false"
-      - cloud-provider: "external"
-      - cluster-name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
-      - profiling: "false"
-      - feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
-      - tls-min-version: "VersionTLS12"
-      - tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+      allocate-node-cidrs: "false"
+      cloud-provider: "external"
+      cluster-name: "{{ .Values.global.clusterName | default \"clusterNameIsNotDefined\" }}"
+      profiling: "false"
+      feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+      tls-min-version: "VersionTLS12"
+      tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
   #
   # scheduler configuration
   # See: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/
   #
   scheduler:
     extraArgs:
-      - feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
-      - profiling: "false"
-      - tls-min-version: "VersionTLS12"
-      - tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
+      feature-gates: "HPAScaleToZero=true,QOSReserved=true,RecoverVolumeExpansionFailure=true,SELinuxMountReadWriteOncePod=true"
+      profiling: "false"
+      tls-min-version: "VersionTLS12"
+      tls-cipher-suites: "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_AES_256_GCM_SHA384,TLS_AES_128_GCM_SHA256,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256"
   #
   # etcd configuration
   #
   etcd:
     local:
-      dataDir: "/var/lib/etcd"
       extraArgs:
         auto-compaction-retention: "1"
         experimental-bootstrap-defrag-threshold-megabytes: "512"
