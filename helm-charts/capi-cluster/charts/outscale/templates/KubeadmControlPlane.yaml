@@ -19,12 +19,9 @@ spec:
     clusterConfiguration:
       apiServer:
         extraArgs:
-          - name: audit-policy-file
-            value: "/etc/kubernetes/audit-policy.yaml"
-          - name: admission-control-config-file
-            value: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
-          {{- with .Values.global.apiServer.extraArgs }}
-          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- range k,v := .Values.global.apiServer.extraArgs }}
+          - name: {{ k }}
+            value: {{ tpl v . }}
           {{- end }}
         extraVolumes:
           - name: "audit-policy"
@@ -42,10 +39,6 @@ spec:
             readOnly: true
       controllerManager:
         extraArgs:
-          - name: cloud-provider
-            value: "external"
-          - name: cluster-name
-            value: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
           {{- with .Values.global.controllerManager.extraArgs }}
           {{- tpl (. | toYaml) $ | nindent 10 }}
           {{- end }}
