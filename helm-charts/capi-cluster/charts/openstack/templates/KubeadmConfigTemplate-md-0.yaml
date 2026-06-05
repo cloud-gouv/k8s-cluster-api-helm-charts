@@ -1,7 +1,7 @@
 {{- $values := .Values }}
 {{- range $name, $pool := .Values.workers }}
 {{- if $pool }}
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
   name: {{ $.Values.global.clusterName }}-{{ $name }}
@@ -35,10 +35,12 @@ spec:
           imagePullPolicy: IfNotPresent
           name: {{`"{{ local_hostname }}"`}}
           kubeletExtraArgs:
-            provider-id: {{`"openstack:///{{ instance_id }}"`}}
             {{- with $pool.nodeLabels }}
-            node-labels: "{{ range $i, $k := (keys . | sortAlpha) }}{{ if ne $i 0 }},{{ end }}{{ $k }}={{ index $pool.nodeLabels $k }}{{ end }}"
+            - name: node-labels
+              value: "{{ range $i, $k := (keys . | sortAlpha) }}{{ if ne $i 0 }},{{ end }}{{ $k }}={{ index $pool.nodeLabels $k }}{{ end }}"
             {{- end }}
+            - name: provider-id
+              value: {{`"openstack:///{{ instance_id }}"`}}
         #
         # Here we specify the directory that contains the patch files
         # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target

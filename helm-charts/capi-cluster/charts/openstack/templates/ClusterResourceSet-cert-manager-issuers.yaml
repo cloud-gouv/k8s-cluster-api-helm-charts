@@ -29,7 +29,7 @@ data:
     {{- end }}
     {{- end }}
 ---
-apiVersion: addons.cluster.x-k8s.io/v1beta1
+apiVersion: addons.cluster.x-k8s.io/v1beta2
 kind: ClusterResourceSet
 metadata:
   name: {{ .Values.global.clusterName }}-cert-manager-issuers
