@@ -19,15 +19,10 @@ spec:
     {{- end }}
     clusterConfiguration:
       apiServer:
-        timeoutForControlPlane: 20m0s
         extraArgs:
-          - name: audit-policy-file
-            value: "/etc/kubernetes/audit-policy.yaml"
-          - name: admission-control-config-file
-            value: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
-          # encryption-provider-config: "xxxx"
-          {{- with .Values.global.apiServer.extraArgs }}
-          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- range $k,$v := .Values.global.apiServer.extraArgs }}
+          - name: {{ $k }}
+            value: {{ tpl $v $ | quote }}
           {{- end }}
         extraVolumes:
           - name: "audit-policy"
@@ -45,22 +40,27 @@ spec:
             readOnly: true
       controllerManager:
         extraArgs:
-          cloud-provider: "external"
-          cluster-name: {{ .Values.global.clusterName | default "clusterNameIsNotDefined" }}
-          {{- with .Values.global.controllerManager.extraArgs }}
-          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- range $k,$v := .Values.global.controllerManager.extraArgs }}
+          - name: {{ $k }}
+            value: {{ tpl $v $ | quote }}
           {{- end }}
       etcd:
         local:
-          {{- with .Values.global.etcd.local }}
-          {{- tpl (. | toYaml) $ | nindent 10 }}
-          {{- end }}
+          dataDir: "/var/lib/etcd"
+          extraArgs:
+            {{- range $k,$v := .Values.global.etcd.local.extraArgs }}
+            - name: {{ $k }}
+              value: {{ tpl $v $ | quote }}
+            {{- end }}
       scheduler:
         extraArgs:
-          {{- with .Values.global.scheduler.extraArgs }}
-          {{- tpl (. | toYaml) $ | nindent 10 }}
+          {{- range $k,$v := .Values.global.scheduler.extraArgs }}
+          - name: {{ $k }}
+            value: {{ tpl $v $ | quote }}
           {{- end }}
     initConfiguration:
+      timeouts:
+        controlPlaneComponentHealthCheckSeconds: 1200
       {{ if and .Values.global.addons.cni.enabled ( eq .Values.global.addons.cni.type "cilium" ) -}}
       # cilium replace kube-proxy
       skipPhases:
@@ -69,8 +69,10 @@ spec:
       nodeRegistration:
         name: {{`"{{ local_hostname }}"`}}
         kubeletExtraArgs:
-          cloud-provider: "external"
-          provider-id: {{`"openstack:///{{ instance_id }}"`}}
+          - name: cloud-provider
+            value: "external"
+          - name: provider-id
+            value: {{`"openstack:///{{ instance_id }}"`}}
       # Here we specify the directory that contains the patch files
       # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
       # See: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
@@ -78,11 +80,15 @@ spec:
       patches:
         directory: /etc/kubernetes/patches
     joinConfiguration:
+      timeouts:
+        controlPlaneComponentHealthCheckSeconds: 1200
       nodeRegistration:
         name: {{`"{{ local_hostname }}"`}}
         kubeletExtraArgs:
-          cloud-provider: "external"
-          provider-id: {{`"openstack:///{{ instance_id }}"`}}
+          - name: cloud-provider
+            value: "external"
+          - name: provider-id
+            value: {{`"openstack:///{{ instance_id }}"`}}
       # Here we specify the directory that contains the patch files
       # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
       # See: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
