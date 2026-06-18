@@ -45,3 +45,11 @@ spec:
         sizeGiB: {{ .Values.controlplane.rootVolume.sizeGiB }}
         type: {{ .Values.controlplane.rootVolume.type }}
       {{- end }}
+      {{- $unmanagedSecurityGroups := .Values.unmanagedSecurityGroups | default (list) }}
+      {{- if gt (len $unmanagedSecurityGroups) 0 }}
+      securityGroups:
+        {{- range $unmanagedSecurityGroups }}
+        - filter:
+            name: {{ toYaml . }}
+        {{- end }}
+      {{- end }}
