@@ -189,9 +189,8 @@ global:
     local:
       extraArgs:
         auto-compaction-retention: "1"
-        experimental-bootstrap-defrag-threshold-megabytes: "512"
-        experimental-initial-corrupt-check: "true"
-        experimental-warning-apply-duration: "200ms"
+        bootstrap-defrag-threshold-megabytes: "512"
+        warning-apply-duration: "200ms"
         quota-backend-bytes: "8589934592"
         tls-min-version: "TLS1.2"
         v2-deprecation: "gone"
