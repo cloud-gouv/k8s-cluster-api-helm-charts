@@ -37,6 +37,10 @@ spec:
             hostPath: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
             mountPath: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
             readOnly: true
+        {{- with .Values.global.apiServer.certSANs }}
+        certSANs:
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
       controllerManager:
         extraArgs:
           {{- range $k,$v := .Values.global.controllerManager.extraArgs }}
