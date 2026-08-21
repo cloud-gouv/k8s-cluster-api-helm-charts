@@ -58,3 +58,57 @@ spec:
     name: {{ .Values.global.clusterName }}-cilium-config
   strategy: Reconcile
 {{ end -}}
+{{ if eq .Values.global.addons.cni.type "cilium" -}}
+#
+#  ClusterResourceSet: Inject extra Cilium NetPol
+#
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    note: generated
+  labels:
+    type: generated
+  name: {{ .Values.global.clusterName }}-cilium-netpol
+  namespace: default
+data:
+  ciliumConfig: |
+    apiVersion: cilium.io/v2
+    kind: CiliumClusterwideNetworkPolicy
+    metadata:
+      name: deny-imds-egress-cluster
+    spec:
+      enableDefaultDeny:
+        egress: false
+        ingress: false
+      endpointSelector:
+        matchExpressions:
+        - key: io.kubernetes.pod.namespace
+          operator: NotIn
+          values:
+          - cluster-api-provider-outscale-system
+        - key: app.kubernetes.io/name
+          operator: NotIn
+          values:
+          - osc-bsu-csi-driver
+      egressDeny:
+      - toCIDR:
+        - 169.254.169.254/32
+---
+apiVersion: addons.cluster.x-k8s.io/v1beta2
+kind: ClusterResourceSet
+metadata:
+  name: {{ .Values.global.clusterName }}-cilium-netpol
+  namespace: default
+spec:
+  clusterSelector:
+    matchLabels:
+      cni.enabled: {{  printf "%t" .Values.global.addons.cni.enabled | quote }}
+      cni.type: {{  .Values.global.addons.cni.type }}
+      cluster.x-k8s.io/name: {{ .Values.global.clusterName }}
+  resources:
+  - kind: ConfigMap
+    name: {{ .Values.global.clusterName }}-cilium-netpol
+  strategy: Reconcile
+{{ end -}}
