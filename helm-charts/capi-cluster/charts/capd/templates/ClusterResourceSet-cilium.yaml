@@ -1,0 +1,60 @@
+{{ if and .Values.global.addons.cni.enabled ( eq .Values.global.addons.cni.type "cilium" )  .Values.global.addons.cni.config.ipaddresspool -}}
+#
+#  ClusterResourceSet: addconfiguration in workload cluster
+#
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    note: generated
+  labels:
+    type: generated
+  name: {{ .Values.global.clusterName }}-cilium-config
+  namespace: default
+data:
+  ciliumConfig: |
+    apiVersion: "cilium.io/v2alpha1"
+    kind: CiliumLoadBalancerIPPool
+    metadata:
+      name: pool
+    spec:
+      blocks:{{ range $i, $cidr := .Values.global.addons.cni.config.ipaddresspool.addresses }}
+      - cidr: "{{ $cidr }}"{{end}}
+      # to limit which services can get IPs from which pools using label
+      serviceSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+    ---
+    apiVersion: "cilium.io/v2alpha1"
+    kind: CiliumL2AnnouncementPolicy
+    metadata:
+      name: l2policy
+    spec:
+      loadBalancerIPs: true
+      externalIPs: true
+      nodeSelector:
+        matchExpressions:
+          - key: node-role.kubernetes.io/control-plane
+            operator: DoesNotExist
+          - key: ingress-ready
+            operator: In
+            values:
+             - "true"
+---
+apiVersion: addons.cluster.x-k8s.io/v1beta1
+kind: ClusterResourceSet
+metadata:
+  name: {{ .Values.global.clusterName }}-cilium-config
+  namespace: default
+spec:
+  clusterSelector:
+    matchLabels:
+      cni.enabled: {{  printf "%t" .Values.global.addons.cni.enabled | quote }}
+      cni.type: {{  .Values.global.addons.cni.type }}
+      cluster.x-k8s.io/name: {{ .Values.global.clusterName }}
+  resources:
+  - kind: ConfigMap
+    name: {{ .Values.global.clusterName }}-cilium-config
+  strategy: Reconcile
+{{ end -}}

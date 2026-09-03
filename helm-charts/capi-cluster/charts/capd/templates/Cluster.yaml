@@ -1,0 +1,59 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: {{ .Values.global.clusterName }}
+  labels:
+    cluster.x-k8s.io/name: {{ .Values.global.clusterName }}
+    {{ if .Values.global.addons.cni.enabled -}}
+    cni.enabled: {{ printf "%t" .Values.global.addons.cni.enabled | quote }}
+    cni.type: {{ .Values.global.addons.cni.type }}
+    cni.version: {{ .Values.global.addons.cni.version }}
+    {{ end -}}
+    {{ if .Values.global.addons.ccm.enabled -}}
+    ccm.enabled: {{  printf "%t" .Values.global.addons.ccm.enabled | quote }}
+    ccm.type: {{ .Values.global.addons.ccm.type }}
+    ccm.version: {{ .Values.global.addons.ccm.version }}
+    {{ end -}}
+    {{ if .Values.global.addons.metallb.enabled -}}
+    metallb.enabled: {{  printf "%t" .Values.global.addons.metallb.enabled | quote }}
+    metallb.type: {{ .Values.global.addons.metallb.type }}
+    metallb.version: {{ .Values.global.addons.metallb.version }}
+    {{ end -}}
+    {{ if .Values.global.addons.ingress.enabled -}}
+    ingress.enabled: {{  printf "%t" .Values.global.addons.ingress.enabled | quote }}
+    ingress.type: {{ .Values.global.addons.ingress.type }}
+    ingress.version: {{ .Values.global.addons.ingress.version }}
+    {{ end -}}
+    {{ if .Values.global.addons.certmanager.enabled -}}
+    certmanager.enabled: {{  printf "%t" .Values.global.addons.certmanager.enabled | quote }}
+    certmanager.type: {{ .Values.global.addons.certmanager.type }}
+    certmanager.version: {{ .Values.global.addons.certmanager.version }}
+    {{ end -}}
+    {{ if .Values.global.addons.storagelocal.enabled -}}
+    storagelocal.enabled: {{  printf "%t" .Values.global.addons.storagelocal.enabled | quote }}
+    storagelocal.type: {{ .Values.global.addons.storagelocal.type }}
+    storagelocal.version: {{ .Values.global.addons.storagelocal.version }}
+    {{ end -}}
+    {{ if .Values.global.addons.csi.enabled -}}
+    csi.enabled: {{ printf "%t" .Values.global.addons.csi.enabled | quote }}
+    csi.type: {{ .Values.global.addons.csi.type }}
+    csi.version: {{ .Values.global.addons.csi.version }}
+    {{ end -}}
+    #
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+        - {{ .Values.global.pods.cidrBlocks | default "172.16.0.0/16" }}
+    services:
+      cidrBlocks:
+        - {{ .Values.global.services.cidrBlocks | default "10.96.0.0/12" }}
+    serviceDomain: cluster.local
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: {{ .Values.global.clusterName }}-control-plane
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: DockerCluster
+    name: {{ .Values.global.clusterName }}
