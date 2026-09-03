@@ -101,6 +101,7 @@ global:
       ephemeral-storage: "1Gi"
       pid: "1000"
     maxPods: 110
+    protectKernelDefaults: true
     registryBurst: 10
     registryPullQPS: 5
     serializeImagePulls: false
@@ -116,8 +117,6 @@ global:
       - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
       - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256"
       - "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
-      - "TLS_RSA_WITH_AES_256_GCM_SHA384"
-      - "TLS_RSA_WITH_AES_128_GCM_SHA256"
     tlsMinVersion: "VersionTLS12"
     featureGates:
       HPAScaleToZero: true
