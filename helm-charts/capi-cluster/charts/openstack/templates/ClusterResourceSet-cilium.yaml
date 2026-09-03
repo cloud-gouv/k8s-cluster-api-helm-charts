@@ -23,8 +23,12 @@ data:
       - cidr: "{{ $cidr }}"{{end}}
       # to limit which services can get IPs from which pools using label
       serviceSelector:
-        matchLabels:
-          app.kubernetes.io/name: ingress-nginx
+        matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+              - ingress-nginx
+              - envoy
     ---
     apiVersion: "cilium.io/v2alpha1"
     kind: CiliumL2AnnouncementPolicy
