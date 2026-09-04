@@ -26,9 +26,8 @@ data:
         matchExpressions:
           - key: app.kubernetes.io/name
             operator: In
-            values:
-              - ingress-nginx
-              - envoy
+            values:{{ range .Values.global.addons.cni.config.ipaddresspool.serviceNames | default (list "ingress-nginx") }}
+              - {{ . }}{{ end }}
     ---
     apiVersion: "cilium.io/v2alpha1"
     kind: CiliumL2AnnouncementPolicy
@@ -38,6 +37,9 @@ data:
       loadBalancerIPs: true
       externalIPs: true
       nodeSelector:
+        {{- with .Values.global.addons.cni.config.l2NodeSelector }}
+        {{- toYaml . | nindent 8 }}
+        {{- else }}
         matchExpressions:
           - key: node-role.kubernetes.io/control-plane
             operator: DoesNotExist
@@ -45,6 +47,7 @@ data:
             operator: In
             values:
              - "true"
+        {{- end }}
 ---
 apiVersion: addons.cluster.x-k8s.io/v1beta2
 kind: ClusterResourceSet
