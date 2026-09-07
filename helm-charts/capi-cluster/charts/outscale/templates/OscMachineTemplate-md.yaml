@@ -2,7 +2,7 @@
 
 {{/* iterate over the workers */}}
 {{- range $name, $pool := $.Values.workers }}
-  {{ if $pool }}
+  {{- if $pool }}
   {{- $isMultiaz := $.Values.multiaz }}
   {{- $subregions := (include "outscale.subregionsLabels" $.Values | fromYamlArray) }}
 
@@ -13,6 +13,12 @@
     {{- $poolName := printf "%s%s" $name (ternary (printf "-%s" $subregion) "" $isMultiaz) }}
     {{- $subregionName := ternary (printf "%s%s" $.Values.region $subregion) $pool.subregionName $isMultiaz }}
     {{- $subnetName := ternary (printf "%s-subnet-kw-%s" $.Values.global.clusterName $subregion) "" $isMultiaz }}
+    {{/* we want to know what is the region whether we're multiaz or not */}}
+    {{- $subRegionRegion := "" }}
+    {{- if hasKey $pool "subregionName" }}
+      {{- $subRegionRegion = trunc ((sub (len $pool.subregionName) 1) | int) $pool.subregionName }}
+    {{- end }}
+    {{- $region := ternary $.Values.region $subRegionRegion $isMultiaz }}
 
     {{- $generatedName := include "outscale.generatedName" (dict
       "clusterName" $.Values.global.clusterName
@@ -52,7 +58,17 @@ spec:
           {{- if hasKey $pool "imageId" }}
           imageId: {{ $pool.imageId }}
           {{- end }}
+          {{- if $pool.gpu }}
+          subregionMode: random
+          subregionNames:
+            - {{ $region }}a
+            - {{ $region }}b
+            - {{ $region }}c
+          fGPU:
+            model: {{ $pool.gpu }}
+          {{- else }}
           subregionName: {{ $subregionName }}
+          {{- end }}
           {{- if $subnetName }}
           subnetName: {{ $subnetName }}
           {{- end }}
@@ -67,6 +83,10 @@ spec:
         {{- with $pool.volumes }}
         volumes: {{- toYaml . | nindent 10 }}
         {{- end }}
+    {{- if $pool.gpu }}
+    {{/* We need only 1 template for all regions, get out of the loop */}}
+    {{- break }}
+    {{- end }}
   {{- end }}
   {{- end }}
 {{- end }}
