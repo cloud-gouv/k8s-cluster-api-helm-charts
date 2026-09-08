@@ -13,12 +13,6 @@
     {{- $poolName := printf "%s%s" $name (ternary (printf "-%s" $subregion) "" $isMultiaz) }}
     {{- $subregionName := ternary (printf "%s%s" $.Values.region $subregion) $pool.subregionName $isMultiaz }}
     {{- $subnetName := ternary (printf "%s-subnet-kw-%s" $.Values.global.clusterName $subregion) "" $isMultiaz }}
-    {{/* we want to know what is the region whether we're multiaz or not */}}
-    {{- $subRegionRegion := "" }}
-    {{- if hasKey $pool "subregionName" }}
-      {{- $subRegionRegion = trunc ((sub (len $pool.subregionName) 1) | int) $pool.subregionName }}
-    {{- end }}
-    {{- $region := ternary $.Values.region $subRegionRegion $isMultiaz }}
 
     {{- $generatedName := include "outscale.generatedName" (dict
       "clusterName" $.Values.global.clusterName
@@ -59,11 +53,14 @@ spec:
           imageId: {{ $pool.imageId }}
           {{- end }}
           {{- if $pool.gpu }}
+          {{- if not $isMultiaz }}
+            {{- fail "fGPU is only supported in multiaz configuration" }}
+          {{- end }}
           subregionMode: random
           subregionNames:
-            - {{ $region }}a
-            - {{ $region }}b
-            - {{ $region }}c
+            - {{ $.Values.region }}a
+            - {{ $.Values.region }}b
+            - {{ $.Values.region }}c
           fGPU:
             model: {{ $pool.gpu }}
           {{- else }}
