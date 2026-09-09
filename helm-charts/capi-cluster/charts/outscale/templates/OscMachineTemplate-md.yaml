@@ -2,7 +2,7 @@
 
 {{/* iterate over the workers */}}
 {{- range $name, $pool := $.Values.workers }}
-  {{ if $pool }}
+  {{- if $pool }}
   {{- $isMultiaz := $.Values.multiaz }}
   {{- $subregions := (include "outscale.subregionsLabels" $.Values | fromYamlArray) }}
 
@@ -52,7 +52,20 @@ spec:
           {{- if hasKey $pool "imageId" }}
           imageId: {{ $pool.imageId }}
           {{- end }}
+          {{- if $pool.gpu }}
+          {{- if not $isMultiaz }}
+            {{- fail "fGPU is only supported in multiaz configuration" }}
+          {{- end }}
+          subregionMode: random
+          subregionNames:
+            - {{ $.Values.region }}a
+            - {{ $.Values.region }}b
+            - {{ $.Values.region }}c
+          fGPU:
+            model: {{ $pool.gpu }}
+          {{- else }}
           subregionName: {{ $subregionName }}
+          {{- end }}
           {{- if $subnetName }}
           subnetName: {{ $subnetName }}
           {{- end }}
@@ -67,6 +80,10 @@ spec:
         {{- with $pool.volumes }}
         volumes: {{- toYaml . | nindent 10 }}
         {{- end }}
+    {{- if $pool.gpu }}
+    {{/* We need only 1 template for all regions, get out of the loop */}}
+    {{- break }}
+    {{- end }}
   {{- end }}
   {{- end }}
 {{- end }}

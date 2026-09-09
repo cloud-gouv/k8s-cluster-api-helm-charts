@@ -33,8 +33,8 @@
       {{- $loadbalancer_ranges = slice $subnets 6 9 -}}
     {{- else }}
       {{- $controlplane_ranges = list (index $subnets 0) -}}
-      {{- $worker_ranges = list (index $subnets 1) -}}  
-      {{- $loadbalancer_ranges = list (index $subnets 2) -}}  
+      {{- $worker_ranges = list (index $subnets 1) -}}
+      {{- $loadbalancer_ranges = list (index $subnets 2) -}}
     {{- end }}
 {{- end }}
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -88,7 +88,7 @@ spec:
     natServices:
     {{- range $s := $subregions }}
       - name: {{ $.Values.global.clusterName }}-nat-{{ $s }}
-        subregionName: {{ $region }}{{ $s }} 
+        subregionName: {{ $region }}{{ $s }}
     {{- end }}
     net:
       name: {{ .Values.global.clusterName }}-net
@@ -118,7 +118,7 @@ spec:
     {{- end }}
     subregions:
     {{- range $s := $subregions }}
-      - {{ $region }}{{ $s }}  
+      - {{ $region }}{{ $s }}
     {{- end }}
     {{- if hasKey .Values "apiAllowedCidr" }}
     {{- if gt (len .Values.apiAllowedCidr) 0 }}
@@ -347,3 +347,6 @@ spec:
 {{ toYaml $loadbalancer_ranges | indent 10 }}
       {{ end -}}
       tag: OscK8sMainSG
+    {{- with .Values.extraSecurityGroups -}}
+    {{ tpl (. | toYaml) $ | nindent 4}}
+    {{- end -}}

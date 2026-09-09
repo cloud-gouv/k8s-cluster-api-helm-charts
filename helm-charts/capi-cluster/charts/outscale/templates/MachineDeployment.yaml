@@ -21,7 +21,9 @@
       "replicas" $pool.replicas
       "multiaz" $isMultiaz
     ) }}
-
+    {{- if hasKey $pool "gpu" }}
+      {{- $computedReplicas = $pool.replicas }}
+    {{- end }}
     {{- $generatedName := include "outscale.generatedName" (dict
       "clusterName" $clusterName
       "nodeType" "worker"
@@ -66,6 +68,10 @@ spec:
         kind: OscMachineTemplate
         name: {{ $generatedName }}
       version: {{ $pool.version }}
+  {{- if $pool.gpu }}
+    {{/* We need only 1 machinedeployment for all regions, get out of the loop */}}
+    {{- break }}
+  {{- end }}
   {{- end }}
   {{- end }}
 {{- end }}
