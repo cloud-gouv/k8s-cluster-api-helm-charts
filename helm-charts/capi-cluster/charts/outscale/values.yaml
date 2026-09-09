@@ -119,6 +119,8 @@ extraSecurityGroups: []
 #  - description: App LB  securityGroup
 #    name: app-lb
 #    authoritative: true
+#    roles:
+#    - loadbalancer
 #    securityGroupRules:
 #    - name: icmp-lb-in
 #      flow: Inbound
