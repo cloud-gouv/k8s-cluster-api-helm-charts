@@ -46,7 +46,7 @@ machinehealthcheck:
 #    network: workers
 #    subnet: workers # optional, defaults to "workers"
 #    # reserved ip/port outside cluster-api
-#    ingressServerFixedIP: 192.168.101.11
+#    ingressServerFixedIP: 192.168.101.11 or gatewayServerFixedIP: 192.168.101.11
 #    failureDomain: AZ1
 #    serverGroup:
 #      filter:
