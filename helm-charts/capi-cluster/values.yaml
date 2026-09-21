@@ -23,6 +23,29 @@ global:
       type: cilium
       version: 1.15.8
       config: {}
+      #config:
+      #  ipaddresspool:
+      #    layer: "l2"
+      #    name: "first-pool"
+      #    addresses:
+      #      - 192.168.101.11/32
+      #    # optional: app.kubernetes.io/name values allowed to get an IP
+      #    # from this pool. defaults to ingress-nginx.
+      #    serviceNames:
+      #      - ingress-nginx
+      #      - envoy
+      #  # optional: nodes announcing the LoadBalancer IPs (L2 policy).
+      #  # defaults to any non control-plane node labeled ingress-ready=true,
+      #  # which suits ingress-nginx. with envoy gateway, target the nodes
+      #  # running the envoy proxies instead, e.g.:
+      #  l2NodeSelector:
+      #    matchExpressions:
+      #      - key: node-role.kubernetes.io/control-plane
+      #        operator: DoesNotExist
+      #      - key: envoy-ready
+      #        operator: In
+      #        values:
+      #          - "true"
     ccm:
       enabled: true
       type: outscale    # or openstack
@@ -265,7 +288,7 @@ openstack: {}
 #      network: workers
 #      subnet: workers # optional, defaults to "workers"
 #      # reserved ip/port outside cluster-api
-#      ingressServerFixedIP: 192.168.101.11
+#      ingressServerFixedIP: 192.168.101.11 or gatewayServerFixedIP: 192.168.101.11
 #      failureDomain: AZ1
 #      serverGroup:
 #        filter:

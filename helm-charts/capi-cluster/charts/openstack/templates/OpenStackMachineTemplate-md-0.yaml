@@ -45,7 +45,11 @@ spec:
                 filter:
                   name: {{ $pool.subnet | default "workers" }}
           allowedAddressPairs:
+            {{- if $pool.gatewayServerFixedIP }}
+            - ipAddress: {{ $pool.gatewayServerFixedIP }}
+            {{- else }}
             - ipAddress: {{ $pool.ingressServerFixedIP }}
+            {{- end }}
       {{- if $pool.rootVolume }}
       rootVolume:
         sizeGiB: {{ $pool.rootVolume.sizeGiB }}
