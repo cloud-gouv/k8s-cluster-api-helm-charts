@@ -160,6 +160,17 @@ spec:
                           values:
                           - kube-dns
 
+      - path: /etc/post-kubeadm-commands/30-kube-system-ns-tolerations.sh
+        owner: root:root
+        permissions: "0755"
+        content: |
+          #!/bin/bash
+          set -euo pipefail
+
+          /usr/bin/kubectl --kubeconfig=/etc/kubernetes/admin.conf \
+          annotate namespace kube-system scheduler.alpha.kubernetes.io/tolerationsWhitelist='[{"key":"node.kubernetes.io/not-ready","operator":"Exists","effect":"NoExecute","tolerationSeconds":300},{"key":"node.kubernetes.io/unreachable","operator":"Exists","effect":"NoExecute","tolerationSeconds":300}]' \
+          --overwrite
+
       - path: /etc/post-kubeadm-commands/20-coredns-anti-affinity.sh
         owner: root:root
         permissions: "0755"
