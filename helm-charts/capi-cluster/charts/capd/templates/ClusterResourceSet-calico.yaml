@@ -1,0 +1,52 @@
+{{ if and .Values.global.addons.metallb.enabled .Values.global.addons.metallb.config.ipaddresspool -}}
+#
+#  ClusterResourceSet: addconfiguration in workload cluster
+#
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    note: generated
+  labels:
+    type: generated
+  name: {{ .Values.global.clusterName }}-metallb-config
+  namespace: default
+data:
+  metallbConfig: |
+    apiVersion: metallb.io/v1beta1
+    kind: IPAddressPool
+    metadata:
+      name: {{ .Values.global.addons.metallb.config.ipaddresspool.name }}
+      namespace: metallb
+    spec:
+      # A list of IP address ranges over which MetalLB has
+      # authority. You can list multiple ranges in a single pool, they
+      # will all share the same settings. Each range can be either a
+      # CIDR prefix, or an explicit start-end range of IPs.
+      addresses: {{ .Values.global.addons.metallb.config.ipaddresspool.addresses }}
+    ---
+    apiVersion: metallb.io/v1beta1
+    kind: L2Advertisement
+    metadata:
+      name: {{ .Values.global.addons.metallb.config.ipaddresspool.layer }}
+      namespace: metallb
+    spec:
+      ipAddressPools:
+      - {{ .Values.global.addons.metallb.config.ipaddresspool.name }}
+---
+apiVersion: addons.cluster.x-k8s.io/v1beta1
+kind: ClusterResourceSet
+metadata:
+  name: {{ .Values.global.clusterName }}-metallb-config
+  namespace: default
+spec:
+  clusterSelector:
+    matchLabels:
+      metallb.enabled: {{  printf "%t" .Values.global.addons.metallb.enabled | quote }}
+      cluster.x-k8s.io/name: {{ .Values.global.clusterName }}
+  resources:
+  - kind: ConfigMap
+    name: {{ .Values.global.clusterName }}-metallb-config
+  strategy: Reconcile
+{{ end -}}

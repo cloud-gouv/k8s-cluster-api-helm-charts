@@ -1,0 +1,20 @@
+{{ if .Values.machinehealthcheck.enabled -}}
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  name: {{ .Values.global.clusterName }}-node-unhealthy-5m
+spec:
+  clusterName: {{ .Values.global.clusterName }}
+  maxUnhealthy: 100%
+  nodeStartupTimeout: 10m0s
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: {{ .Values.global.clusterName }}
+  unhealthyConditions:
+    - type: Ready
+      status: Unknown
+      timeout: 5m0s
+    - type: Ready
+      status: "False"
+      timeout: 5m0s
+{{ end -}}
