@@ -22,27 +22,6 @@ spec:
   chartName: osc-bsu-csi-driver
   version: {{ $version }}
   namespace: kube-system
-  {{/* the format of the Values changes with version 2.0.0 of the chart */}}
-  {{- if semverCompare "<2.0.0" $version }}
-  valuesTemplate: |
-    {{ if $.Values.dockerConfig.enabled -}}
-    imagePullSecrets:
-      - name: regcred
-    {{ end -}}
-
-    enableVolumeResizing: true
-    enableVolumeSnapshot: {{ $.Values.enableVolumeSnapshot }}
-
-    credentials:
-      secretName: osc-bsu-csi
-
-    {{- if $.Values.global.https_proxy }}
-    httpsProxy: {{ $.Values.global.https_proxy | quote }}
-    {{- end }}
-    {{- if $.Values.global.no_proxy }}
-    noProxy: "{{ $.Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
-    {{- end }}
-  {{- else }} {{/* format for versions >=2.0.0 */}}
   valuesTemplate: |
     {{ if $.Values.dockerConfig.enabled -}}
     imagePullSecrets:
@@ -76,6 +55,5 @@ spec:
     {{- if $.Values.global.no_proxy }}
     noProxy: "{{ $.Values.global.no_proxy }},{{`{{ ( index .Cluster.spec.clusterNetwork.pods.cidrBlocks 0 ) }}`}},{{`{{ (index .Cluster.spec.clusterNetwork.services.cidrBlocks 0 ) }}`}},.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,16,192.168.0.0/16"
     {{- end }}
-  {{- end }}
 {{- end }}
 {{ end -}}
