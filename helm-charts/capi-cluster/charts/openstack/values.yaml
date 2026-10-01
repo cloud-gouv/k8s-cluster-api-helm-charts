@@ -56,6 +56,14 @@ machinehealthcheck:
 #        value: "true"
 #    nodeLabels:
 #      ingress-ready: true
+#    # node pool of the workers, set as label node-restriction.kubernetes.io/node-pool
+#    # used by namespaces annotation scheduler.alpha.kubernetes.io/node-selector
+#    nodePool: default
+#    # optional taints set at node registration
+#    taints:
+#      - key: node-restriction.kubernetes.io/node-pool
+#        value: default
+#        effect: NoSchedule
 #    #rootVolume: {}
 #    #additionalBlockDevices: {}
 #workersExtraSecurityGroups:

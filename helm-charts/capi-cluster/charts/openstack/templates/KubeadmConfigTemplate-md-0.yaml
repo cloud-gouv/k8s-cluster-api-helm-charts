@@ -41,6 +41,10 @@ spec:
             {{- end }}
             - name: provider-id
               value: {{`"openstack:///{{ instance_id }}"`}}
+          {{- with $pool.taints }}
+          taints:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
         #
         # Here we specify the directory that contains the patch files
         # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
