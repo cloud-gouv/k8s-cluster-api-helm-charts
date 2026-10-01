@@ -30,6 +30,9 @@ spec:
     imagePullSecrets:
      - name: regcred
     {{- end }}
+    operator:
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: ""
     kubeProxyReplacement: true
     k8sServiceHost: {{`{{ .Cluster.spec.controlPlaneEndpoint.host }}`}}
     k8sServicePort: {{`{{ .Cluster.spec.controlPlaneEndpoint.port }}`}}
