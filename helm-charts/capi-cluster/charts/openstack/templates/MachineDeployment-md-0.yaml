@@ -27,6 +27,12 @@ spec:
         maxUnavailable: 0
       type: RollingUpdate
   template:
+    {{- if $pool.nodePool }}
+    metadata:
+      labels:
+        # propagated by cluster-api to the Node, the kubelet can not modify it (NodeRestriction)
+        node-restriction.kubernetes.io/node-pool: {{ $pool.nodePool }}
+    {{- end }}
     spec:
       bootstrap:
         configRef:
