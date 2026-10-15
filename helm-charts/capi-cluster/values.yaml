@@ -240,6 +240,7 @@ global:
         - kube-system
         - ingress-nginx
         - monitoring
+        - cluster-api-provider-outscale-system
 
 #
 # reference to openstack helm values
