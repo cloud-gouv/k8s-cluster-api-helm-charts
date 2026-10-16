@@ -37,6 +37,13 @@ spec:
             hostPath: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
             mountPath: "/etc/kubernetes/kube-apiserver-admission-pss.yaml"
             readOnly: true
+          {{- if .Values.global.PodNodeSelector.enabled }}
+          - name: "admission-podnodeselector"
+            pathType: "File"
+            hostPath: "/etc/kubernetes/kube-apiserver-admission-podnodeselector.yaml"
+            mountPath: "/etc/kubernetes/kube-apiserver-admission-podnodeselector.yaml"
+            readOnly: true
+          {{- end }}
         {{- with .Values.global.apiServer.certSANs }}
         certSANs:
         {{- toYaml . | nindent 10 }}
@@ -417,6 +424,30 @@ spec:
               {{- with .Values.global.PodSecurityConfiguration }}
               {{- tpl (. | toYaml) $ | nindent 14 }}
               {{- end }}
+          {{- if .Values.global.PodNodeSelector.enabled }}
+          - name: PodNodeSelector
+            path: /etc/kubernetes/kube-apiserver-admission-podnodeselector.yaml
+          {{- end }}
+      {{- if .Values.global.PodNodeSelector.enabled }}
+      - path: /etc/kubernetes/kube-apiserver-admission-podnodeselector.yaml
+        owner: root:root
+        permissions: "0444"
+        content: |
+          podNodeSelectorPluginConfig:
+            {{- toYaml .Values.global.PodNodeSelector.podNodeSelectorPluginConfig | nindent 12 }}
+      # kube-system hosts the DaemonSets of every node pool (cni, csi...):
+      # it must not inherit clusterDefaultNodeSelector
+      - path: /etc/post-kubeadm-commands/05-kube-system-node-selector.sh
+        owner: root:root
+        permissions: "0755"
+        content: |
+          #!/bin/bash
+          set -euo pipefail
+
+          /usr/bin/kubectl --kubeconfig /etc/kubernetes/admin.conf \
+            annotate namespace kube-system --overwrite \
+            scheduler.alpha.kubernetes.io/node-selector=""
+      {{- end }}
 
   machineTemplate:
     spec:

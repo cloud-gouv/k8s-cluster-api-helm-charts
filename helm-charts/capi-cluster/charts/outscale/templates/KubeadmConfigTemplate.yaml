@@ -22,8 +22,12 @@ spec:
               value: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
             {{- with $pool.nodeLabels }}
             - name: node-labels
-              values: "{{ range $i, $k := (keys . | sortAlpha) }}{{ if ne $i 0 }},{{ end }}{{ $k }}={{ index $pool.nodeLabels $k }}{{ end }}"
+              value: "{{ range $i, $k := (keys . | sortAlpha) }}{{ if ne $i 0 }},{{ end }}{{ $k }}={{ index $pool.nodeLabels $k }}{{ end }}"
             {{- end }}
+          {{- with $pool.taints }}
+          taints:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
         #
         # Here we specify the directory that contains the patch files
         # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
