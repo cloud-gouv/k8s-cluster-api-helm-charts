@@ -49,6 +49,9 @@ spec:
       - name: regcred
     {{ end -}}
 
+    controller:
+      tolerateAllTaints: false
+
     driver:
       enableVolumeSnapshot: {{ $.Values.enableVolumeSnapshot }}
       enableVolumeSnapshotExports: {{ $.Values.enableVolumeSnapshotExports }}
