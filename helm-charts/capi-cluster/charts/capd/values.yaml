@@ -1,0 +1,18 @@
+machinehealthcheck:
+  enabled: false
+
+addons:
+  cni: {}
+  ccm: {}
+  metallb: {}
+  ingress: {}
+  certmanager: {}
+  csi: {}
+#controlplane:
+#  version: v1.29.4
+#  replicas: 1
+#
+#workers:
+#  - name: md-0
+#    version: v1.29.4
+#    replicas: 1

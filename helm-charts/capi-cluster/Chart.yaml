@@ -17,3 +17,7 @@ dependencies:
     version: 1.1.0
     repository: 'file://charts/outscale-clusterclass'
     condition: provider.outscale-clusterclass
+  - name: capd
+    version: 1.0.0
+    repository: 'file://charts/capd'
+    condition: provider.capd
