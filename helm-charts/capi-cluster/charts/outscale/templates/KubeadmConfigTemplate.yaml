@@ -56,9 +56,12 @@ spec:
           content: |
             apiVersion: kubelet.config.k8s.io/v1beta1
             kind: KubeletConfiguration
-            {{- with $.Values.global.KubeletConfiguration }}
-            {{- tpl (. | toYaml) $ | nindent 12 }}
-            {{- end }}
+            {{- include "outscale.kubeletConfiguration" (dict
+                  "root" $
+                  "vmType" $pool.vmType
+                  "enableCpu" (dig "kubeletDynamicReservation" "cpu" false $pool)
+                  "enableMemory" (dig "kubeletDynamicReservation" "memory" false $pool)
+                ) | nindent 12 }}
         - path: /etc/pre-kubeadm-commands/00-wait_endpoint.sh
           owner: root:root
           permissions: "0755"
