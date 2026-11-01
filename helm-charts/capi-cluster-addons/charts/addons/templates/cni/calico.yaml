@@ -36,7 +36,10 @@ spec:
       calicoNetwork:
         bgp: Enabled
         {{- if not $.Values.global.addons.cni.mtu.auto }}
-        mtu: {{ $.Values.global.addons.cni.mtu.value }}
+        {{`{{- $mtu := index .Cluster.metadata.labels "cni.mtu" | default "`}}{{ $.Values.global.addons.cni.mtu.value }}{{`" }}`}}
+        {{`{{- if ne $mtu "auto" }}`}}
+        mtu: {{`{{ $mtu }}`}}
+        {{`{{- end }}`}}
         {{- end }}
         #  Helm render the template as a raw string with \{\{`
         ipPools:{{`{{range $i, $cidr := .Cluster.spec.clusterNetwork.pods.cidrBlocks }}

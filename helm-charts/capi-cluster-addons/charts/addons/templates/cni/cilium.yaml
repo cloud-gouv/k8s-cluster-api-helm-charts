@@ -45,7 +45,10 @@ spec:
           - "{{ $cidr }}"{{end}}`}}
         clusterPoolIPv4MaskSize: 24
     {{- if not $.Values.global.addons.cni.mtu.auto }}
-    MTU: {{ $.Values.global.addons.cni.mtu.value }}
+    {{`{{- $mtu := index .Cluster.metadata.labels "cni.mtu" | default "`}}{{ $.Values.global.addons.cni.mtu.value }}{{`" }}`}}
+    {{`{{- if ne $mtu "auto" }}`}}
+    MTU: {{`{{ $mtu }}`}}
+    {{`{{- end }}`}}
     {{- end }}
     gatewayAPI:
       enabled: false

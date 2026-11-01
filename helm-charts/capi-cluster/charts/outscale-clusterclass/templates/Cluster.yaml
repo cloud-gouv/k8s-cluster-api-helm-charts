@@ -10,6 +10,11 @@ metadata:
     cni.enabled: {{ printf "%t" .Values.global.addons.cni.enabled | quote }}
     cni.type: {{ .Values.global.addons.cni.type | quote }}
     cni.version: {{ .Values.global.addons.cni.version | quote }}
+    {{- if .Values.global.addons.cni.mtu.auto }}
+    cni.mtu: "auto"
+    {{- else if .Values.global.addons.cni.mtu.value }}
+    cni.mtu: {{ .Values.global.addons.cni.mtu.value | quote }}
+    {{- end }}
     {{- end }}
     {{- if .Values.global.addons.ccm.enabled }}
     ccm.enabled: {{  printf "%t" .Values.global.addons.ccm.enabled | quote }}

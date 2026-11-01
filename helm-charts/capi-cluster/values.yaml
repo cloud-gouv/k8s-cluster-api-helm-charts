@@ -22,6 +22,11 @@ global:
       enabled: true
       type: cilium
       version: 1.15.8
+      mtu:
+        # label the cluster with cni.mtu=auto so that the CNI detects the MTU itself
+        auto: false
+        # label the cluster with cni.mtu=<value>, ignored when auto is true.
+        value: ""
       config: {}
       #config:
       #  ipaddresspool:
