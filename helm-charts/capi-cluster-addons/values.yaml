@@ -14,6 +14,11 @@ global:
       # type: cilium
       # versions:
       #   - 1.15.19
+      mtu:
+        # let the CNI detect the MTU itself instead of setting value
+        auto: false
+        # MTU of the underlying network, ignored when auto is true
+        value: 1350
     ccm:
       enabled: true
       type: openstack

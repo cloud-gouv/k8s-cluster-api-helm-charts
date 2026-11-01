@@ -44,8 +44,9 @@ spec:
         clusterPoolIPv4PodCIDRList:{{`{{range $i, $cidr := .Cluster.spec.clusterNetwork.pods.cidrBlocks }}
           - "{{ $cidr }}"{{end}}`}}
         clusterPoolIPv4MaskSize: 24
-    extraArgs:
-      - "--mtu=1350"
+    {{- if not $.Values.global.addons.cni.mtu.auto }}
+    MTU: {{ $.Values.global.addons.cni.mtu.value }}
+    {{- end }}
     gatewayAPI:
       enabled: false
     # lb
