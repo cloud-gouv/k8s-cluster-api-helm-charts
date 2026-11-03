@@ -220,7 +220,7 @@ global:
         quota-backend-bytes: "8589934592"
         tls-min-version: "TLS1.2"
         v2-deprecation: "gone"
-
+        listen-metrics-urls: "http://0.0.0.0:2381"
   #
   # configure Pod Security Standards
   # see: https://kubernetes.io/docs/concepts/security/pod-security-standards/
