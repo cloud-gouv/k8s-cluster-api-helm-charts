@@ -2,6 +2,7 @@ provider:
   openstack: false
   outscale: false
   outscale-clusterclass: false
+  capd: false
 
 global:
   http_proxy: ""
@@ -249,6 +250,11 @@ global:
     enabled: false
     podNodeSelectorPluginConfig:
       clusterDefaultNodeSelector: "node-restriction.kubernetes.io/node-pool=default"
+
+#
+# reference to capd helm values
+#
+capd: {}
 
 #
 # reference to openstack helm values
