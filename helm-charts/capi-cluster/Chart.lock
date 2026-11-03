@@ -1,12 +1,12 @@
 dependencies:
 - name: openstack
   repository: file://charts/openstack
-  version: 1.0.0
+  version: 1.4.0
 - name: outscale
   repository: file://charts/outscale
-  version: 1.0.1
+  version: 1.3.0
 - name: outscale-clusterclass
   repository: file://charts/outscale-clusterclass
-  version: 1.0.0
-digest: sha256:a34f8d8ab443ee99acc35a9698f7362cb9abf358e5ed827c48692dcb6133f50f
-generated: "2025-03-13T23:02:23.259826966+01:00"
+  version: 1.2.0
+digest: sha256:5066dfa86a24cc0a1e8b118cf1f57d9fbedfcd83d02361ec58f264b8a6cee5e5
+generated: "2026-11-01T23:23:51.4913376+01:00"

@@ -14,6 +14,12 @@ global:
       # type: cilium
       # versions:
       #   - 1.15.19
+      mtu:
+        # let the CNI detect the MTU itself on all clusters, takes precedence over the cni.mtu label
+        auto: false
+        # MTU of the underlying network, used by clusters without a cni.mtu label.
+        # A cluster overrides it with cni.mtu=auto or cni.mtu=<int> (see capi-cluster)
+        value: 1350
     ccm:
       enabled: true
       type: openstack
