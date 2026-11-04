@@ -2,6 +2,7 @@ dockerConfig:
   enabled: false
 enableVolumeSnapshot: false
 enableVolumeSnapshotExports: false
+updateIOPSOnResize: assume
 
 #addons: {}
 #  cni: {}
