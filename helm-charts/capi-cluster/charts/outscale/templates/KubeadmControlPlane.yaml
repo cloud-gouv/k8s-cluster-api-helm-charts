@@ -144,9 +144,12 @@ spec:
         content: |
           apiVersion: kubelet.config.k8s.io/v1beta1
           kind: KubeletConfiguration
-          {{- with .Values.global.KubeletConfiguration }}
-          {{- tpl (. | toYaml) $ | nindent 10 }}
-          {{- end }}
+          {{- include "outscale.kubeletConfiguration" (dict
+                "root" $
+                "vmType" .Values.controlplane.vmType
+                "enableCpu" (dig "kubeletDynamicReservation" "cpu" false .Values.controlplane)
+                "enableMemory" (dig "kubeletDynamicReservation" "memory" false .Values.controlplane)
+              ) | nindent 10 }}
 
       - path: /etc/kubernetes/patches/coredns-anti-affinity.yaml
         owner: root:root

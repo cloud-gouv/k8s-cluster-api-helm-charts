@@ -24,6 +24,10 @@ machinehealthcheck:
 #  replicas: 1
 #  image: ubuntu-2204-kube-v1.29.4
 #  flavor: CO1.2
+#  # size the kubelet reservations from the flavor instead of global.KubeletConfiguration
+#  kubeletDynamicReservation:
+#    cpu: false     # computes kubeReserved.cpu and systemReserved.cpu
+#    memory: false  # computes kubeReserved.memory and systemReserved.memory
 #  network: controlplane
 #  subnet: controlplane # optional, defaults to "controlplane"
 #  # reserved ip/port outside cluster-api
@@ -43,6 +47,10 @@ machinehealthcheck:
 #    replicas: 0
 #    image: ubuntu-2204-kube-v1.29.4
 #    flavor: CO1.2
+#    # size the kubelet reservations from the flavor instead of global.KubeletConfiguration
+#    kubeletDynamicReservation:
+#      cpu: false     # computes kubeReserved.cpu and systemReserved.cpu
+#      memory: false  # computes kubeReserved.memory and systemReserved.memory
 #    network: workers
 #    subnet: workers # optional, defaults to "workers"
 #    # reserved ip/port outside cluster-api

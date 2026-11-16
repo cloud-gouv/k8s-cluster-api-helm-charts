@@ -46,6 +46,10 @@ apiAllowedCidr:
 #  version: v1.29.5
 #  replicas: 1
 #  vmType: tinav5.c2r4p3
+#  # size the kubelet reservations from the vmType instead of global.KubeletConfiguration
+#  kubeletDynamicReservation:
+#    cpu: false     # computes kubeReserved.cpu and systemReserved.cpu
+#    memory: false  # computes kubeReserved.memory and systemReserved.memory
 #  subregionName: eu-west-2a
 ### choose on the key below : image or imageId, not both
 #  image: ubuntu-22.04-2204-kubernetes-v1.29.1-2024-02-19
@@ -67,6 +71,10 @@ apiAllowedCidr:
 #    version: v1.29.5
 #    replicas: 0
 #    vmType: tinav5.c2r4p3
+#    # size the kubelet reservations from the vmType instead of global.KubeletConfiguration
+#    kubeletDynamicReservation:
+#      cpu: false     # computes kubeReserved.cpu and systemReserved.cpu
+#      memory: false  # computes kubeReserved.memory and systemReserved.memory
 #    gpu: nvidia-p6
 #    subregionName: eu-west-2a
 ### choose on the key below : image or imageId, not both
