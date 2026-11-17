@@ -14,7 +14,7 @@
     {{- $poolName := printf "%s%s" $name (ternary (printf "-%s" $subregion) "" $isMultiaz) }}
     {{- $mdName := printf "%s-%s%s" $clusterName $name (ternary (printf "-%s" $subregion) "" $isMultiaz) }}
 
-    {{- $bootstrapName := printf "%s-%s" $clusterName $name }}
+    {{- $bootstrapName := include "outscale.kubeadmConfigTemplateName" (dict "root" $ "name" $name "pool" $pool) }}
 
     {{- $computedReplicas := include "outscale.computeReplicas" (dict
       "subregion" $subregion
