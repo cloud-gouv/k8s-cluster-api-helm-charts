@@ -95,6 +95,24 @@ Define Loadbalancer name : outscale limitation is max length 32
 {{- end }}
 {{- end }}
 
+{{/*
+Number of subregions (zones) used by the cluster.
+*/}}
+{{- define "outscale.zonesCount" -}}
+{{- if .Values.multiaz -}}
+3
+{{- else -}}
+1
+{{- end -}}
+{{- end }}
+
+{{/*
+CoreDNS replicas: one per zone, minimum 2.
+*/}}
+{{- define "outscale.corednsReplicas" -}}
+{{- max 2 (include "outscale.zonesCount" . | int) -}}
+{{- end }}
+
 {{- define "outscale.region" }}
 {{- if .multiaz }}
 {{ .region }}

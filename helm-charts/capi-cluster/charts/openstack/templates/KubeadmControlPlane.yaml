@@ -139,6 +139,7 @@ spec:
         permissions: "0644"
         content: |
           spec:
+            replicas: {{ include "openstack.corednsReplicas" . }}
             template:
               spec:
                 affinity:
@@ -152,6 +153,15 @@ spec:
                           operator: In
                           values:
                           - kube-dns
+                {{- if gt (include "openstack.zonesCount" . | int) 1 }}
+                topologySpreadConstraints:
+                - maxSkew: 1
+                  topologyKey: topology.kubernetes.io/zone
+                  whenUnsatisfiable: DoNotSchedule
+                  labelSelector:
+                    matchLabels:
+                      k8s-app: kube-dns
+                {{- end }}
 
       - path: /etc/post-kubeadm-commands/20-coredns-anti-affinity.sh
         owner: root:root
@@ -166,6 +176,10 @@ spec:
           /usr/bin/kubectl --kubeconfig /etc/kubernetes/admin.conf \
             -n kube-system patch deploy coredns --type=strategic \
             --patch-file /etc/kubernetes/patches/coredns-anti-affinity.yaml
+
+          /usr/bin/kubectl --kubeconfig /etc/kubernetes/admin.conf \
+            -n kube-system patch svc kube-dns --type=merge \
+            -p '{"spec":{"trafficDistribution":"PreferSameZone"}}'
 
       - path: /etc/pre-kubeadm-commands/10-containerd-restart.sh
         owner: root:root

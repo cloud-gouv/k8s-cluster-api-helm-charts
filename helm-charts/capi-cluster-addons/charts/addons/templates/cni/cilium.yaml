@@ -57,6 +57,9 @@ spec:
       enabled: true
     externalIPs:
       enabled: true
+    # honor EndpointSlice topology hints (e.g. kube-dns trafficDistribution: PreferSameZone)
+    loadBalancer:
+      serviceTopology: true
     {{- with $.Values.global.addons.cni.extraChartArgs -}}
     {{- toYaml . | nindent 4 }}
     {{- end }}
