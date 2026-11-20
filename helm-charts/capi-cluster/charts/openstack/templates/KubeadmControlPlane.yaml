@@ -139,6 +139,7 @@ spec:
         permissions: "0644"
         content: |
           spec:
+            replicas: 3
             template:
               spec:
                 affinity:
@@ -166,6 +167,10 @@ spec:
           /usr/bin/kubectl --kubeconfig /etc/kubernetes/admin.conf \
             -n kube-system patch deploy coredns --type=strategic \
             --patch-file /etc/kubernetes/patches/coredns-anti-affinity.yaml
+
+          /usr/bin/kubectl --kubeconfig /etc/kubernetes/admin.conf \
+            -n kube-system patch svc kube-dns --type=merge \
+            -p '{"spec":{"trafficDistribution":"PreferSameZone"}}'
 
       - path: /etc/pre-kubeadm-commands/10-containerd-restart.sh
         owner: root:root
