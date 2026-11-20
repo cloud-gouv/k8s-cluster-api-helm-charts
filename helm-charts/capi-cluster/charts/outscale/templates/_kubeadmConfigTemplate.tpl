@@ -1,0 +1,146 @@
+{{/*
+Spec of the KubeadmConfigTemplate of a worker pool.
+
+Usage: {{ include "outscale.kubeadmConfigTemplateSpec" (dict "root" $ "name" $name "pool" $pool) }}
+*/}}
+{{- define "outscale.kubeadmConfigTemplateSpec" -}}
+{{- $root := .root }}
+{{- $pool := .pool -}}
+spec:
+  template:
+    spec:
+      {{- if hasKey $root.Values.global.kubeadmConfigSpec "verbosity" }}
+      verbosity: {{ $root.Values.global.kubeadmConfigSpec.verbosity | default 1 }}
+      {{- end }}
+      joinConfiguration:
+        nodeRegistration:
+          imagePullPolicy: IfNotPresent
+          name: {{`"{{ ds.meta_data.local_hostname }}"`}}
+          kubeletExtraArgs:
+            - name: cloud-provider
+              value: external
+            - name: provider-id
+              value: {{`"aws:///{{ ds.meta_data.placement.availability_zone }}/{{ ds.meta_data.instance_id }}"`}}
+            {{- with $pool.nodeLabels }}
+            - name: node-labels
+              value: "{{ range $i, $k := (keys . | sortAlpha) }}{{ if ne $i 0 }},{{ end }}{{ $k }}={{ index $pool.nodeLabels $k }}{{ end }}"
+            {{- end }}
+          {{- with $pool.taints }}
+          taints:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        #
+        # Here we specify the directory that contains the patch files
+        # See: https://cluster-api.sigs.k8s.io/tasks/bootstrap/kubeadm-bootstrap/kubelet-config#use-kubeadms-kubeletconfiguration-patch-target
+        # See: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/control-plane-flags/#patches
+        #
+        patches:
+          directory: /etc/kubernetes/patches
+      preKubeadmCommands:
+        - mkdir -p /etc/pre-kubeadm-commands
+        - for script in $(find /etc/pre-kubeadm-commands/ -name '*.sh' -type f | sort);
+          do echo "Running script $script"; "$script"; done
+      postKubeadmCommands:
+        - mkdir -p /etc/post-kubeadm-commands
+        - for script in $(find /etc/post-kubeadm-commands/ -name '*.sh' -type f | sort);
+          do echo "Running script $script"; "$script"; done
+      files:
+        # Here we put a patch file for kubeletconfiguration target in strategic patchtype on nodes via KubeadmConfigSpec.files
+        # The naming convention of the patch file is kubeletconfiguration{suffix}+{patchtype}.yaml where {suffix} is an string and {patchtype} is one of the following: strategic, merge, json.
+        # {suffix} determines the order of the patch files. The patches are applied in the alpha-numerical order of the {suffix}.
+        #
+        # See https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/
+        #
+        - path: /etc/kubernetes/patches/kubeletconfiguration0+strategic.yaml
+          owner: "root:root"
+          permissions: "0644"
+          content: |
+            apiVersion: kubelet.config.k8s.io/v1beta1
+            kind: KubeletConfiguration
+            {{- include "outscale.kubeletConfiguration" (dict
+                  "root" $root
+                  "vmType" $pool.vmType
+                  "enableCpu" (dig "kubeletDynamicReservation" "cpu" false $pool)
+                  "enableMemory" (dig "kubeletDynamicReservation" "memory" false $pool)
+                ) | nindent 12 }}
+        - path: /etc/pre-kubeadm-commands/00-wait_endpoint.sh
+          owner: root:root
+          permissions: "0755"
+          content: |
+            #!/bin/bash
+            set +e
+            # Define the retry function
+            wait_and_retry() {
+              local retries="$1"
+              local wait="$2"
+              local command="$3"
+
+              $command
+              local exit_code=$?
+
+              if [[ $exit_code -ne 0 && $retries -gt 0 ]]; then
+                echo "# Wait $wait before retrying $retries : $command"
+                sleep $wait
+                wait_and_retry $(($retries - 1)) $wait "$command"
+              else
+                return $exit_code
+              fi
+            }
+            # wait endpoint is up
+            endpoint=""
+            [[ -f /run/kubeadm/kubeadm.yaml ]] && endpoint=$(grep "controlPlaneEndpoint" /run/kubeadm/kubeadm.yaml|awk ' {print $2 }' |sed -e 's/ //g;s/:.*//g')
+            [[ -f  /run/kubeadm/kubeadm-join-config.yaml ]] && endpoint=$(grep "apiServerEndpoint" /run/kubeadm/kubeadm-join-config.yaml |awk ' {print $2 }' |sed -e 's/ //g;s/:.*//g')
+            [[ -n "$endpoint" ]] && wait_and_retry 360 10 "host $endpoint"
+            # wait external access is up
+            external_url="github.com"
+            [[ -n "$external_url" ]] && wait_and_retry 360 10 "host $external_url"
+        - path: /etc/pre-kubeadm-commands/10-containerd-restart.sh
+          owner: root:root
+          permissions: "0700"
+          content: |
+            #!/bin/bash
+            #
+            # pre-kubadm-scripts
+            #
+            set -e
+            # apply containerd config before kubeadm
+            echo "## restart containerd"
+            systemctl daemon-reload
+            systemctl restart containerd
+        - path: /etc/apt/apt.conf.d/99proxy
+          owner: "root:root"
+          permissions: "0644"
+          content: |
+            Acquire {
+              {{- if $root.Values.global.http_proxy }}
+              http::Proxy {{ $root.Values.global.http_proxy | quote }};
+              {{- end }}
+              {{- if $root.Values.global.https_proxy }}
+              https::Proxy {{ $root.Values.global.https_proxy | quote }};
+              {{- end }}
+            }
+        - path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+          owner: "root:root"
+          permissions: "0644"
+          content: |
+            [Service]
+            {{- if $root.Values.global.http_proxy }}
+            Environment="HTTP_PROXY={{ $root.Values.global.http_proxy }}"
+            {{- end }}
+            {{- if $root.Values.global.https_proxy }}
+            Environment="HTTPS_PROXY={{ $root.Values.global.https_proxy }}"
+            {{- end }}
+            {{- if $root.Values.global.no_proxy }}
+            Environment="NO_PROXY=.svc,.svc.cluster,.svc.cluster.local,127.0.0.0/8,192.168.0.0/16,{{ $root.Values.global.pods.cidrBlocks }},{{ $root.Values.global.services.cidrBlocks }}"
+            {{- end }}
+{{- end }}
+
+{{/*
+Name of the KubeadmConfigTemplate of a worker pool: <cluster>-<pool>-<specHash>
+
+Usage: {{ include "outscale.kubeadmConfigTemplateName" (dict "root" $ "name" $name "pool" $pool) }}
+*/}}
+{{- define "outscale.kubeadmConfigTemplateName" -}}
+{{- $spec := include "outscale.kubeadmConfigTemplateSpec" . -}}
+{{- printf "%s-%s-%s" .root.Values.global.clusterName .name (sha256sum $spec | trunc 8) -}}
+{{- end }}

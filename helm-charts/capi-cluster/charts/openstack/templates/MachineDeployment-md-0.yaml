@@ -43,7 +43,7 @@ spec:
         configRef:
           apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
-          name: {{ $.Values.global.clusterName }}-{{ $name }}
+          name: {{ include "openstack.kubeadmConfigTemplateName" (dict "root" $ "name" $name "pool" $pool) }}
       clusterName: {{ $.Values.global.clusterName }}
       {{- if $pool.failureDomain }}
       failureDomain: {{ $pool.failureDomain }}
