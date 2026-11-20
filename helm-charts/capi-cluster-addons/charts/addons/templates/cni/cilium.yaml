@@ -60,6 +60,8 @@ spec:
     # honor EndpointSlice topology hints (e.g. kube-dns trafficDistribution: PreferSameZone)
     loadBalancer:
       serviceTopology: true
+    # restart cilium agents when the cilium-config ConfigMap changes
+    rollOutCiliumPods: true
     {{- with $.Values.global.addons.cni.extraChartArgs -}}
     {{- toYaml . | nindent 4 }}
     {{- end }}
