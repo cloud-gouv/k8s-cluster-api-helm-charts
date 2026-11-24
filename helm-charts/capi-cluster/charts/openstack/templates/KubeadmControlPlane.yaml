@@ -179,7 +179,7 @@ spec:
 
           /usr/bin/kubectl --kubeconfig /etc/kubernetes/admin.conf \
             -n kube-system patch svc kube-dns --type=merge \
-            -p '{"spec":{"trafficDistribution":"PreferSameZone"}}'
+            -p '{"spec":{"trafficDistribution":"PreferClose"}}'
 
       - path: /etc/pre-kubeadm-commands/10-containerd-restart.sh
         owner: root:root

@@ -57,7 +57,7 @@ spec:
       enabled: true
     externalIPs:
       enabled: true
-    # honor EndpointSlice topology hints (e.g. kube-dns trafficDistribution: PreferSameZone)
+    # honor EndpointSlice topology hints (e.g. kube-dns trafficDistribution: PreferClose)
     loadBalancer:
       serviceTopology: true
     # restart cilium agents when the cilium-config ConfigMap changes

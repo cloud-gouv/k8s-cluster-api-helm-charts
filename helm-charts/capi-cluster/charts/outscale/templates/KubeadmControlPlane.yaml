@@ -196,7 +196,7 @@ spec:
 
           /usr/bin/kubectl --kubeconfig /etc/kubernetes/admin.conf \
             -n kube-system patch svc kube-dns --type=merge \
-            -p '{"spec":{"trafficDistribution":"PreferSameZone"}}'
+            -p '{"spec":{"trafficDistribution":"PreferClose"}}'
 
       - path: /etc/pre-kubeadm-commands/00-wait_endpoint.sh
         owner: root:root
