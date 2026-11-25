@@ -151,7 +151,7 @@ spec:
                 "enableMemory" (dig "kubeletDynamicReservation" "memory" false .Values.controlplane)
               ) | nindent 10 }}
 
-      - path: /etc/kubernetes/patches/coredns-anti-affinity.yaml
+      - path: /etc/kubernetes/patches/coredns-ha.yaml
         owner: root:root
         permissions: "0644"
         content: |
@@ -180,7 +180,7 @@ spec:
                       k8s-app: kube-dns
                 {{- end }}
 
-      - path: /etc/post-kubeadm-commands/20-coredns-anti-affinity.sh
+      - path: /etc/post-kubeadm-commands/20-coredns-ha.sh
         owner: root:root
         permissions: "0755"
         content: |
@@ -192,7 +192,7 @@ spec:
 
           /usr/bin/kubectl --kubeconfig /etc/kubernetes/admin.conf \
             -n kube-system patch deploy coredns --type=strategic \
-            --patch-file /etc/kubernetes/patches/coredns-anti-affinity.yaml
+            --patch-file /etc/kubernetes/patches/coredns-ha.yaml
 
           /usr/bin/kubectl --kubeconfig /etc/kubernetes/admin.conf \
             -n kube-system patch svc kube-dns --type=merge \
