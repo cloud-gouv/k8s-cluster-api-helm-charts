@@ -151,11 +151,12 @@ spec:
                 "enableMemory" (dig "kubeletDynamicReservation" "memory" false .Values.controlplane)
               ) | nindent 10 }}
 
-      - path: /etc/kubernetes/patches/coredns-anti-affinity.yaml
+      - path: /etc/kubernetes/patches/coredns-ha.yaml
         owner: root:root
         permissions: "0644"
         content: |
           spec:
+            replicas: {{ include "outscale.corednsReplicas" . }}
             template:
               spec:
                 affinity:
@@ -169,8 +170,17 @@ spec:
                           operator: In
                           values:
                           - kube-dns
+                {{- if gt (include "outscale.zonesCount" . | int) 1 }}
+                topologySpreadConstraints:
+                - maxSkew: 1
+                  topologyKey: topology.kubernetes.io/zone
+                  whenUnsatisfiable: DoNotSchedule
+                  labelSelector:
+                    matchLabels:
+                      k8s-app: kube-dns
+                {{- end }}
 
-      - path: /etc/post-kubeadm-commands/20-coredns-anti-affinity.sh
+      - path: /etc/post-kubeadm-commands/20-coredns-ha.sh
         owner: root:root
         permissions: "0755"
         content: |
@@ -182,7 +192,11 @@ spec:
 
           /usr/bin/kubectl --kubeconfig /etc/kubernetes/admin.conf \
             -n kube-system patch deploy coredns --type=strategic \
-            --patch-file /etc/kubernetes/patches/coredns-anti-affinity.yaml
+            --patch-file /etc/kubernetes/patches/coredns-ha.yaml
+
+          /usr/bin/kubectl --kubeconfig /etc/kubernetes/admin.conf \
+            -n kube-system patch svc kube-dns --type=merge \
+            -p '{"spec":{"trafficDistribution":"PreferClose"}}'
 
       - path: /etc/pre-kubeadm-commands/00-wait_endpoint.sh
         owner: root:root

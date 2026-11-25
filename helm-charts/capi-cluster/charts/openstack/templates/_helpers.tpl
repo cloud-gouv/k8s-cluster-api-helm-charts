@@ -179,3 +179,24 @@ Usage: {{ include "openstack.kubeletConfiguration" (dict "root" $ "flavor" "CO1.
 {{- toYaml $config -}}
 {{- end -}}
 {{- end }}
+
+{{/*
+Number of distinct availability zones used by the cluster
+(controlplane.availabilityZones + workers failureDomain).
+*/}}
+{{- define "openstack.zonesCount" -}}
+{{- $zones := .Values.controlplane.availabilityZones | default list -}}
+{{- range $pool := .Values.workers -}}
+{{- with $zone := ($pool).failureDomain -}}
+{{- $zones = append $zones $zone -}}
+{{- end -}}
+{{- end -}}
+{{- len (uniq $zones) -}}
+{{- end }}
+
+{{/*
+CoreDNS replicas: one per zone, minimum 2.
+*/}}
+{{- define "openstack.corednsReplicas" -}}
+{{- max 2 (include "openstack.zonesCount" . | int) -}}
+{{- end }}
