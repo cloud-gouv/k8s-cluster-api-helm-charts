@@ -38,12 +38,12 @@ spec:
           kubeletExtraArgs:
             - name: cloud-provider
               value: external
+            - name: provider-id
+              value: {{`"openstack:///{{ instance_id }}"`}}
             {{- with $pool.nodeLabels }}
             - name: node-labels
               value: "{{ range $i, $k := (keys . | sortAlpha) }}{{ if ne $i 0 }},{{ end }}{{ $k }}={{ index $pool.nodeLabels $k }}{{ end }}"
             {{- end }}
-            - name: provider-id
-              value: {{`"openstack:///{{ instance_id }}"`}}
           {{- with $pool.taints }}
           taints:
             {{- toYaml . | nindent 12 }}
