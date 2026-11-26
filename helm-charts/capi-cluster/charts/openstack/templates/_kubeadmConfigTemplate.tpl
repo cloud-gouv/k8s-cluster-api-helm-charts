@@ -36,6 +36,8 @@ spec:
           imagePullPolicy: IfNotPresent
           name: {{`"{{ local_hostname }}"`}}
           kubeletExtraArgs:
+            - name: cloud-provider
+              value: external
             {{- with $pool.nodeLabels }}
             - name: node-labels
               value: "{{ range $i, $k := (keys . | sortAlpha) }}{{ if ne $i 0 }},{{ end }}{{ $k }}={{ index $pool.nodeLabels $k }}{{ end }}"
